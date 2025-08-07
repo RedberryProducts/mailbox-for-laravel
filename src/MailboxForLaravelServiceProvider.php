@@ -2,11 +2,10 @@
 
 namespace Redberry\MailboxForLaravel;
 
-use App\Mail\Transport\CustomTransportFactory;
 use Illuminate\Mail\MailManager;
+use Redberry\MailboxForLaravel\Commands\MailboxForLaravelCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Redberry\MailboxForLaravel\Commands\MailboxForLaravelCommand;
 use Symfony\Component\Mailer\Transport\Dsn;
 
 class MailboxForLaravelServiceProvider extends PackageServiceProvider
@@ -27,7 +26,7 @@ class MailboxForLaravelServiceProvider extends PackageServiceProvider
 
         $this->app->afterResolving(MailManager::class, function (MailManager $manager) {
             $manager->extend('mailbox-for-laravel', function () {
-                return (new MailTransportFactory())->create(
+                return (new MailTransportFactory)->create(
                     new Dsn('mailbox-for-laravel', 'default')
                 );
             });
