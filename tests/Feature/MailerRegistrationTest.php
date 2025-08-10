@@ -16,17 +16,20 @@ it('routes mail through inbox transport and calls CaptureService', function () {
     $captured = (object) ['raw' => null];
 
     $this->app->singleton(CaptureService::class, function () use ($captured) {
-        return new class($captured) extends CaptureService {
+        return new class($captured) extends CaptureService
+        {
             public function __construct(private object $captured) {}
+
             public function storeRaw(string $raw): string
             {
                 $this->captured->raw = $raw;
+
                 return 'k';
             }
         };
     });
 
-    Mail::to('user@example.com')->send(new TestMailable());
+    Mail::to('user@example.com')->send(new TestMailable);
 
     expect($captured->raw)->not->toBeNull()
         ->and($captured->raw)->toContain('Hello');

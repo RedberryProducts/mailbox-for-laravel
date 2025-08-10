@@ -10,9 +10,7 @@ use Symfony\Component\Mime\RawMessage;
 
 class InboxTransport implements TransportInterface
 {
-    public function __construct(protected CaptureService $mailbox)
-    {
-    }
+    public function __construct(protected CaptureService $mailbox) {}
 
     public function __toString(): string
     {

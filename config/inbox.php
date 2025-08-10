@@ -1,4 +1,5 @@
 <?php
+
 return [
     'store' => [
         'driver' => env('INBOX_STORE_DRIVER', 'file'),

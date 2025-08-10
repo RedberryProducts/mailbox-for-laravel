@@ -1,25 +1,27 @@
 <?php
 
-use Redberry\MailboxForLaravel\Transport\InboxTransport;
 use Redberry\MailboxForLaravel\CaptureService;
-use Symfony\Component\Mime\RawMessage;
+use Redberry\MailboxForLaravel\Transport\InboxTransport;
 use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mime\Address;
+use Symfony\Component\Mime\RawMessage;
 
 class FakeCaptureService extends CaptureService
 {
     public ?string $captured = null;
 
     public function __construct() {}
+
     public function storeRaw(string $raw): string
     {
         $this->captured = $raw;
+
         return 'k';
     }
 }
 
 it('forwards raw message to CaptureService and returns SentMessage', function () {
-    $svc = new FakeCaptureService();
+    $svc = new FakeCaptureService;
     $transport = new InboxTransport($svc);
 
     $msg = new RawMessage("Subject: T\r\n\r\nBody");
@@ -30,6 +32,6 @@ it('forwards raw message to CaptureService and returns SentMessage', function ()
 });
 
 it('has string name inbox', function () {
-    $transport = new InboxTransport(new FakeCaptureService());
+    $transport = new InboxTransport(new FakeCaptureService);
     expect((string) $transport)->toBe('inbox');
 });

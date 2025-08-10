@@ -3,15 +3,19 @@
 use Redberry\MailboxForLaravel\Storage\FileStorage;
 
 beforeEach(function () {
-    $this->basePath = sys_get_temp_dir() . '/inbox-fs-' . uniqid();
+    $this->basePath = sys_get_temp_dir().'/inbox-fs-'.uniqid();
     @mkdir($this->basePath, 0777, true);
     $this->fs = new FileStorage($this->basePath);
 });
 
 afterEach(function () {
     if (is_dir($this->basePath)) {
-        $files = glob($this->basePath . '/*');
-        if ($files) { foreach ($files as $f) { @unlink($f); } }
+        $files = glob($this->basePath.'/*');
+        if ($files) {
+            foreach ($files as $f) {
+                @unlink($f);
+            }
+        }
         @rmdir($this->basePath);
     }
 });

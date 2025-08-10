@@ -13,7 +13,7 @@ class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn(string $modelName
+            fn (string $modelName
             ) => 'Redberry\\MailboxForLaravel\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
     }
@@ -31,6 +31,6 @@ class TestCase extends Orchestra
 
         $app['config']->set('mail.mailers.inbox', ['transport' => 'inbox']);
         $app['config']->set('mail.default', 'inbox');
-        
+
     }
 }

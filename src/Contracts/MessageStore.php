@@ -9,8 +9,6 @@ interface MessageStore
      *
      * @param  string  $key  Unique key (you generate it).
      * @param  array  $value  Associative array payload; MUST include at least: ['raw' => string, 'timestamp' => int]
-     *
-     * @return void
      */
     public function store(string $key, array $value): void;
 
@@ -18,7 +16,6 @@ interface MessageStore
      * Retrieve a single payload by key.
      *
      * @param  string  $key  Unique key to retrieve the payload.
-     *
      * @return array|null Returns the payload array or null if not found.
      */
     public function retrieve(string $key): ?array;
@@ -26,7 +23,6 @@ interface MessageStore
     /**
      * Retrieve multiple payload keys optionally filtered by a UNIX timestamp (>= since).
      *
-     * @param  int|null  $since
      *
      * @return iterable<string> Keys
      */

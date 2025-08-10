@@ -21,13 +21,13 @@ class InboxServiceProvider extends PackageServiceProvider
     public function registeringPackage(): void
     {
         $this->app->singleton(MessageStore::class, function () {
-            return (new StoreManager())->create();
+            return (new StoreManager)->create();
         });
         $this->app->singleton(CaptureService::class, function () {
             return new CaptureService(app(MessageStore::class));
         });
 
-        $this->app->singleton(InboxTransport::class, fn() => new InboxTransport(app(CaptureService::class)));
+        $this->app->singleton(InboxTransport::class, fn () => new InboxTransport(app(CaptureService::class)));
 
         // Register the mail driver
         $this->app->afterResolving(MailManager::class, function (MailManager $manager) {
