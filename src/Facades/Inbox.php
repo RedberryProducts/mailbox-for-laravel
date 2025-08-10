@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\Facade;
 /**
  * @see \Redberry\MailboxForLaravel\MailboxForLaravel
  */
-class MailboxForLaravel extends Facade
+class Inbox extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
-        return \Redberry\MailboxForLaravel\MailboxForLaravel::class;
+        return \Redberry\MailboxForLaravel\InboxTranport::class;
     }
 }
