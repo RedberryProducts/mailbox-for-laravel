@@ -1,0 +1,23 @@
+{
+    "name": "mailbox-for-laravel",
+    "version": "1.0.0",
+    "description": "[![Latest Version on Packagist](https://img.shields.io/packagist/v/redberryproducts/mailbox-for-laravel.svg?style=flat-square)](https://packagist.org/packages/redberryproducts/mailbox-for-laravel) [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/redberryproducts/mailbox-for-laravel/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/redberryproducts/mailbox-for-laravel/actions?query=workflow%3Arun-tests+branch%3Amain) [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/redberryproducts/mailbox-for-laravel/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/redberryproducts/mailbox-for-laravel/actions?query=workflow%3A\"Fix+PHP+code+style+issues\"+branch%3Amain) [![Total Downloads](https://img.shields.io/packagist/dt/redberryproducts/mailbox-for-laravel.svg?style=flat-square)](https://packagist.org/packages/redberryproducts/mailbox-for-laravel)",
+    "main": "index.js",
+    "type": "module",
+    "directories": {
+        "test": "tests"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "dev": "vite dev",
+        "build": "vite build"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "autoprefixer": "^10.4.21",
+        "postcss": "^8.5.6",
+        "tailwindcss": "^4.1.11"
+    }
+}

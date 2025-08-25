@@ -3,25 +3,33 @@
 namespace Redberry\MailboxForLaravel\Transport;
 
 use Redberry\MailboxForLaravel\CaptureService;
+use Redberry\MailboxForLaravel\Support\MessageNormalizer;
 use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\SentMessage;
+use Symfony\Component\Mailer\Transport\AbstractTransport;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\RawMessage;
 
-class InboxTransport implements TransportInterface
+class InboxTransport extends AbstractTransport
 {
-    public function __construct(protected CaptureService $mailbox) {}
+    public function __construct(protected CaptureService $mailbox)
+    {
+        parent::__construct();
+    }
 
     public function __toString(): string
     {
         return 'inbox';
     }
 
-    public function send(RawMessage $message, ?Envelope $envelope = null): ?SentMessage
+    protected function doSend(SentMessage $message): void
     {
         $raw = $message->toString();
-        $this->mailbox->storeRaw($raw);
+        $original = $message->getOriginalMessage();
+        $envelope = $message->getEnvelope();
+        $payload = MessageNormalizer::normalize($original, $envelope, $raw, true);
 
-        return new SentMessage($message, $envelope);
+        $this->mailbox->store($payload);
     }
+
 }
