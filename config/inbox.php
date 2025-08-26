@@ -10,7 +10,7 @@ return [
     'retention' => [
         'seconds' => (int) env('INBOX_RETENTION', 60 * 60 * 24),
     ],
-    'enabled' => env('INBOX_DASHBOARD_ENABLED', false),
+    'gate' => env('INBOX_GATE', 'viewMailbox'),
     'route' => env('INBOX_DASHBOARD_ROUTE', 'mailbox'),
     'middleware' => ['web'],
 ];

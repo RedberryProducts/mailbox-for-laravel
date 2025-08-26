@@ -6,7 +6,7 @@ use Redberry\MailboxForLaravel\Http\Controllers\InboxController;
 
 Route::middleware(array_merge(
     config('inbox.middleware', ['web']),
-    []
+    ['mailbox.authorize']
 ))
     ->prefix(config('inbox.route', 'mailbox'))
     ->name('inbox.')

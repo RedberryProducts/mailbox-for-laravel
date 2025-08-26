@@ -3,8 +3,10 @@
 namespace Redberry\MailboxForLaravel;
 
 use Illuminate\Mail\MailManager;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Gate;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
+use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeInbox;
 use Redberry\MailboxForLaravel\Transport\InboxTransport;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -26,20 +28,26 @@ class InboxServiceProvider extends PackageServiceProvider
 
     public function registeringPackage(): void
     {
-        $this->app->singleton(MessageStore::class, fn () => (new StoreManager)->create());
-        $this->app->singleton(CaptureService::class, fn () => new CaptureService(app(MessageStore::class)));
-        $this->app->singleton(InboxTransport::class, fn () => new InboxTransport(app(CaptureService::class)));
+        $this->app->singleton(MessageStore::class, fn() => (new StoreManager)->create());
+        $this->app->singleton(CaptureService::class, fn() => new CaptureService(app(MessageStore::class)));
+        $this->app->singleton(InboxTransport::class, fn() => new InboxTransport(app(CaptureService::class)));
 
         $this->app->afterResolving(MailManager::class, function (MailManager $manager) {
-            $manager->extend('inbox', fn ($config) => app(InboxTransport::class));
+            $manager->extend('inbox', fn($config) => app(InboxTransport::class));
         });
 
-        Gate::define('viewInbox', fn ($user = null) => app()->environment(['local', 'development', 'staging'])
-        );
     }
 
     public function packageBooted(): void
     {
+        $this->app->make(Router::class)
+            ->aliasMiddleware('mailbox.authorize', AuthorizeInbox::class);
+
+        Gate::define('viewMailbox', function ($user = null) {
+            // This closure only runs when Gate::allows() is called, i.e. during a request
+            return ! app()->environment('production');
+        });
+
         $this->publishes([
             __DIR__.'/../dist' => public_path('vendor/mailbox'),
         ], 'mailbox-assets');
@@ -49,5 +57,6 @@ class InboxServiceProvider extends PackageServiceProvider
             __DIR__.'/../resources/views' => resource_path('views/vendor/inbox'),
             __DIR__.'/../dist' => public_path('vendor/mailbox'),
         ], 'mailbox-install');
+
     }
 }
