@@ -1,11 +1,11 @@
 {
   "resources/js/mailbox.js": {
-    "file": "assets/mailbox-CzXw6ZTM.js",
+    "file": "assets/mailbox-B60OrGbc.js",
     "name": "mailbox",
     "src": "resources/js/mailbox.js",
     "isEntry": true,
     "css": [
-      "assets/mailbox-rdDOB8x2.css"
+      "assets/mailbox-CWd4pnfW.css"
     ]
   }
 }

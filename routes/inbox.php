@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Redberry\MailboxForLaravel\Http\Controllers\Api\MessagesController;
 use Redberry\MailboxForLaravel\Http\Controllers\AssetController;
 use Redberry\MailboxForLaravel\Http\Controllers\InboxController;
 
