@@ -11,8 +11,6 @@ Route::middleware(array_merge(
     ->prefix(config('inbox.route', 'mailbox'))
     ->name('inbox.')
     ->group(function () {
-        abort_unless(config('inbox.enabled'), 404);
-
         Route::get('/', InboxController::class)
             ->name('index');
     });
