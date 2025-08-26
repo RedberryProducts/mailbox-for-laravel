@@ -6,9 +6,7 @@ use Redberry\MailboxForLaravel\Contracts\MessageStore;
 
 class CaptureService
 {
-    public function __construct(protected MessageStore $storage)
-    {
-    }
+    public function __construct(protected MessageStore $storage) {}
 
     /**
      * Persist the raw message and metadata.
@@ -40,6 +38,7 @@ class CaptureService
         foreach ($this->storage->keys() as $key) {
             $messages[$key] = $this->retrieve($key);
         }
+
         return $messages;
     }
 }

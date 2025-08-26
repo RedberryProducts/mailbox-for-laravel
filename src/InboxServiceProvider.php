@@ -26,15 +26,15 @@ class InboxServiceProvider extends PackageServiceProvider
 
     public function registeringPackage(): void
     {
-        $this->app->singleton(MessageStore::class, fn() => (new StoreManager())->create());
-        $this->app->singleton(CaptureService::class, fn() => new CaptureService(app(MessageStore::class)));
-        $this->app->singleton(InboxTransport::class, fn() => new InboxTransport(app(CaptureService::class)));
+        $this->app->singleton(MessageStore::class, fn () => (new StoreManager)->create());
+        $this->app->singleton(CaptureService::class, fn () => new CaptureService(app(MessageStore::class)));
+        $this->app->singleton(InboxTransport::class, fn () => new InboxTransport(app(CaptureService::class)));
 
         $this->app->afterResolving(MailManager::class, function (MailManager $manager) {
-            $manager->extend('inbox', fn($config) => app(InboxTransport::class));
+            $manager->extend('inbox', fn ($config) => app(InboxTransport::class));
         });
 
-        Gate::define('viewInbox', fn($user = null) => app()->environment(['local', 'development', 'staging'])
+        Gate::define('viewInbox', fn ($user = null) => app()->environment(['local', 'development', 'staging'])
         );
     }
 

@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Redberry\MailboxForLaravel\Http\Controllers\Api\MessagesController;
 use Redberry\MailboxForLaravel\Http\Controllers\AssetController;
 use Redberry\MailboxForLaravel\Http\Controllers\InboxController;
 
@@ -17,6 +16,5 @@ Route::middleware(array_merge(
         Route::get('/', InboxController::class)
             ->name('index');
     });
-
 
 Route::get('/mailbox/assets/{path}', AssetController::class)->where('path', '.*')->name('mailbox.asset');

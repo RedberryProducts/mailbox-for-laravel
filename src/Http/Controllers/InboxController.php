@@ -2,8 +2,8 @@
 
 namespace Redberry\MailboxForLaravel\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Redberry\MailboxForLaravel\CaptureService;
 

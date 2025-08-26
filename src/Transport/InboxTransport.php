@@ -4,11 +4,8 @@ namespace Redberry\MailboxForLaravel\Transport;
 
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Support\MessageNormalizer;
-use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\AbstractTransport;
-use Symfony\Component\Mailer\Transport\TransportInterface;
-use Symfony\Component\Mime\RawMessage;
 
 class InboxTransport extends AbstractTransport
 {
@@ -31,5 +28,4 @@ class InboxTransport extends AbstractTransport
 
         $this->mailbox->store($payload);
     }
-
 }

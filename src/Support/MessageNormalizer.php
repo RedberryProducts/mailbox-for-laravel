@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Redberry\MailboxForLaravel\Support;
 
 use DateTimeInterface;
-use Symfony\Component\Mime\Email;
-use Symfony\Component\Mime\Address;
 use Symfony\Component\Mailer\Envelope;
+use Symfony\Component\Mime\Address;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Part\DataPart;
 
 final class MessageNormalizer
@@ -15,10 +15,6 @@ final class MessageNormalizer
     /**
      * Build a structured array to store.
      *
-     * @param  Email  $email
-     * @param  Envelope|null  $envelope
-     * @param  string|null  $raw
-     * @param  bool  $storeAttachmentsInline
      *
      * @return array<string,mixed>
      */
@@ -75,7 +71,7 @@ final class MessageNormalizer
                 'inline' => $contentId !== null,
                 'size' => $size,
                 'content' => $bodyBase64,  // base64 or null
-            ], static fn($v) => $v !== null);
+            ], static fn ($v) => $v !== null);
         }
 
         // Prefer explicitly set envelope sender/recipients, fallback to headers
@@ -88,7 +84,7 @@ final class MessageNormalizer
 
         $payload = [
             'version' => 1,
-            'saved_at' => (new \DateTimeImmutable())->format(DateTimeInterface::ATOM),
+            'saved_at' => (new \DateTimeImmutable)->format(DateTimeInterface::ATOM),
 
             'message_id' => self::firstHeader($email, 'Message-ID'),
             'subject' => $email->getSubject(),
@@ -117,7 +113,6 @@ final class MessageNormalizer
 
     /**
      * @param  Address[]  $addresses
-     *
      * @return array<int,array{name?:string,email:string}>
      */
     private static function addressesToArray(iterable $addresses): array
@@ -132,6 +127,7 @@ final class MessageNormalizer
                 $out[] = $row;
             }
         }
+
         return $out;
     }
 
@@ -146,9 +142,10 @@ final class MessageNormalizer
     private static function firstHeader(Email $email, string $name): ?string
     {
         $headers = $email->getHeaders();
-        if (!$headers->has($name)) {
+        if (! $headers->has($name)) {
             return null;
         }
+
         return trim($headers->get($name)->getBodyAsString());
     }
 }
