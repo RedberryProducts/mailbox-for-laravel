@@ -32,6 +32,11 @@ class CaptureService
         return $this->storage->retrieve($key);
     }
 
+    public function delete(string $key): void
+    {
+        $this->storage->delete($key);
+    }
+
     public function all()
     {
         $messages = [];
