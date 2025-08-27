@@ -21,13 +21,34 @@ describe(StoreManager::class, function () {
     });
 
     it('accepts a custom driver resolver via config', function () {
-        $custom = new class implements MessageStore {
+        $custom = new class implements MessageStore
+        {
             public array $stored = [];
-            public function store(string $key, array $value): void { $this->stored[$key] = $value; }
-            public function retrieve(string $key): ?array { return $this->stored[$key] ?? null; }
-            public function keys(?int $since = null): iterable { return array_keys($this->stored); }
-            public function delete(string $key): void { unset($this->stored[$key]); }
-            public function purgeOlderThan(int $seconds): void { $this->stored = []; }
+
+            public function store(string $key, array $value): void
+            {
+                $this->stored[$key] = $value;
+            }
+
+            public function retrieve(string $key): ?array
+            {
+                return $this->stored[$key] ?? null;
+            }
+
+            public function keys(?int $since = null): iterable
+            {
+                return array_keys($this->stored);
+            }
+
+            public function delete(string $key): void
+            {
+                unset($this->stored[$key]);
+            }
+
+            public function purgeOlderThan(int $seconds): void
+            {
+                $this->stored = [];
+            }
         };
 
         config([
