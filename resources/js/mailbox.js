@@ -1,6 +1,6 @@
 import {createApp} from 'vue'
 import '../css/mailbox.css'
-import InboxApp from './components/InboxApp.vue'
+import InboxApp from './Components/InboxApp.vue'
 
 function readHydratedProps() {
     const el = document.getElementById('mailbox-props')
