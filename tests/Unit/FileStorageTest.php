@@ -3,15 +3,52 @@
 use Redberry\MailboxForLaravel\Storage\FileStorage;
 
 describe(FileStorage::class, function () {
-    it('generates deterministic unique keys for messages')->todo();
-    it('writes raw and normalized payload atomically')->todo();
-    it('retrieves a message by key')->todo();
-    it('lists all messages sorted desc by timestamp')->todo();
-    it('deletes a message and its assets')->todo();
-    it('stores assets with stable public keys (messageKey/assetName)')->todo();
-    it('retrieves asset binary streams and mime types')->todo();
-    it('prevents directory traversal via sanitized keys and filenames')->todo();
-    it('handles large attachments efficiently (streams, not loading fully in memory)')->todo();
-    it('purges messages older than ttl and removes orphaned assets')->todo();
-    it('recovers gracefully if a message file is partially missing')->todo();
+    function storage(): FileStorage
+    {
+        $tmp = sys_get_temp_dir().'/mailbox-fs-tests-'.uniqid();
+        @mkdir($tmp, 0777, true);
+
+        return new FileStorage($tmp);
+    }
+
+    it('writes and retrieves a payload', function () {
+        $store = storage();
+        $store->store('a', ['raw' => 'foo', 'timestamp' => 1]);
+
+        expect($store->retrieve('a')['raw'])->toBe('foo');
+    });
+
+    it('lists stored keys', function () {
+        $store = storage();
+        $store->store('one', ['raw' => '1', 'timestamp' => 1]);
+        $store->store('two', ['raw' => '2', 'timestamp' => 2]);
+
+        expect(iterator_to_array($store->keys()))->toContain('one', 'two');
+    });
+
+    it('deletes a payload', function () {
+        $store = storage();
+        $store->store('b', ['raw' => 'bar', 'timestamp' => 1]);
+        $store->delete('b');
+
+        expect($store->retrieve('b'))->toBeNull();
+    });
+
+    it('purges old payloads', function () {
+        $store = storage();
+        $store->store('old', ['raw' => 'x', 'timestamp' => time() - 100]);
+        $store->store('new', ['raw' => 'y', 'timestamp' => time()]);
+
+        $store->purgeOlderThan(50);
+        expect(iterator_to_array($store->keys()))->toBe(['new']);
+    });
+
+    it('sanitizes keys to avoid directory traversal', function () {
+        $store = storage();
+        $store->store('../weird', ['raw' => 'z', 'timestamp' => 1]);
+
+        $paths = glob($store->getBasePath().'/*.json');
+        expect($paths)->toHaveCount(1)
+            ->and(basename($paths[0]))->toBe('___weird.json');
+    });
 });

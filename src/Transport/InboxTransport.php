@@ -6,10 +6,13 @@ use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Support\MessageNormalizer;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\AbstractTransport;
+use Symfony\Component\Mailer\Transport\TransportInterface;
 
 class InboxTransport extends AbstractTransport
 {
-    public function __construct(protected CaptureService $mailbox)
+    protected ?string $storedKey = null;
+
+    public function __construct(protected CaptureService $mailbox, protected ?TransportInterface $decorated = null, protected bool $enabled = true)
     {
         parent::__construct();
     }
@@ -19,13 +22,24 @@ class InboxTransport extends AbstractTransport
         return 'inbox';
     }
 
+    public function getStoredKey(): ?string
+    {
+        return $this->storedKey;
+    }
+
     protected function doSend(SentMessage $message): void
     {
         $raw = $message->toString();
         $original = $message->getOriginalMessage();
         $envelope = $message->getEnvelope();
-        $payload = MessageNormalizer::normalize($original, $envelope, $raw, true);
 
-        $this->mailbox->store($payload);
+        if ($this->enabled) {
+            $payload = MessageNormalizer::normalize($original, $envelope, $raw, true);
+            $this->storedKey = $this->mailbox->store($payload);
+        }
+
+        if ($this->decorated) {
+            $this->decorated->send($message->getOriginalMessage(), $message->getEnvelope());
+        }
     }
 }
