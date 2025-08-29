@@ -38,4 +38,3 @@ foreach ($rules as $rule) {
         expect(true)->toBeTrue();
     });
 }
-

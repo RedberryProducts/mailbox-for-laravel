@@ -6,7 +6,7 @@ use Symfony\Component\Mime\Part\DataPart;
 
 describe(MessageNormalizer::class, function () {
     it('normalizes a simple text-only email', function () {
-        $email = (new Email())
+        $email = (new Email)
             ->from('alice@example.com')
             ->to('bob@example.com')
             ->subject('Greetings')
@@ -20,7 +20,7 @@ describe(MessageNormalizer::class, function () {
     });
 
     it('normalizes an html-only email', function () {
-        $email = (new Email())
+        $email = (new Email)
             ->from('alice@example.com')
             ->to('bob@example.com')
             ->subject('Hi')
@@ -33,7 +33,7 @@ describe(MessageNormalizer::class, function () {
     });
 
     it('normalizes a multipart/alternative email with both text and html', function () {
-        $email = (new Email())
+        $email = (new Email)
             ->from('a@example.com')
             ->to('b@example.com')
             ->subject('Hi')
@@ -47,7 +47,7 @@ describe(MessageNormalizer::class, function () {
     });
 
     it('normalizes unicode headers and encoded words', function () {
-        $email = (new Email())
+        $email = (new Email)
             ->subject('Hello ✌')
             ->from('José <jose@example.com>')
             ->to('r@example.com')
@@ -60,7 +60,7 @@ describe(MessageNormalizer::class, function () {
     });
 
     it('normalizes multiple recipients in to/cc/bcc', function () {
-        $email = (new Email())
+        $email = (new Email)
             ->from('sender@example.com')
             ->to('a@example.com', 'b@example.com')
             ->cc('c@example.com', 'd@example.com')
@@ -75,7 +75,7 @@ describe(MessageNormalizer::class, function () {
     });
 
     it('extracts attachments with metadata and inline flags', function () {
-        $email = (new Email())
+        $email = (new Email)
             ->from('s@example.com')
             ->to('r@example.com')
             ->text('body');
@@ -106,7 +106,7 @@ describe(MessageNormalizer::class, function () {
     });
 
     it('preserves content-id mapping for inline images', function () {
-        $email = (new Email())
+        $email = (new Email)
             ->from('a@example.com')
             ->to('b@example.com')
             ->text('body');
@@ -122,7 +122,7 @@ describe(MessageNormalizer::class, function () {
     });
 
     it('parses Date header and falls back to current time if missing', function () {
-        $email = (new Email())
+        $email = (new Email)
             ->from('a@example.com')
             ->to('b@example.com')
             ->text('body');
@@ -131,7 +131,7 @@ describe(MessageNormalizer::class, function () {
         $payload = MessageNormalizer::normalize($email);
         expect($payload['date'])->toBe('Thu, 21 Dec 2000 16:01:07 +0200');
 
-        $emailNoDate = (new Email())
+        $emailNoDate = (new Email)
             ->from('a@example.com')
             ->to('b@example.com')
             ->text('body');
@@ -140,7 +140,7 @@ describe(MessageNormalizer::class, function () {
     });
 
     it('handles empty subject and no sender gracefully', function () {
-        $email = (new Email())
+        $email = (new Email)
             ->to('x@example.com')
             ->text('body');
 
@@ -152,7 +152,7 @@ describe(MessageNormalizer::class, function () {
     });
 
     it('enforces a stable schema version and includes saved_at timestamp', function () {
-        $email = (new Email())
+        $email = (new Email)
             ->from('a@example.com')
             ->to('b@example.com')
             ->text('body');

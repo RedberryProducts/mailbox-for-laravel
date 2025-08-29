@@ -4,9 +4,11 @@ use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Storage\FileStorage;
 
 describe(CaptureService::class, function () {
-    function service(): CaptureService {
+    function service(): CaptureService
+    {
         $path = sys_get_temp_dir().'/mailbox-capture-tests-'.uniqid();
         $store = new FileStorage($path);
+
         return new CaptureService($store);
     }
 

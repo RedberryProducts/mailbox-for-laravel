@@ -2,10 +2,10 @@
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Http\Controllers\AssetController;
 use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeInboxMiddleware;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 describe(AssetController::class, function () {
     beforeEach(function () {
@@ -15,7 +15,8 @@ describe(AssetController::class, function () {
         config()->set('inbox.public', true);
     });
 
-    function storeMessage(): array {
+    function storeMessage(): array
+    {
         $svc = app(CaptureService::class);
         $payload = [
             'attachments' => [[
@@ -26,6 +27,7 @@ describe(AssetController::class, function () {
             ]],
         ];
         $key = $svc->store($payload);
+
         return [$svc, $key];
     }
 

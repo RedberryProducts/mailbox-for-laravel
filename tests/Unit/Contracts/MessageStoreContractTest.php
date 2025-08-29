@@ -1,7 +1,7 @@
 <?php
 
-use ReflectionClass;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
+use ReflectionClass;
 
 describe(MessageStore::class, function () {
     it('defines required methods: store, retrieve, keys, delete, purgeOlderThan', function () {

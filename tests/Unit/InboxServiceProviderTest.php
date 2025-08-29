@@ -50,7 +50,6 @@ describe(InboxServiceProvider::class, function () {
         putenv('INBOX_ENABLED');
     });
 
-
     it('merges default config values correctly', function () {
         expect(config('inbox.store.driver'))->toBe('file');
         expect(config('inbox.middleware'))->toBe(['web']);

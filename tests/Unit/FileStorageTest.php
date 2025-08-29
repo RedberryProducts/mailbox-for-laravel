@@ -3,7 +3,8 @@
 use Redberry\MailboxForLaravel\Storage\FileStorage;
 
 describe(FileStorage::class, function () {
-    function storage(): FileStorage {
+    function storage(): FileStorage
+    {
         $tmp = sys_get_temp_dir().'/mailbox-fs-tests-'.uniqid();
         @mkdir($tmp, 0777, true);
 

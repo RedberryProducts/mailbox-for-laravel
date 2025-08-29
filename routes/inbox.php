@@ -2,8 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use Redberry\MailboxForLaravel\Http\Controllers\AssetController;
-use Redberry\MailboxForLaravel\Http\Controllers\PublicAssetController;
 use Redberry\MailboxForLaravel\Http\Controllers\InboxController;
+use Redberry\MailboxForLaravel\Http\Controllers\PublicAssetController;
 
 if (! config('inbox.enabled', true)) {
     return;

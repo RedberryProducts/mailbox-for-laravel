@@ -2,8 +2,8 @@
 
 namespace Redberry\MailboxForLaravel;
 
-use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use InvalidArgumentException;
+use Redberry\MailboxForLaravel\Contracts\MessageStore;
 
 class CaptureService
 {

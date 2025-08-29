@@ -2,9 +2,8 @@
 
 namespace Redberry\MailboxForLaravel\Http\Controllers;
 
-use Illuminate\Support\Facades\Response;
 use Illuminate\Http\Response as HttpResponse;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Facades\Response;
 use Redberry\MailboxForLaravel\CaptureService;
 
 class AssetController
@@ -40,6 +39,7 @@ class AssetController
 
         if (isset($attachment['content'])) {
             $content = base64_decode($attachment['content']);
+
             return new HttpResponse($content, 200, $headers);
         }
 
