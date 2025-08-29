@@ -2,27 +2,47 @@
 
 namespace Redberry\MailboxForLaravel\Http\Controllers;
 
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Str;
+use Illuminate\Http\Response as HttpResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Redberry\MailboxForLaravel\CaptureService;
 
 class AssetController
 {
-    public function __invoke($path)
+    public function __invoke(CaptureService $capture, string $message, string $asset)
     {
-        $full = __DIR__.'/../../../dist/'.$path;
-        abort_unless(File::exists($full), 404);
+        $payload = $capture->get($message);
+        abort_unless($payload, 404);
 
-        $mime = match (true) {
-            Str::endsWith($path, '.js') => 'application/javascript',
-            Str::endsWith($path, '.css') => 'text/css',
-            Str::endsWith($path, '.map') => 'application/json',
-            default => File::mimeType($full),
-        };
+        $attachment = collect($payload['attachments'] ?? [])
+            ->first(fn ($a) => ($a['filename'] ?? null) === $asset);
+        abort_unless($attachment, 404);
 
-        return Response::file($full, [
-            'Content-Type' => $mime,
+        $headers = [
+            'Content-Type' => $attachment['contentType'] ?? 'application/octet-stream',
             'Cache-Control' => 'public, max-age=31536000, immutable',
-        ]);
+        ];
+
+        // decide disposition inline vs attachment
+        if (($attachment['disposition'] ?? '') !== '') {
+            $headers['Content-Disposition'] = $attachment['disposition'];
+        }
+
+        if (isset($attachment['path'])) {
+            return Response::stream(function () use ($attachment) {
+                $stream = fopen($attachment['path'], 'rb');
+                if ($stream) {
+                    fpassthru($stream);
+                    fclose($stream);
+                }
+            }, 200, $headers);
+        }
+
+        if (isset($attachment['content'])) {
+            $content = base64_decode($attachment['content']);
+            return new HttpResponse($content, 200, $headers);
+        }
+
+        abort(404);
     }
 }

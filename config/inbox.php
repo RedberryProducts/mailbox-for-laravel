@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'enabled' => env('INBOX_ENABLED', env('APP_ENV') !== 'production'),
+    'public' => env('INBOX_PUBLIC', false),
     'store' => [
         'driver' => env('INBOX_STORE_DRIVER', 'file'),
         'file' => [

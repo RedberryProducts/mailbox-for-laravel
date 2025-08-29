@@ -2,7 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use Redberry\MailboxForLaravel\Http\Controllers\AssetController;
+use Redberry\MailboxForLaravel\Http\Controllers\PublicAssetController;
 use Redberry\MailboxForLaravel\Http\Controllers\InboxController;
+
+if (! config('inbox.enabled', true)) {
+    return;
+}
 
 Route::middleware(array_merge(
     config('inbox.middleware', ['web']),
@@ -13,6 +18,9 @@ Route::middleware(array_merge(
     ->group(function () {
         Route::get('/', InboxController::class)
             ->name('index');
+
+        Route::get('/messages/{message}/attachments/{asset}', AssetController::class)
+            ->name('asset');
     });
 
-Route::get('/mailbox/assets/{path}', AssetController::class)->where('path', '.*')->name('mailbox.asset');
+Route::get('/mailbox/assets/{path}', PublicAssetController::class)->where('path', '.*')->name('mailbox.asset');

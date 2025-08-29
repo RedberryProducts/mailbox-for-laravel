@@ -16,6 +16,11 @@ class FileStorage implements MessageStore
         }
     }
 
+    public function getBasePath(): string
+    {
+        return $this->basePath;
+    }
+
     public function store(string $key, array $value): void
     {
         $path = $this->pathFor($key);
