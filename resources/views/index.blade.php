@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Mailbox for Laravel</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     @vite('resources/js/mailbox.js', 'vendor/mailbox')
 </head>
 <body>

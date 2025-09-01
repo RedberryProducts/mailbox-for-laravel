@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import AppHeader from './AppHeader.vue'
 import MailListItem from './MailListItem.vue'
 import EmailDialog from './EmailDialog.vue'
+import { get, post } from '../api'
 
 const props = defineProps({
     messages: { type: [Object, Array], default: () => ({}) },
@@ -11,6 +12,13 @@ const props = defineProps({
 })
 
 const query = ref('')
+
+/**
+ * Local “just-seen” tracker to avoid mutating props.
+ * If an item has no seen_at from server but gets opened now,
+ * we put its id into this Set to render as read immediately.
+ */
+const locallySeen = ref(new Set())
 
 /** normalize list but keep original in __raw for modal */
 const rows = computed(() => {
@@ -31,17 +39,37 @@ const filtered = computed(() => {
     )
 })
 
+/** unread counter for header */
+const unreadCount = computed(() =>
+    rows.value.reduce((acc, m) => acc + (isUnread(m) ? 1 : 0), 0)
+)
+
 /* modal state */
 const dialogOpen = ref(false)
 const selected = ref(null)
-function openItem(row) {
+
+async function openItem(row) {
     selected.value = row.__raw || row
     dialogOpen.value = true
+
+    // Optimistically mark as seen locally (only if not already seen on server)
+    if (isUnread(row)) {
+        locallySeen.value.add(row.id)
+
+        // Fire-and-forget marking request
+        // Adjust the URL to your backend route (example below).
+        // Expected: backend sets seen_at for this message id.
+        post(`/messages/${encodeURIComponent(row.id)}/seen`)
+            .catch(() => {
+                // If server fails, we can revert local state
+                locallySeen.value.delete(row.id)
+            })
+    }
 }
 
 /* helpers */
 function normalizeMessage(input, idx) {
-    const id = input.__k || input.id || input.message_id || `msg_${idx}`
+    const id = input.id
 
     const fromArr = Array.isArray(input.from) ? input.from : []
     const firstFrom = fromArr[0] || {}
@@ -57,10 +85,29 @@ function normalizeMessage(input, idx) {
     const snippet = makeSnippet(input.text, input.html)
     const hasAttachments = Array.isArray(input.attachments) && input.attachments.length > 0
 
+    // seen_at is the source of truth for read/unread (server), with local override
+    const seenAt = input.seen_at || null
+    const unread = !seenAt && !locallySeen.value.has(id)
+
     return {
-        id, subject, fromName, fromEmail, date: dateStr, snippet, hasAttachments,
-        __raw: input, // <- keep full original for modal
+        id,
+        subject,
+        fromName,
+        fromEmail,
+        date: dateStr,
+        snippet,
+        hasAttachments,
+        unread,     // <- convenient flag for UI
+        seen_at: seenAt, // for completeness
+        __raw: input,
     }
+}
+
+function isUnread(m) {
+    // Prefer the normalized unread flag, fallback to raw rule
+    return typeof m.unread === 'boolean'
+        ? m.unread
+        : !(m.seen_at || (m.__raw && m.__raw.seen_at)) && !locallySeen.value.has(m.id)
 }
 
 function makeSnippet(text, html) {
@@ -70,11 +117,45 @@ function makeSnippet(text, html) {
         ''
     return raw.replace(/\s+/g, ' ').trim().slice(0, 180)
 }
+
 function stripHtml(s) {
     return String(s)
         .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
         .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
         .replace(/<[^>]+>/g, '')
+}
+
+function sendTestMail() {
+    post('/test-email')
+        .then((r) => {
+            if (r.status !== 200) throw new Error('Failed to send test mail')
+            alert('Test mail sent! It should arrive in a few seconds.')
+            location.reload()
+        })
+        .catch((e) => {
+            console.error(e)
+            alert('Error: ' + e.message)
+        })
+}
+
+function refreshInbox() {
+    location.reload()
+}
+
+function clearMessages() {
+    if (!confirm('Are you sure you want to clear all messages? This action cannot be undone.')) {
+        return
+    }
+    post('/clear', { method: 'POST' })
+        .then((r) => {
+            if (r.status !== 200) throw new Error('Failed to clear messages')
+            alert('All messages cleared.')
+            location.reload()
+        })
+        .catch((e) => {
+            console.error(e)
+            alert('Error: ' + e.message)
+        })
 }
 </script>
 
@@ -87,10 +168,39 @@ function stripHtml(s) {
             v-model:query="query"
             search-placeholder="Search subject, sender, or body…"
         >
+            <template #actions>
+                <div class="flex items-center gap-2">
+                    <button
+                        @click="sendTestMail"
+                        class="rounded-full bg-blue-500 px-3 py-1 text-xs text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700">
+                        Send Test Mail
+                    </button>
+
+                    <button
+                        @click="refreshInbox"
+                        class="rounded-full bg-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
+                        Refresh
+                    </button>
+
+                    <button
+                        @click="clearMessages"
+                        class="rounded-full bg-red-500 px-3 py-1 text-xs text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700">
+                        Clear
+                    </button>
+                </div>
+            </template>
+
             <template #extra>
-        <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-          {{ filtered.length }} message{{ filtered.length === 1 ? '' : 's' }}
-        </span>
+                <div class="flex items-center gap-2">
+          <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            {{ filtered.length }} message{{ filtered.length === 1 ? '' : 's' }}
+          </span>
+                    <span
+                        v-if="unreadCount"
+                        class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+            {{ unreadCount }} unread
+          </span>
+                </div>
             </template>
         </AppHeader>
 
@@ -104,6 +214,7 @@ function stripHtml(s) {
                         v-for="m in filtered"
                         :key="m.id"
                         :message="m"
+                        :unread="m.unread"
                         @open="openItem"
                     />
                 </ul>
@@ -118,6 +229,6 @@ function stripHtml(s) {
         </main>
 
         <!-- Modal -->
-        <EmailDialog :open="dialogOpen" :message="selected" @close="dialogOpen=false" />
+        <EmailDialog :open="dialogOpen" :message="selected" @close="dialogOpen=false"/>
     </div>
 </template>

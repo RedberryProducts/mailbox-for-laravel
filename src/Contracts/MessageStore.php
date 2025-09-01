@@ -16,6 +16,7 @@ interface MessageStore
      * Retrieve a single payload by key.
      *
      * @param  string  $key  Unique key to retrieve the payload.
+     *
      * @return array|null Returns the payload array or null if not found.
      */
     public function retrieve(string $key): ?array;
@@ -36,9 +37,24 @@ interface MessageStore
     public function delete(string $key): void;
 
     /**
+     * Update an existing payload by merging the provided value array.
+     *
+     * @param  string  $key  Unique key to update the payload.
+     * @param  array  $value  Associative array with values to merge into the existing payload.
+     *
+     * @return array|null Returns the updated payload or null if not found.
+     */
+    public function update(string $key, array $value): ?array;
+
+    /**
      * Remove payloads older than $seconds (relative to now).
      *
      * @param  int  $seconds  Number of seconds to keep; older payloads will be purged.
      */
     public function purgeOlderThan(int $seconds): void;
+
+    /**
+     * Remove all stored payloads.
+     */
+    public function clear(): bool;
 }

@@ -7,7 +7,9 @@ use Redberry\MailboxForLaravel\Contracts\MessageStore;
 
 class CaptureService
 {
-    public function __construct(protected MessageStore $storage) {}
+    public function __construct(protected MessageStore $storage)
+    {
+    }
 
     /**
      * Persist the raw message and metadata.
@@ -19,10 +21,22 @@ class CaptureService
 
         $this->storage->store($key, [
             'timestamp' => time(),
+            'id' => $key,
+            'seen_at' => null,
             ...$payload,
         ]);
 
         return $key;
+    }
+
+    /**
+     * Retrieve a stored message by its key.
+     */
+    public function update(string $key, array $values): ?array
+    {
+        $this->assertKey($key);
+
+        return $this->storage->update($key, $values);
     }
 
     /**
@@ -39,12 +53,17 @@ class CaptureService
         $this->storage->delete($key);
     }
 
-    public function all()
+    public function all(): array
     {
         $messages = [];
         foreach ($this->storage->keys() as $key) {
             $messages[$key] = $this->retrieve($key);
         }
+
+        // Sort by timestamp (newest first)
+        uasort($messages, function ($a, $b) {
+            return ($b['timestamp'] ?? 0) <=> ($a['timestamp'] ?? 0);
+        });
 
         return $messages;
     }
@@ -74,6 +93,11 @@ class CaptureService
         ];
     }
 
+    public function clearAll(): bool
+    {
+        return $this->storage->clear();
+    }
+
     public function storeRaw(string $raw): string
     {
         return $this->store(['raw' => $raw]);
@@ -81,7 +105,7 @@ class CaptureService
 
     protected function assertKey(string $key): void
     {
-        if (! preg_match('/^[A-Za-z0-9_.\-]+$/', $key)) {
+        if (!preg_match('/^[A-Za-z0-9_.\-]+$/', $key)) {
             throw new InvalidArgumentException('Invalid id');
         }
     }
