@@ -8,7 +8,7 @@ use Redberry\MailboxForLaravel\Http\Controllers\PublicAssetController;
 use Redberry\MailboxForLaravel\Http\Controllers\SeenController;
 use Redberry\MailboxForLaravel\Http\Controllers\SendTestMailController;
 
-if (!config('inbox.enabled', true)) {
+if (! config('inbox.enabled', true)) {
     return;
 }
 

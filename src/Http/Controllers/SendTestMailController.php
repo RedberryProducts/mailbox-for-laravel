@@ -65,5 +65,4 @@ class SendTestMailController extends Controller
             'key' => $key,
         ]);
     }
-
 }

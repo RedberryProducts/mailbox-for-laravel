@@ -11,7 +11,7 @@ class FileStorage implements MessageStore
     public function __construct(?string $basePath = null)
     {
         $this->basePath = $basePath ?: storage_path('app/mail-inbox');
-        if (!is_dir($this->basePath)) {
+        if (! is_dir($this->basePath)) {
             @mkdir($this->basePath, 0775, true);
         }
     }
@@ -32,7 +32,7 @@ class FileStorage implements MessageStore
     public function retrieve(string $key): ?array
     {
         $path = $this->pathFor($key);
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             return null;
         }
 
@@ -44,7 +44,7 @@ class FileStorage implements MessageStore
 
     public function keys(?int $since = null): iterable
     {
-        if (!is_dir($this->basePath)) {
+        if (! is_dir($this->basePath)) {
             return [];
         }
 
@@ -54,7 +54,7 @@ class FileStorage implements MessageStore
 
             if ($since) {
                 $payload = $this->retrieve($key);
-                if (!$payload || ($payload['timestamp'] ?? 0) < $since) {
+                if (! $payload || ($payload['timestamp'] ?? 0) < $since) {
                     continue;
                 }
             }
@@ -77,7 +77,7 @@ class FileStorage implements MessageStore
 
         foreach ($this->keys() as $key) {
             $payload = $this->retrieve($key);
-            if (!$payload) {
+            if (! $payload) {
                 continue;
             }
             if (($payload['timestamp'] ?? 0) < $cut) {
@@ -96,7 +96,7 @@ class FileStorage implements MessageStore
     public function update(string $key, array $value): ?array
     {
         $existing = $this->retrieve($key);
-        if (!$existing) {
+        if (! $existing) {
             return null;
         }
 

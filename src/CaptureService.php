@@ -7,9 +7,7 @@ use Redberry\MailboxForLaravel\Contracts\MessageStore;
 
 class CaptureService
 {
-    public function __construct(protected MessageStore $storage)
-    {
-    }
+    public function __construct(protected MessageStore $storage) {}
 
     /**
      * Persist the raw message and metadata.
@@ -105,7 +103,7 @@ class CaptureService
 
     protected function assertKey(string $key): void
     {
-        if (!preg_match('/^[A-Za-z0-9_.\-]+$/', $key)) {
+        if (! preg_match('/^[A-Za-z0-9_.\-]+$/', $key)) {
             throw new InvalidArgumentException('Invalid id');
         }
     }

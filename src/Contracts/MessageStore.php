@@ -16,7 +16,6 @@ interface MessageStore
      * Retrieve a single payload by key.
      *
      * @param  string  $key  Unique key to retrieve the payload.
-     *
      * @return array|null Returns the payload array or null if not found.
      */
     public function retrieve(string $key): ?array;
@@ -41,7 +40,6 @@ interface MessageStore
      *
      * @param  string  $key  Unique key to update the payload.
      * @param  array  $value  Associative array with values to merge into the existing payload.
-     *
      * @return array|null Returns the updated payload or null if not found.
      */
     public function update(string $key, array $value): ?array;
