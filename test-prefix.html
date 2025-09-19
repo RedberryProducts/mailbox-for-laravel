@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mailbox Prefix Test</title>
+    <style>
+        /* Test that regular Tailwind classes don't conflict */
+        .bg-blue-500 { background-color: red !important; }
+        .text-white { color: black !important; }
+        .px-4 { padding-left: 50px !important; padding-right: 50px !important; }
+    </style>
+    <link rel="stylesheet" href="./dist/assets/mailbox-Bhx8iPri.css">
+</head>
+<body>
+    <div class="p-4">
+        <h1>Testing Mailbox CSS Isolation</h1>
+        
+        <h2>Regular Tailwind classes (should be styled with conflicting CSS):</h2>
+        <div class="bg-blue-500 text-white px-4 py-2 mb-4">
+            This should have red background, black text, and excessive padding
+        </div>
+        
+        <h2>Mailbox prefixed classes (should work correctly):</h2>
+        <div class="mbx-bg-blue-500 mbx-text-white mbx-px-4 mbx-py-2 mbx-mb-4">
+            This should have normal blue background, white text, and normal padding
+        </div>
+    </div>
+</body>
+</html>

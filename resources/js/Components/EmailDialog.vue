@@ -2,29 +2,29 @@
     <Teleport to="body">
         <div
             v-show="open"
-            class="fixed inset-0 z-[100]"
+            class="mbx-fixed mbx-inset-0 mbx-z-[100]"
             @keydown.esc.prevent="$emit('close')"
         >
             <!-- Backdrop -->
-            <div class="fixed inset-0 bg-slate-900/60" @click="$emit('close')"/>
+            <div class="mbx-fixed mbx-inset-0 mbx-bg-slate-900/60" @click="$emit('close')"/>
 
             <!-- Panel -->
-            <div class="fixed inset-0 flex items-start justify-center overflow-y-auto p-4 sm:p-6">
+            <div class="mbx-fixed mbx-inset-0 mbx-flex mbx-items-start mbx-justify-center mbx-overflow-y-auto mbx-p-4 sm:mbx-p-6">
                 <div
-                    class="mt-10 w-full max-w-4xl rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+                    class="mbx-mt-10 mbx-w-full mbx-max-w-4xl mbx-rounded-2xl mbx-border mbx-border-slate-200 mbx-bg-white mbx-shadow-2xl dark:mbx-border-slate-800 dark:mbx-bg-slate-900"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="mail-subject"
                 >
                     <!-- Header -->
                     <div
-                        class="flex items-start justify-between gap-4 border-b border-slate-200 p-4 dark:border-slate-800">
-                        <div class="min-w-0">
+                        class="mbx-flex mbx-items-start mbx-justify-between mbx-gap-4 mbx-border-b mbx-border-slate-200 mbx-p-4 dark:mbx-border-slate-800">
+                        <div class="mbx-min-w-0">
                             <h2 id="mail-subject"
-                                class="truncate text-lg font-semibold text-slate-900 dark:text-slate-100">
+                                class="mbx-truncate mbx-text-lg mbx-font-semibold mbx-text-slate-900 dark:mbx-text-slate-100">
                                 {{ subject }}
                             </h2>
-                            <p class="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
+                            <p class="mbx-mt-0.5 mbx-text-sm mbx-text-slate-600 dark:mbx-text-slate-300">
                                 {{ fromLine }}
                                 <span v-if="dateIso"> • {{ prettyDate(dateIso) }}</span>
                             </p>

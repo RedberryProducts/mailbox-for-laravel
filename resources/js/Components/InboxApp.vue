@@ -160,7 +160,7 @@ function clearMessages() {
 </script>
 
 <template>
-    <div class="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div class="mbx-min-h-screen mbx-bg-slate-50 dark:mbx-bg-slate-950">
         <AppHeader
             :title="title"
             :subtitle="subtitle"
@@ -169,47 +169,47 @@ function clearMessages() {
             search-placeholder="Search subject, sender, or body…"
         >
             <template #actions>
-                <div class="flex items-center gap-2">
+                <div class="mbx-flex mbx-items-center mbx-gap-2">
                     <button
                         @click="sendTestMail"
-                        class="rounded-full bg-blue-500 px-3 py-1 text-xs text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700">
+                        class="mbx-rounded-full mbx-bg-blue-500 mbx-px-3 mbx-py-1 mbx-text-xs mbx-text-white hover:mbx-bg-blue-600 dark:mbx-bg-blue-600 dark:hover:mbx-bg-blue-700">
                         Send Test Mail
                     </button>
 
                     <button
                         @click="refreshInbox"
-                        class="rounded-full bg-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
+                        class="mbx-rounded-full mbx-bg-slate-200 mbx-px-3 mbx-py-1 mbx-text-xs mbx-text-slate-700 hover:mbx-bg-slate-300 dark:mbx-bg-slate-800 dark:mbx-text-slate-300 dark:hover:mbx-bg-slate-700">
                         Refresh
                     </button>
 
                     <button
                         @click="clearMessages"
-                        class="rounded-full bg-red-500 px-3 py-1 text-xs text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700">
+                        class="mbx-rounded-full mbx-bg-red-500 mbx-px-3 mbx-py-1 mbx-text-xs mbx-text-white hover:mbx-bg-red-600 dark:mbx-bg-red-600 dark:hover:mbx-bg-red-700">
                         Clear
                     </button>
                 </div>
             </template>
 
             <template #extra>
-                <div class="flex items-center gap-2">
-          <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                <div class="mbx-flex mbx-items-center mbx-gap-2">
+          <span class="mbx-rounded-full mbx-bg-slate-200 mbx-px-2 mbx-py-0.5 mbx-text-xs mbx-text-slate-700 dark:mbx-bg-slate-800 dark:mbx-text-slate-300">
             {{ filtered.length }} message{{ filtered.length === 1 ? '' : 's' }}
           </span>
                     <span
                         v-if="unreadCount"
-                        class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+                        class="mbx-rounded-full mbx-bg-blue-100 mbx-px-2 mbx-py-0.5 mbx-text-xs mbx-font-medium mbx-text-blue-700 dark:mbx-bg-blue-900/40 dark:mbx-text-blue-200">
             {{ unreadCount }} unread
           </span>
                 </div>
             </template>
         </AppHeader>
 
-        <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+        <main class="mbx-mx-auto mbx-max-w-7xl mbx-px-4 sm:mbx-px-6 lg:mbx-px-8 mbx-py-6">
             <div
                 v-if="filtered.length"
-                class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                class="mbx-overflow-hidden mbx-rounded-xl mbx-border mbx-border-slate-200 mbx-bg-white dark:mbx-border-slate-800 dark:mbx-bg-slate-900"
             >
-                <ul role="list" class="divide-y divide-slate-200 dark:divide-slate-800">
+                <ul role="list" class="mbx-divide-y mbx-divide-slate-200 dark:mbx-divide-slate-800">
                     <MailListItem
                         v-for="m in filtered"
                         :key="m.id"
@@ -222,7 +222,7 @@ function clearMessages() {
 
             <div
                 v-else
-                class="rounded-xl border border-dashed border-slate-300 p-10 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400"
+                class="mbx-rounded-xl mbx-border mbx-border-dashed mbx-border-slate-300 mbx-p-10 mbx-text-center mbx-text-slate-500 dark:mbx-border-slate-700 dark:mbx-text-slate-400"
             >
                 No messages match your search.
             </div>

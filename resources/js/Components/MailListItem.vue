@@ -1,58 +1,58 @@
 <template>
     <li
-        class="group cursor-pointer px-4 py-4 sm:px-6 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+        class="mbx-group mbx-cursor-pointer mbx-px-4 mbx-py-4 sm:mbx-px-6 hover:mbx-bg-slate-50 dark:hover:mbx-bg-slate-800/50"
         @click="$emit('open', message)"
     >
-        <div class="flex items-start gap-3">
+        <div class="mbx-flex mbx-items-start mbx-gap-3">
             <!-- unread dot -->
-            <div class="pt-2">
+            <div class="mbx-pt-2">
         <span
             v-if="unread"
-            class="inline-block h-2 w-2 rounded-full bg-blue-500"
+            class="mbx-inline-block mbx-h-2 mbx-w-2 mbx-rounded-full mbx-bg-blue-500"
             aria-label="Unread"
         />
             </div>
 
-            <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
+            <div class="mbx-min-w-0 mbx-flex-1">
+                <div class="mbx-flex mbx-items-center mbx-gap-2">
           <span
-              class="truncate text-sm font-medium text-slate-900 dark:text-slate-100"
+              class="mbx-truncate mbx-text-sm mbx-font-medium mbx-text-slate-900 dark:mbx-text-slate-100"
           >
             {{ message.fromName }}
           </span>
-                    <span class="hidden text-xs text-slate-500 dark:text-slate-400 sm:inline">
+                    <span class="mbx-hidden mbx-text-xs mbx-text-slate-500 dark:mbx-text-slate-400 sm:mbx-inline">
             • {{ message.fromEmail }}
           </span>
                     <span
                         v-if="message.hasAttachments"
-                        class="ml-2 inline-flex items-center rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        class="mbx-ml-2 mbx-inline-flex mbx-items-center mbx-rounded-md mbx-bg-slate-100 mbx-px-1.5 mbx-py-0.5 mbx-text-[10px] mbx-font-medium mbx-text-slate-700 dark:mbx-bg-slate-800 dark:mbx-text-slate-300"
                     >
             Attachments
           </span>
                 </div>
 
-                <div class="mt-0.5 flex items-center gap-2">
+                <div class="mbx-mt-0.5 mbx-flex mbx-items-center mbx-gap-2">
                     <p
-                        class="truncate text-[15px] dark:text-slate-100"
-                        :class="unread ? 'font-semibold text-slate-900' : 'font-normal text-slate-700'"
+                        class="mbx-truncate mbx-text-[15px] dark:mbx-text-slate-100"
+                        :class="unread ? 'mbx-font-semibold mbx-text-slate-900' : 'mbx-font-normal mbx-text-slate-700'"
                     >
                         {{ message.subject }}
                     </p>
                 </div>
 
                 <p
-                    class="mt-0.5 line-clamp-1 text-sm"
-                    :class="unread ? 'text-slate-600 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'"
+                    class="mbx-mt-0.5 mbx-line-clamp-1 mbx-text-sm"
+                    :class="unread ? 'mbx-text-slate-600 dark:mbx-text-slate-300' : 'mbx-text-slate-500 dark:mbx-text-slate-400'"
                 >
                     {{ message.snippet }}
                 </p>
             </div>
 
-            <div class="shrink-0 pl-3 text-right">
+            <div class="mbx-shrink-0 mbx-pl-3 mbx-text-right">
                 <time
                     v-if="message.date"
                     :datetime="message.date"
-                    class="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400"
+                    class="mbx-whitespace-nowrap mbx-text-xs mbx-text-slate-500 dark:mbx-text-slate-400"
                 >
                     {{ prettyDate(message.date) }}
                 </time>
