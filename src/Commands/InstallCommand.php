@@ -3,6 +3,7 @@
 namespace Redberry\MailboxForLaravel\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
 
 class InstallCommand extends Command
 {
@@ -12,6 +13,12 @@ class InstallCommand extends Command
 
     public function handle(): int
     {
+        $path = public_path('vendor/mailbox');
+
+        if (File::exists($path)) {
+            File::deleteDirectory($path);
+        }
+
         $this->call('vendor:publish', [
             '--tag' => 'mailbox-assets',
             '--force' => (bool) $this->option('force'),
