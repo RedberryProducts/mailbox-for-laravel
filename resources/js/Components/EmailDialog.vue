@@ -132,7 +132,7 @@
                             <div v-if="activeTab==='html'">
                                 <article
                                     class="rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
-                                    <div class="email-html p-4 overflow-x-auto" v-html="sanitizedHtml"/>
+                                    <EmailHtmlIframe :html="sanitizedHtml"/>
                                 </article>
                             </div>
 
@@ -183,6 +183,7 @@
 
 <script setup>
 import {computed, ref, watch} from 'vue'
+import EmailHtmlIframe from "./EmailHtmlIframe.vue";
 
 const props = defineProps({
     open: {type: Boolean, default: false},
