@@ -16,7 +16,7 @@ const props = defineProps({
 })
 
 const frame = ref(null)
-const sandbox = 'allow-same-origin allow-scripts allow-popups allow-top-navigation-by-user-activation' // no "allow-scripts" to keep scripts disabled
+const sandbox = 'allow-same-origin allow-forms allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation' // no "allow-scripts" to keep scripts disabled
 
 // Minimal CSS shell injected around the email to normalize layout & make it responsive
 const SHELL_CSS = `
