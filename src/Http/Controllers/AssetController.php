@@ -12,7 +12,7 @@ class AssetController
     {
         $payload = $capture->get($message);
 
-        abort_unless(!!$payload, 404);
+        abort_unless((bool) $payload, 404);
 
         $attachment = collect($payload['attachments'] ?? [])
             ->first(fn ($a) => ($a['filename'] ?? null) === $asset);
