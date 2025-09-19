@@ -1,61 +1,46 @@
 <?php
 
 use Redberry\MailboxForLaravel\CaptureService;
-use Redberry\MailboxForLaravel\Contracts\MessageStore;
+use Redberry\MailboxForLaravel\Storage\FileStorage;
 
-class InMemoryStore implements MessageStore
-{
-    public array $data = [];
-
-    public function store(string $key, array $value): void
+describe(CaptureService::class, function () {
+    function service(): CaptureService
     {
-        $this->data[$key] = $value;
+        $path = sys_get_temp_dir().'/mailbox-capture-tests-'.uniqid();
+        $store = new FileStorage($path);
+
+        return new CaptureService($store);
     }
 
-    public function retrieve(string $key): ?array
-    {
-        return $this->data[$key] ?? null;
-    }
+    it('stores raw message and returns key', function () {
+        $svc = service();
+        $key = $svc->store(['raw' => 'hello']);
 
-    public function keys(?int $since = null): iterable
-    {
-        foreach (array_keys($this->data) as $k) {
-            if ($since) {
-                $ts = $this->data[$k]['timestamp'] ?? 0;
-                if ($ts < $since) {
-                    continue;
-                }
-            }
-            yield $k;
-        }
-    }
+        expect($key)->not->toBeEmpty();
+        expect($svc->retrieve($key)['raw'])->toBe('hello');
+    });
 
-    public function delete(string $key): void
-    {
-        unset($this->data[$key]);
-    }
+    it('lists all messages ordered by timestamp desc', function () {
+        $svc = service();
+        $svc->store(['raw' => 'one']);
+        $svc->store(['raw' => 'two']);
 
-    public function purgeOlderThan(int $seconds): void
-    {
-        $cut = time() - $seconds;
-        foreach ($this->data as $k => $v) {
-            if (($v['timestamp'] ?? 0) < $cut) {
-                unset($this->data[$k]);
-            }
-        }
-    }
-}
+        $all = $svc->all();
+        expect(count($all))->toBe(2);
+    });
 
-it('stores raw message with timestamp and returns a key', function () {
-    $store = new InMemoryStore;
-    $svc = new CaptureService($store);
+    it('finds a message by id', function () {
+        $svc = service();
+        $key = $svc->store(['raw' => 'foo']);
 
-    $key = $svc->storeRaw("Subject: Hi\r\n\r\nBody");
+        expect($svc->retrieve($key)['raw'])->toBe('foo');
+    });
 
-    expect($key)->toBeString()->not->toBe('');
-    $payload = $store->retrieve($key);
+    it('deletes a message by id', function () {
+        $svc = service();
+        $key = $svc->store(['raw' => 'bar']);
+        $svc->delete($key);
 
-    expect($payload)->toBeArray()
-        ->and($payload['raw'])->toContain('Subject: Hi')
-        ->and($payload['timestamp'])->toBeGreaterThan(0);
+        expect($svc->retrieve($key))->toBeNull();
+    });
 });

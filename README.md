@@ -1,62 +1,57 @@
-# This is my package mailbox-for-laravel
+# Mailbox for Laravel
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/redberryproducts/mailbox-for-laravel.svg?style=flat-square)](https://packagist.org/packages/redberryproducts/mailbox-for-laravel)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/redberryproducts/mailbox-for-laravel/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/redberryproducts/mailbox-for-laravel/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/redberryproducts/mailbox-for-laravel/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/redberryproducts/mailbox-for-laravel/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/redberryproducts/mailbox-for-laravel.svg?style=flat-square)](https://packagist.org/packages/redberryproducts/mailbox-for-laravel)
+A Laravel package that captures outgoing mail and stores it for in-app viewing. It adds an `inbox` mail transport, a web dashboard for browsing messages and attachments, and convenient development defaults.
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+## Features
 
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/mailbox-for-laravel.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/mailbox-for-laravel)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+- Registers configuration, routes, views, and an install command for publishing assets and config.
+- Adds an `inbox` mailer transport that persists every sent email for later inspection.
+- Web dashboard at `/mailbox` (configurable) with authorization middleware.
+- Store messages on disk by default with automatic pruning.
+- Works out of the box in non-production environments.
 
 ## Installation
 
-You can install the package via composer:
+1. Install the package via Composer:
+   ```bash
+   composer require redberry/mailbox-for-laravel --dev
+   ```
+2. Publish public assets and configuration:
+   ```bash
+   php artisan mailbox:install
+   # or
+   php artisan vendor:publish --tag=mailbox-install
+   ```
+3. Register the `inbox` mailer driver in `config/mail.php`:
+   ```php
+   'mailers' => [
+       // ...
+       'inbox' => ['transport' => 'inbox'],
+   ],
+   ```
+4. Use the `inbox` mailer by setting it in your `.env`:
+   ```env
+   MAIL_MAILER=inbox
+   ```
 
-```bash
-composer require redberryproducts/mailbox-for-laravel
-```
+## Configuration
 
-You can publish and run the migrations with:
+The published `config/inbox.php` file exposes several options:
 
-```bash
-php artisan vendor:publish --tag="mailbox-for-laravel-migrations"
-php artisan migrate
-```
-
-You can publish the config file with:
-
-```bash
-php artisan vendor:publish --tag="mailbox-for-laravel-config"
-```
-
-This is the contents of the published config file:
-
-```php
-return [
-];
-```
-
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="mailbox-for-laravel-views"
-```
+- `INBOX_ENABLED` &mdash; enable the inbox even in production (defaults to non-production only).
+- `INBOX_PUBLIC` &mdash; bypass authorization and allow public access.
+- `INBOX_GATE` &mdash; ability checked by the `mailbox.authorize` middleware (defaults to `viewMailbox`).
+- `INBOX_DASHBOARD_ROUTE` &mdash; URI where the dashboard is mounted (`/mailbox` by default).
+- `INBOX_STORE_DRIVER` & `INBOX_FILE_PATH` &mdash; storage driver and path for captured messages.
+- `INBOX_RETENTION` &mdash; number of seconds before stored messages are purged.
 
 ## Usage
 
-```php
-$mailboxForLaravel = new Redberry\MailboxForLaravel();
-echo $mailboxForLaravel->echoPhrase('Hello, Redberry!');
-```
+Visit the dashboard route to browse stored messages. Attachments and inline assets are served through dedicated routes. Access is protected by the `mailbox.authorize` middleware which uses Laravel's Gate system; define the `viewMailbox` ability or set `INBOX_PUBLIC=true` to expose it without authentication.
 
 ## Testing
+
+Run the test suite with:
 
 ```bash
 composer test
@@ -68,17 +63,13 @@ Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed re
 
 ## Contributing
 
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+Contributions are welcome! Please submit pull requests or open issues on GitHub.
 
-## Security Vulnerabilities
+## Security
 
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
-
-## Credits
-
-- [Nika Jorjoliani](https://github.com/nikajorjika)
-- [All Contributors](../../contributors)
+If you discover any security related issues, please email security@redberry.ge instead of using the issue tracker.
 
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+

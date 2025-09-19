@@ -3,25 +3,43 @@
 namespace Redberry\MailboxForLaravel\Transport;
 
 use Redberry\MailboxForLaravel\CaptureService;
-use Symfony\Component\Mailer\Envelope;
+use Redberry\MailboxForLaravel\Support\MessageNormalizer;
 use Symfony\Component\Mailer\SentMessage;
+use Symfony\Component\Mailer\Transport\AbstractTransport;
 use Symfony\Component\Mailer\Transport\TransportInterface;
-use Symfony\Component\Mime\RawMessage;
 
-class InboxTransport implements TransportInterface
+class InboxTransport extends AbstractTransport
 {
-    public function __construct(protected CaptureService $mailbox) {}
+    protected ?string $storedKey = null;
+
+    public function __construct(protected CaptureService $mailbox, protected ?TransportInterface $decorated = null, protected bool $enabled = true)
+    {
+        parent::__construct();
+    }
 
     public function __toString(): string
     {
         return 'inbox';
     }
 
-    public function send(RawMessage $message, ?Envelope $envelope = null): ?SentMessage
+    public function getStoredKey(): ?string
+    {
+        return $this->storedKey;
+    }
+
+    protected function doSend(SentMessage $message): void
     {
         $raw = $message->toString();
-        $this->mailbox->storeRaw($raw);
+        $original = $message->getOriginalMessage();
+        $envelope = $message->getEnvelope();
 
-        return new SentMessage($message, $envelope);
+        if ($this->enabled) {
+            $payload = MessageNormalizer::normalize($original, $envelope, $raw, true);
+            $this->storedKey = $this->mailbox->store($payload);
+        }
+
+        if ($this->decorated) {
+            $this->decorated->send($message->getOriginalMessage(), $message->getEnvelope());
+        }
     }
 }

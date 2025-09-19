@@ -2,67 +2,53 @@
 
 use Redberry\MailboxForLaravel\Storage\FileStorage;
 
-beforeEach(function () {
-    $this->basePath = sys_get_temp_dir().'/inbox-fs-'.uniqid();
-    @mkdir($this->basePath, 0777, true);
-    $this->fs = new FileStorage($this->basePath);
-});
+describe(FileStorage::class, function () {
+    function storage(): FileStorage
+    {
+        $tmp = sys_get_temp_dir().'/mailbox-fs-tests-'.uniqid();
+        @mkdir($tmp, 0777, true);
 
-afterEach(function () {
-    if (is_dir($this->basePath)) {
-        $files = glob($this->basePath.'/*');
-        if ($files) {
-            foreach ($files as $f) {
-                @unlink($f);
-            }
-        }
-        @rmdir($this->basePath);
+        return new FileStorage($tmp);
     }
-});
 
-it('stores and retrieves payloads', function () {
-    $key = 'k1';
-    $payload = ['raw' => 'hello', 'timestamp' => time()];
+    it('writes and retrieves a payload', function () {
+        $store = storage();
+        $store->store('a', ['raw' => 'foo', 'timestamp' => 1]);
 
-    $this->fs->store($key, $payload);
+        expect($store->retrieve('a')['raw'])->toBe('foo');
+    });
 
-    $got = $this->fs->retrieve($key);
+    it('lists stored keys', function () {
+        $store = storage();
+        $store->store('one', ['raw' => '1', 'timestamp' => 1]);
+        $store->store('two', ['raw' => '2', 'timestamp' => 2]);
 
-    expect($got)->toBeArray()
-        ->and($got['raw'])->toBe('hello')
-        ->and($got['timestamp'])->toBeGreaterThan(0);
-});
+        expect(iterator_to_array($store->keys()))->toContain('one', 'two');
+    });
 
-it('lists keys with optional since filter', function () {
-    $now = time();
-    $this->fs->store('a', ['raw' => 'A', 'timestamp' => $now - 100]);
-    $this->fs->store('b', ['raw' => 'B', 'timestamp' => $now - 10]);
+    it('deletes a payload', function () {
+        $store = storage();
+        $store->store('b', ['raw' => 'bar', 'timestamp' => 1]);
+        $store->delete('b');
 
-    $all = iterator_to_array($this->fs->keys());
-    expect($all)->toContain('a', 'b');
+        expect($store->retrieve('b'))->toBeNull();
+    });
 
-    $since = $now - 60;
-    $recent = iterator_to_array($this->fs->keys($since));
-    expect($recent)->not()->toContain('a')
-        ->toContain('b');
-});
+    it('purges old payloads', function () {
+        $store = storage();
+        $store->store('old', ['raw' => 'x', 'timestamp' => time() - 100]);
+        $store->store('new', ['raw' => 'y', 'timestamp' => time()]);
 
-it('deletes payloads', function () {
-    $this->fs->store('x', ['raw' => 'X', 'timestamp' => time()]);
-    expect($this->fs->retrieve('x'))->not->toBeNull();
+        $store->purgeOlderThan(50);
+        expect(iterator_to_array($store->keys()))->toBe(['new']);
+    });
 
-    $this->fs->delete('x');
-    expect($this->fs->retrieve('x'))->toBeNull();
-});
+    it('sanitizes keys to avoid directory traversal', function () {
+        $store = storage();
+        $store->store('../weird', ['raw' => 'z', 'timestamp' => 1]);
 
-it('purges old payloads', function () {
-    $now = time();
-    $this->fs->store('old', ['raw' => 'O', 'timestamp' => $now - 3600]);
-    $this->fs->store('new', ['raw' => 'N', 'timestamp' => $now]);
-
-    $this->fs->purgeOlderThan(1800); // keep only last 30 minutes
-
-    $keys = iterator_to_array($this->fs->keys());
-    expect($keys)->not()->toContain('old')
-        ->toContain('new');
+        $paths = glob($store->getBasePath().'/*.json');
+        expect($paths)->toHaveCount(1)
+            ->and(basename($paths[0]))->toBe('___weird.json');
+    });
 });

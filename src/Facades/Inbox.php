@@ -3,14 +3,12 @@
 namespace Redberry\MailboxForLaravel\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Redberry\MailboxForLaravel\CaptureService;
 
-/**
- * @see \Redberry\MailboxForLaravel\MailboxForLaravel
- */
 class Inbox extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
-        return \Redberry\MailboxForLaravel\InboxTranport::class;
+        return CaptureService::class;
     }
 }

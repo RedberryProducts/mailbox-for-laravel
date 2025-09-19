@@ -16,6 +16,11 @@ class FileStorage implements MessageStore
         }
     }
 
+    public function getBasePath(): string
+    {
+        return $this->basePath;
+    }
+
     public function store(string $key, array $value): void
     {
         $path = $this->pathFor($key);
@@ -86,5 +91,27 @@ class FileStorage implements MessageStore
         $key = preg_replace('/[^A-Za-z0-9_\-]/', '_', $key);
 
         return $this->basePath.DIRECTORY_SEPARATOR.$key.'.json';
+    }
+
+    public function update(string $key, array $value): ?array
+    {
+        $existing = $this->retrieve($key);
+        if (! $existing) {
+            return null;
+        }
+
+        $updated = array_merge($existing, $value);
+        $this->store($key, $updated);
+
+        return $updated;
+    }
+
+    public function clear(): bool
+    {
+        foreach ($this->keys() as $key) {
+            $this->delete($key);
+        }
+
+        return true;
     }
 }
