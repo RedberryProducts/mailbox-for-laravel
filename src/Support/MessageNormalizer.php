@@ -8,7 +8,9 @@ use DateTimeInterface;
 use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Mime\Header\Headers;
 use Symfony\Component\Mime\Part\DataPart;
+use Symfony\Component\Mime\RawMessage;
 
 final class MessageNormalizer
 {
@@ -18,22 +20,62 @@ final class MessageNormalizer
      *
      * @return array<string,mixed>
      */
+    /** @return array<string,mixed> */
     public static function normalize(
-        Email $email,
+        Email|RawMessage $message,
         ?Envelope $envelope = null,
         ?string $raw = null,
         bool $storeAttachmentsInline = false
     ): array {
-        $keepRaw = true;
+        if ($message instanceof Email) {
+
+            return self::normalizeEmail($message, $envelope, $raw, $storeAttachmentsInline);
+        }
+        // RawMessage (non-Email) fallback
+        return self::normalizeRaw($message, $envelope, $raw);
+    }
+
+    /** @return array<string,mixed> */
+    private static function normalizeRaw(
+        RawMessage $rawMessage,
+        ?Envelope $envelope,
+        ?string $raw
+    ): array {
+        return [
+            'version' => 1,
+            'saved_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
+            'subject' => null,
+            'from' => [],
+            'to' => [],
+            'cc' => [],
+            'bcc' => [],
+            'reply_to' => [],
+            'text' => null,
+            'html' => null,
+            'headers' => [],
+            'attachments' => [],
+            'raw' => $rawMessage,
+        ];
+    }
+
+
+    /** @return array<string,mixed> */
+    private static function normalizeEmail(
+        Email $email,
+        ?Envelope $envelope,
+        ?string $raw,
+        bool $storeAttachmentsInline
+    ): array {
         $headers = [];
         foreach ($email->getHeaders()->all() as $header) {
-            // flatten to "Name" => ["value1", "value2"...]
             $headers[$header->getName()][] = trim($header->getBodyAsString());
         }
 
         $attachments = [];
         foreach ($email->getAttachments() as $part) {
             /** @var DataPart $part */
+
+            $filename = $part->getFilename();
             $contentId = $part->getPreparedHeaders()->has('Content-ID')
                 ? trim($part->getPreparedHeaders()->get('Content-ID')->getBodyAsString(), '<>')
                 : null;
@@ -42,7 +84,6 @@ final class MessageNormalizer
                 ? $part->getPreparedHeaders()->get('Content-Disposition')->getBodyAsString()
                 : null;
 
-            $filename = method_exists($part, 'getFilename') ? $part->getFilename() : null;
 
             $contentType = $part->getPreparedHeaders()->has('Content-Type')
                 ? $part->getPreparedHeaders()->get('Content-Type')->getBodyAsString()
@@ -71,7 +112,7 @@ final class MessageNormalizer
                 'inline' => $contentId !== null,
                 'size' => $size,
                 'content' => $bodyBase64,  // base64 or null
-            ], static fn ($v) => $v !== null);
+            ], static fn($v) => $v !== null);
         }
 
         // Prefer explicitly set envelope sender/recipients, fallback to headers
@@ -102,30 +143,27 @@ final class MessageNormalizer
 
             'headers' => $headers,       // full header map
             'attachments' => $attachments,   // metadata (+ content if enabled)
-        ];
 
-        if ($keepRaw && $raw !== null) {
-            $payload['raw'] = $raw;
-        }
+            'raw' => $raw,  // raw email source if provided
+        ];
 
         return $payload;
     }
 
     /**
      * @param  Address[]  $addresses
+     *
      * @return array<int,array{name?:string,email:string}>
      */
     private static function addressesToArray(iterable $addresses): array
     {
         $out = [];
         foreach ($addresses as $addr) {
-            if ($addr instanceof Address) {
-                $row = ['email' => $addr->getAddress()];
-                if ($addr->getName() !== '') {
-                    $row['name'] = $addr->getName();
-                }
-                $out[] = $row;
+            $row = ['email' => $addr->getAddress()];
+            if ($addr->getName() !== '') {
+                $row['name'] = $addr->getName();
             }
+            $out[] = $row;
         }
 
         return $out;
@@ -139,10 +177,11 @@ final class MessageNormalizer
         ]);
     }
 
+
     private static function firstHeader(Email $email, string $name): ?string
     {
         $headers = $email->getHeaders();
-        if (! $headers->has($name)) {
+        if (!$headers->has($name)) {
             return null;
         }
 

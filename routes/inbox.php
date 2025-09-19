@@ -8,7 +8,7 @@ use Redberry\MailboxForLaravel\Http\Controllers\PublicAssetController;
 use Redberry\MailboxForLaravel\Http\Controllers\SeenController;
 use Redberry\MailboxForLaravel\Http\Controllers\SendTestMailController;
 
-if (! config('inbox.enabled', true)) {
+if (!config('inbox.enabled', true)) {
     return;
 }
 
@@ -32,5 +32,3 @@ Route::middleware(array_merge(
             ->name('asset');
         Route::post('/messages/{id}/seen', SeenController::class)->name('messages.seen');
     });
-
-Route::get('/mailbox/assets/{path}', PublicAssetController::class)->where('path', '.*')->name('mailbox.asset');
