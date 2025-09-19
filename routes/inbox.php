@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use Redberry\MailboxForLaravel\Http\Controllers\AssetController;
 use Redberry\MailboxForLaravel\Http\Controllers\ClearInboxController;
 use Redberry\MailboxForLaravel\Http\Controllers\InboxController;
-use Redberry\MailboxForLaravel\Http\Controllers\PublicAssetController;
 use Redberry\MailboxForLaravel\Http\Controllers\SeenController;
 use Redberry\MailboxForLaravel\Http\Controllers\SendTestMailController;
 
@@ -32,5 +31,3 @@ Route::middleware(array_merge(
             ->name('asset');
         Route::post('/messages/{id}/seen', SeenController::class)->name('messages.seen');
     });
-
-Route::get('/mailbox/assets/{path}', PublicAssetController::class)->where('path', '.*')->name('mailbox.asset');
