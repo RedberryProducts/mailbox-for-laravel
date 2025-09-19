@@ -31,6 +31,7 @@ final class MessageNormalizer
 
             return self::normalizeEmail($message, $envelope, $raw, $storeAttachmentsInline);
         }
+
         // RawMessage (non-Email) fallback
         return self::normalizeRaw($message, $envelope, $raw);
     }
@@ -43,7 +44,7 @@ final class MessageNormalizer
     ): array {
         return [
             'version' => 1,
-            'saved_at' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
+            'saved_at' => (new \DateTimeImmutable)->format(\DateTimeInterface::ATOM),
             'subject' => null,
             'from' => [],
             'to' => [],
@@ -57,7 +58,6 @@ final class MessageNormalizer
             'raw' => $rawMessage,
         ];
     }
-
 
     /** @return array<string,mixed> */
     private static function normalizeEmail(
@@ -74,7 +74,6 @@ final class MessageNormalizer
         $attachments = [];
         foreach ($email->getAttachments() as $part) {
             /** @var DataPart $part */
-
             $filename = $part->getFilename();
             $contentId = $part->getPreparedHeaders()->has('Content-ID')
                 ? trim($part->getPreparedHeaders()->get('Content-ID')->getBodyAsString(), '<>')
@@ -83,7 +82,6 @@ final class MessageNormalizer
             $disposition = $part->getPreparedHeaders()->has('Content-Disposition')
                 ? $part->getPreparedHeaders()->get('Content-Disposition')->getBodyAsString()
                 : null;
-
 
             $contentType = $part->getPreparedHeaders()->has('Content-Type')
                 ? $part->getPreparedHeaders()->get('Content-Type')->getBodyAsString()
@@ -112,7 +110,7 @@ final class MessageNormalizer
                 'inline' => $contentId !== null,
                 'size' => $size,
                 'content' => $bodyBase64,  // base64 or null
-            ], static fn($v) => $v !== null);
+            ], static fn ($v) => $v !== null);
         }
 
         // Prefer explicitly set envelope sender/recipients, fallback to headers
@@ -152,7 +150,6 @@ final class MessageNormalizer
 
     /**
      * @param  Address[]  $addresses
-     *
      * @return array<int,array{name?:string,email:string}>
      */
     private static function addressesToArray(iterable $addresses): array
@@ -177,11 +174,10 @@ final class MessageNormalizer
         ]);
     }
 
-
     private static function firstHeader(Email $email, string $name): ?string
     {
         $headers = $email->getHeaders();
-        if (!$headers->has($name)) {
+        if (! $headers->has($name)) {
             return null;
         }
 
