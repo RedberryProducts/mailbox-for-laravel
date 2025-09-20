@@ -6,7 +6,7 @@ use Redberry\MailboxForLaravel\StoreManager;
 
 describe(StoreManager::class, function () {
     it('creates a file-based MessageStore when driver=file', function () {
-        config(['mailbox-for-laravel.storage_driver' => 'file']);
+        config(['inbox.store.driver' => 'file']);
 
         $store = (new StoreManager)->create();
 
@@ -14,7 +14,7 @@ describe(StoreManager::class, function () {
     });
 
     it('throws when an unknown driver is configured', function () {
-        config(['mailbox-for-laravel.storage_driver' => 'foo']);
+        config(['inbox.store.driver' => 'foo']);
 
         expect(fn () => (new StoreManager)->create())
             ->toThrow(InvalidArgumentException::class);
@@ -52,8 +52,8 @@ describe(StoreManager::class, function () {
         };
 
         config([
-            'mailbox-for-laravel.storage_driver' => 'memory',
-            'mailbox-for-laravel.storage_resolvers' => [
+            'inbox.store.driver' => 'memory',
+            'inbox.store.resolvers' => [
                 'memory' => fn () => $custom,
             ],
         ]);
@@ -66,8 +66,8 @@ describe(StoreManager::class, function () {
         $tmp = sys_get_temp_dir().'/mailbox-tests';
         @mkdir($tmp, 0777, true);
         config([
-            'mailbox-for-laravel.storage_driver' => 'file',
-            'mailbox-for-laravel.storage' => ['path' => $tmp],
+            'inbox.store.driver' => 'file',
+            'inbox.store.file.path' => $tmp,
         ]);
 
         $store = (new StoreManager)->create();

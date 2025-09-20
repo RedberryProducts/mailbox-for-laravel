@@ -9,17 +9,17 @@ class StoreManager
 {
     public function create(): MessageStore
     {
-        $driver = config('mailbox-for-laravel.storage_driver', 'file');
-        $options = config('mailbox-for-laravel.storage', []);
+        $driver = config('inbox.store.driver', 'file');
+        $options = config('inbox.store', []);
 
-        $resolvers = config('mailbox-for-laravel.storage_resolvers', []);
+        $resolvers = config('inbox.store.resolvers', []);
         if (isset($resolvers[$driver]) && is_callable($resolvers[$driver])) {
             return $resolvers[$driver]($options);
         }
 
         return match ($driver) {
-            'file' => new FileStorage($options['path'] ?? config('mailbox-for-laravel.storage_path')),
-            default => throw new \InvalidArgumentException("Unsupported storage driver [{$driver}]"),
+            'file' => new FileStorage($options['file']['path'] ?? config('inbox.store.file.path', storage_path('app/inbox'))),
+            default => throw new \InvalidArgumentException("Unsupported storage driver: {$driver}"),
         };
     }
 }
