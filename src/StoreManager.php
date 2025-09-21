@@ -19,7 +19,7 @@ class StoreManager
         }
 
         return match ($driver) {
-            'file' => new FileStorage(config('inbox.store.file.path')),
+            'file' => new FileStorage(config('inbox.store.file.path', storage_path('mailbox'))),
             default => throw new \InvalidArgumentException("Unsupported storage driver [{$driver}]"),
         };
     }
