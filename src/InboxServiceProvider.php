@@ -18,7 +18,7 @@ class InboxServiceProvider extends PackageServiceProvider
         $package
             ->name('mailbox-for-laravel')
             ->hasConfigFile('inbox')
-            ->hasRoutes('inbox')
+            ->hasRoutes(['inbox', 'api'])
             ->hasViews('inbox')
             ->hasCommands([
                 Commands\InstallCommand::class,

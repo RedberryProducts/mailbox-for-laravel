@@ -28,6 +28,7 @@ class TestCase extends Orchestra
     public function getEnvironmentSetUp($app)
     {
         config()->set('database.default', 'testing');
+        config()->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
 
         $app['config']->set('mail.mailers.inbox', ['transport' => 'inbox']);
         $app['config']->set('mail.default', 'inbox');
