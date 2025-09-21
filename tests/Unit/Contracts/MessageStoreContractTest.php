@@ -1,10 +1,9 @@
 <?php
 
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
-use ReflectionClass;
 
 describe(MessageStore::class, function () {
-    it('defines required methods: store, retrieve, keys, delete, purgeOlderThan', function () {
+    it('defines required methods: store, retrieve, keys, update, delete, purgeOlderThan, clear', function () {
         $methods = array_map(
             fn ($m) => $m->getName(),
             (new ReflectionClass(MessageStore::class))->getMethods()
@@ -15,7 +14,9 @@ describe(MessageStore::class, function () {
             'retrieve',
             'keys',
             'delete',
+            'update',
             'purgeOlderThan',
+            'clear',
         ]);
     });
 
