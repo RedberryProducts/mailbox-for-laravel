@@ -16,12 +16,13 @@ describe(StoreManager::class, function () {
     it('throws when an unknown driver is configured', function () {
         config(['inbox.store.driver' => 'foo']);
 
-        expect(fn() => (new StoreManager)->create())
+        expect(fn () => (new StoreManager)->create())
             ->toThrow(InvalidArgumentException::class);
     });
 
     it('accepts a custom driver resolver via config', function () {
-        $custom = new class implements MessageStore {
+        $custom = new class implements MessageStore
+        {
             public array $stored = [];
 
             public function store(string $key, array $value): void
@@ -46,10 +47,11 @@ describe(StoreManager::class, function () {
 
             public function update(string $key, array $value): ?array
             {
-                if (!isset($this->stored[$key])) {
+                if (! isset($this->stored[$key])) {
                     return null;
                 }
                 $this->stored[$key] = array_merge($this->stored[$key], $value);
+
                 return $this->stored[$key];
             }
 
@@ -61,10 +63,10 @@ describe(StoreManager::class, function () {
             public function clear(): bool
             {
                 $this->stored = [];
+
                 return true;
             }
         };
-
 
         Config::set('inbox.store.driver', 'memory');
         Config::set('inbox.store.resolvers', [

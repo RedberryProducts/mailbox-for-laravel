@@ -26,12 +26,12 @@ class StoreManager
 
     private function resolveCustomStore($driver, $resolvers): ?MessageStore
     {
-        if (!isset($resolvers[$driver]) || !is_callable($resolvers[$driver])) {
+        if (! isset($resolvers[$driver]) || ! is_callable($resolvers[$driver])) {
             return null;
         }
 
         $store = $resolvers[$driver]();
-        if (!$store instanceof MessageStore) {
+        if (! $store instanceof MessageStore) {
             return null;
         }
 
