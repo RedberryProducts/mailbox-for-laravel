@@ -31,5 +31,9 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci
 
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
       - name: Install composer dependencies
         run: composer install --prefer-dist --no-progress --no-suggest --no-interaction
