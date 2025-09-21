@@ -19,10 +19,8 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
 
-      - name: Fix PHP code style issues
-        uses: aglipanci/laravel-pint-action@2.6
 
-      - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v6
-        with:
-          commit_message: Fix styling
+      - name: Check PHP code style issues
+        run: |
+          composer global require laravel/pint
+          ~/.composer/vendor/bin/pint --test
