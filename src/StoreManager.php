@@ -9,17 +9,32 @@ class StoreManager
 {
     public function create(): MessageStore
     {
-        $driver = config('mailbox-for-laravel.storage_driver', 'file');
-        $options = config('mailbox-for-laravel.storage', []);
+        $driver = config('inbox.store.driver', 'file');
+        $resolvers = config('inbox.store.resolvers', []);
 
-        $resolvers = config('mailbox-for-laravel.storage_resolvers', []);
-        if (isset($resolvers[$driver]) && is_callable($resolvers[$driver])) {
-            return $resolvers[$driver]($options);
+        // Check for a custom resolver first, if available and it should implement MessageStore
+        $customStore = $this->resolveCustomStore($driver, $resolvers);
+        if ($customStore !== null) {
+            return $customStore;
         }
 
         return match ($driver) {
-            'file' => new FileStorage($options['path'] ?? config('mailbox-for-laravel.storage_path')),
+            'file' => new FileStorage(config('inbox.store.file.path', storage_path('mailbox'))),
             default => throw new \InvalidArgumentException("Unsupported storage driver [{$driver}]"),
         };
+    }
+
+    private function resolveCustomStore($driver, $resolvers): ?MessageStore
+    {
+        if (! isset($resolvers[$driver]) || ! is_callable($resolvers[$driver])) {
+            return null;
+        }
+
+        $store = $resolvers[$driver]();
+        if (! $store instanceof MessageStore) {
+            return null;
+        }
+
+        return $store;
     }
 }

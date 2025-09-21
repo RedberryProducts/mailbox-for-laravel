@@ -6,7 +6,7 @@ use Redberry\MailboxForLaravel\StoreManager;
 
 describe(StoreManager::class, function () {
     it('creates a file-based MessageStore when driver=file', function () {
-        config(['mailbox-for-laravel.storage_driver' => 'file']);
+        config(['inbox.store.driver' => 'file']);
 
         $store = (new StoreManager)->create();
 
@@ -14,7 +14,7 @@ describe(StoreManager::class, function () {
     });
 
     it('throws when an unknown driver is configured', function () {
-        config(['mailbox-for-laravel.storage_driver' => 'foo']);
+        config(['inbox.store.driver' => 'foo']);
 
         expect(fn () => (new StoreManager)->create())
             ->toThrow(InvalidArgumentException::class);
@@ -45,20 +45,36 @@ describe(StoreManager::class, function () {
                 unset($this->stored[$key]);
             }
 
+            public function update(string $key, array $value): ?array
+            {
+                if (! isset($this->stored[$key])) {
+                    return null;
+                }
+                $this->stored[$key] = array_merge($this->stored[$key], $value);
+
+                return $this->stored[$key];
+            }
+
             public function purgeOlderThan(int $seconds): void
             {
                 $this->stored = [];
             }
+
+            public function clear(): bool
+            {
+                $this->stored = [];
+
+                return true;
+            }
         };
 
-        config([
-            'mailbox-for-laravel.storage_driver' => 'memory',
-            'mailbox-for-laravel.storage_resolvers' => [
-                'memory' => fn () => $custom,
-            ],
+        Config::set('inbox.store.driver', 'memory');
+        Config::set('inbox.store.resolvers', [
+            'memory' => fn () => $custom,
         ]);
 
         $store = (new StoreManager)->create();
+
         expect($store)->toBe($custom);
     });
 
@@ -66,8 +82,8 @@ describe(StoreManager::class, function () {
         $tmp = sys_get_temp_dir().'/mailbox-tests';
         @mkdir($tmp, 0777, true);
         config([
-            'mailbox-for-laravel.storage_driver' => 'file',
-            'mailbox-for-laravel.storage' => ['path' => $tmp],
+            'inbox.store.driver' => 'file',
+            'inbox.store.file' => ['path' => $tmp],
         ]);
 
         $store = (new StoreManager)->create();
