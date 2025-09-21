@@ -66,6 +66,7 @@ class MessagesController
     {
         try {
             $this->captureService->delete($id);
+
             return response()->json(['message' => 'Message deleted successfully']);
         } catch (\InvalidArgumentException $e) {
             return response()->json(['message' => 'Invalid message ID'], 400);

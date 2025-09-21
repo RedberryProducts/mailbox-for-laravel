@@ -1,13 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Gate;
 use Redberry\MailboxForLaravel\CaptureService;
 
 describe('API Inbox Controller', function () {
     beforeEach(function () {
         config()->set('inbox.public', true);
         config()->set('inbox.enabled', true);
-        
+
         // Clear any existing messages
         $captureService = $this->app->make(CaptureService::class);
         $captureService->clearAll();
@@ -15,17 +14,17 @@ describe('API Inbox Controller', function () {
 
     it('clears all messages via API', function () {
         $captureService = $this->app->make(CaptureService::class);
-        
+
         // Store some test messages
         $captureService->store([
             'raw' => 'test email 1',
             'subject' => 'Test Subject 1',
             'timestamp' => time(),
         ]);
-        
+
         $captureService->store([
             'raw' => 'test email 2',
-            'subject' => 'Test Subject 2', 
+            'subject' => 'Test Subject 2',
             'timestamp' => time() + 1,
         ]);
 
@@ -45,14 +44,14 @@ describe('API Inbox Controller', function () {
 
     it('returns inbox statistics via API', function () {
         $captureService = $this->app->make(CaptureService::class);
-        
+
         // Store some test messages - some read, some unread
         $messageId1 = $captureService->store([
             'raw' => 'test email 1',
             'subject' => 'Test Subject 1',
             'timestamp' => time(),
         ]);
-        
+
         $messageId2 = $captureService->store([
             'raw' => 'test email 2',
             'subject' => 'Test Subject 2',
@@ -74,7 +73,7 @@ describe('API Inbox Controller', function () {
             ->assertJsonStructure([
                 'total',
                 'unread',
-                'read'
+                'read',
             ]);
 
         $data = $response->json();
@@ -88,7 +87,7 @@ describe('API Inbox Controller', function () {
 
         $response->assertStatus(200);
         $data = $response->json();
-        
+
         expect($data['total'])->toBe(0)
             ->and($data['unread'])->toBe(0)
             ->and($data['read'])->toBe(0);

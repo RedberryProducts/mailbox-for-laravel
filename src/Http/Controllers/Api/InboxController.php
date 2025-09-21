@@ -3,7 +3,6 @@
 namespace Redberry\MailboxForLaravel\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Redberry\MailboxForLaravel\CaptureService;
 
 class InboxController

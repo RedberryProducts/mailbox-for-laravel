@@ -1,13 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Gate;
 use Redberry\MailboxForLaravel\CaptureService;
 
 describe('InboxController API Response Support', function () {
     beforeEach(function () {
         config()->set('inbox.public', true);
         config()->set('inbox.enabled', true);
-        
+
         // Clear any existing messages
         $captureService = $this->app->make(CaptureService::class);
         $captureService->clearAll();
@@ -15,7 +14,7 @@ describe('InboxController API Response Support', function () {
 
     it('returns JSON when Accept header requests JSON', function () {
         $captureService = $this->app->make(CaptureService::class);
-        
+
         $captureService->store([
             'raw' => 'test email',
             'subject' => 'Test Subject',
@@ -30,13 +29,13 @@ describe('InboxController API Response Support', function () {
                 'total',
                 'page',
                 'per_page',
-                'last_page'
+                'last_page',
             ]);
     });
 
     it('returns Blade view for regular web requests', function () {
         $captureService = $this->app->make(CaptureService::class);
-        
+
         $captureService->store([
             'raw' => 'test email',
             'subject' => 'Test Subject',
@@ -53,7 +52,7 @@ describe('InboxController API Response Support', function () {
 
     it('supports pagination in JSON responses', function () {
         $captureService = $this->app->make(CaptureService::class);
-        
+
         // Store multiple messages
         for ($i = 1; $i <= 5; $i++) {
             $captureService->store([
@@ -67,7 +66,7 @@ describe('InboxController API Response Support', function () {
 
         $response->assertStatus(200);
         $data = $response->json();
-        
+
         expect($data['total'])->toBe(5)
             ->and($data['page'])->toBe(1)
             ->and($data['per_page'])->toBe(3)

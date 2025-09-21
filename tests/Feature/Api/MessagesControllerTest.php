@@ -1,13 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Gate;
 use Redberry\MailboxForLaravel\CaptureService;
 
 describe('API Messages Controller', function () {
     beforeEach(function () {
         config()->set('inbox.public', true);
         config()->set('inbox.enabled', true);
-        
+
         // Clear any existing messages
         $captureService = $this->app->make(CaptureService::class);
         $captureService->clearAll();
@@ -15,7 +14,7 @@ describe('API Messages Controller', function () {
 
     it('returns paginated messages list via API', function () {
         $captureService = $this->app->make(CaptureService::class);
-        
+
         // Store some test messages
         $captureService->store([
             'raw' => 'test email 1',
@@ -23,7 +22,7 @@ describe('API Messages Controller', function () {
             'from' => [['name' => 'Test Sender', 'address' => 'test@example.com']],
             'timestamp' => time(),
         ]);
-        
+
         $captureService->store([
             'raw' => 'test email 2',
             'subject' => 'Test Subject 2',
@@ -34,19 +33,19 @@ describe('API Messages Controller', function () {
         $response = $this->getJson('/mailbox/api/messages');
 
         $response->assertStatus(200);
-        
+
         $data = $response->json();
-        
+
         // Check basic structure
         expect($data)->toHaveKeys(['data', 'total', 'page', 'per_page', 'last_page'])
             ->and($data['total'])->toBe(2)
             ->and($data['page'])->toBe(1)
             ->and($data['per_page'])->toBe(50);
-            
+
         // Check that we have messages
         expect($data['data'])->toBeArray()
             ->and(count($data['data']))->toBe(2);
-            
+
         // Check first message has basic fields
         $firstMessage = $data['data'][0];
         expect($firstMessage)->toHaveKeys(['id', 'timestamp', 'seen_at']);
@@ -54,7 +53,7 @@ describe('API Messages Controller', function () {
 
     it('supports pagination parameters', function () {
         $captureService = $this->app->make(CaptureService::class);
-        
+
         // Store 3 test messages
         for ($i = 1; $i <= 3; $i++) {
             $captureService->store([
@@ -68,7 +67,7 @@ describe('API Messages Controller', function () {
 
         $response->assertStatus(200);
         $data = $response->json();
-        
+
         expect($data['total'])->toBe(3)
             ->and($data['page'])->toBe(1)
             ->and($data['per_page'])->toBe(2)
@@ -78,7 +77,7 @@ describe('API Messages Controller', function () {
 
     it('returns a specific message by ID via API', function () {
         $captureService = $this->app->make(CaptureService::class);
-        
+
         $messageId = $captureService->store([
             'raw' => 'test email content',
             'subject' => 'Test Subject',
@@ -95,7 +94,7 @@ describe('API Messages Controller', function () {
                 'from',
                 'timestamp',
                 'seen_at',
-                'raw'
+                'raw',
             ]);
 
         $data = $response->json();
@@ -112,7 +111,7 @@ describe('API Messages Controller', function () {
 
     it('marks message as seen via API', function () {
         $captureService = $this->app->make(CaptureService::class);
-        
+
         $messageId = $captureService->store([
             'raw' => 'test email content',
             'subject' => 'Test Subject',
@@ -126,7 +125,7 @@ describe('API Messages Controller', function () {
         $response = $this->postJson("/mailbox/api/messages/$messageId/seen");
 
         $response->assertStatus(200);
-        
+
         // Check message is now marked as seen
         $updatedMessage = $captureService->get($messageId);
         expect($updatedMessage['seen_at'])->not->toBeNull();
@@ -141,7 +140,7 @@ describe('API Messages Controller', function () {
 
     it('deletes a message via API', function () {
         $captureService = $this->app->make(CaptureService::class);
-        
+
         $messageId = $captureService->store([
             'raw' => 'test email content',
             'subject' => 'Test Subject',

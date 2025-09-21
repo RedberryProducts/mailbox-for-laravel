@@ -14,7 +14,7 @@ Route::middleware(array_merge(
     config('inbox.middleware', ['web']),
     ['mailbox.authorize']
 ))
-    ->prefix(config('inbox.route', 'mailbox') . '/api')
+    ->prefix(config('inbox.route', 'mailbox').'/api')
     ->name('inbox.api.')
     ->group(function () {
         // Messages endpoints
