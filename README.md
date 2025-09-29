@@ -33,6 +33,7 @@ A Laravel package that captures outgoing mail and stores it for in-app viewing. 
    ```env
    MAIL_MAILER=inbox
    ```
+5. Go to [http://localhost/mailbox](http://localhost/mailbox)
 
 ## Configuration
 
