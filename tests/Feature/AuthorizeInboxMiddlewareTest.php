@@ -6,7 +6,7 @@ use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeInboxMiddleware;
 
 describe(AuthorizeInboxMiddleware::class, function () {
     beforeEach(function () {
-        Route::get('/mailbox-test', fn() => 'ok')->middleware(AuthorizeInboxMiddleware::class);
+        Route::get('/mailbox-test', fn () => 'ok')->middleware(AuthorizeInboxMiddleware::class);
     });
 
     it('allows access when Gate::allows(inbox.view) returns true', function () {
@@ -35,10 +35,9 @@ describe(AuthorizeInboxMiddleware::class, function () {
         $this->get('/mailbox-test')->assertRedirect('/custom-unauthorized');
     });
 
-
     it('denies access in production when config forbids public access', function () {
         config()->set('inbox.public', false);
-        $this->app->detectEnvironment(fn() => 'production');
+        $this->app->detectEnvironment(fn () => 'production');
         Gate::shouldReceive('allows')->with('viewMailbox')->andReturn(false);
 
         $this->get('/mailbox-test')->assertForbidden();

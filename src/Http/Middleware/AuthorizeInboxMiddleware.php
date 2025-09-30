@@ -11,7 +11,7 @@ class AuthorizeInboxMiddleware
     {
         $ability = config('inbox.gate', 'viewMailbox');
 
-        if (!Gate::allows($ability)) {
+        if (! Gate::allows($ability)) {
             $redirect = config('inbox.unauthorized_redirect');
 
             if ($redirect) {
