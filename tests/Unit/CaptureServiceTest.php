@@ -59,14 +59,14 @@ describe(CaptureService::class, function () {
         $svc->store(['raw' => 'message2']);
         $svc->store(['raw' => 'message3']);
 
-        // Call list with default PHP_INT_MAX - this should hit line 80 
+        // Call list with default PHP_INT_MAX - this should hit line 80
         $result = $svc->list();
-        
+
         expect($result)->toHaveCount(3);
         expect(is_array($result))->toBeTrue();
-        
+
         // Verify all messages are present by checking raw content
-        $rawContents = array_map(fn($msg) => $msg['raw'], $result);
+        $rawContents = array_map(fn ($msg) => $msg['raw'], $result);
         expect($rawContents)->toContain('message1');
         expect($rawContents)->toContain('message2');
         expect($rawContents)->toContain('message3');
@@ -79,7 +79,7 @@ describe(CaptureService::class, function () {
         $svc->store(['raw' => 'message3']);
 
         $result = $svc->list(1, 2);
-        
+
         expect($result)->toHaveKey('data');
         expect($result)->toHaveKey('total');
         expect($result)->toHaveKey('page');
