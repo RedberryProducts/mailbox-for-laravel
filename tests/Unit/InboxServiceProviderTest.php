@@ -53,6 +53,5 @@ describe(InboxServiceProvider::class, function () {
     it('merges default config values correctly', function () {
         expect(config('inbox.store.driver'))->toBe('file');
         expect(config('inbox.middleware'))->toBe(['web']);
-        expect(config('inbox.public'))->toBeFalse();
     });
 });

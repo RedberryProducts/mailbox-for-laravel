@@ -6,7 +6,7 @@ use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeInboxMiddleware;
 
 describe(AuthorizeInboxMiddleware::class, function () {
     beforeEach(function () {
-        Route::get('/mailbox-test', fn () => 'ok')->middleware(AuthorizeInboxMiddleware::class);
+        Route::get('/mailbox-test', fn() => 'ok')->middleware(AuthorizeInboxMiddleware::class);
     });
 
     it('allows access when Gate::allows(inbox.view) returns true', function () {
@@ -21,16 +21,24 @@ describe(AuthorizeInboxMiddleware::class, function () {
         $this->get('/mailbox-test')->assertForbidden();
     });
 
-    it('allows access when config(inbox.public)=true', function () {
-        config()->set('inbox.public', true);
-        Gate::shouldReceive('allows')->never();
+    it('redirects to 403 page when no inbox.unauthorized_redirect config is set', function () {
+        config()->set('inbox.unauthorized_redirect', null);
+        Gate::shouldReceive('allows')->with('viewMailbox')->andReturn(false);
 
-        $this->get('/mailbox-test')->assertOk();
+        $this->get('/mailbox-test')->assertForbidden();
     });
+
+    it('redirects to inbox.unauthorized_redirect page when set in config', function () {
+        config()->set('inbox.unauthorized_redirect', '/custon-unauthorized');
+        Gate::shouldReceive('allows')->with('viewMailbox')->andReturn(false);
+
+        $this->get('/mailbox-test')->assertRedirect('/custon-unauthorized');
+    });
+
 
     it('denies access in production when config forbids public access', function () {
         config()->set('inbox.public', false);
-        $this->app->detectEnvironment(fn () => 'production');
+        $this->app->detectEnvironment(fn() => 'production');
         Gate::shouldReceive('allows')->with('viewMailbox')->andReturn(false);
 
         $this->get('/mailbox-test')->assertForbidden();

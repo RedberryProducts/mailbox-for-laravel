@@ -9,16 +9,17 @@ class AuthorizeInboxMiddleware
 {
     public function handle($request, Closure $next)
     {
-        if (config('inbox.public', false)) {
-            return $next($request);
-        }
-
         $ability = config('inbox.gate', 'viewMailbox');
-        // Let Gate decide (works with or without authenticated user; $user can be null)
-        if (Gate::allows($ability)) {
-            return $next($request);
+
+        if (!Gate::allows($ability)) {
+            $redirect = config('inbox.unauthorized_redirect');
+
+            if ($redirect) {
+                return redirect($redirect);
+            }
+            abort(403);
         }
 
-        abort(403);
+        return $next($request);
     }
 }
