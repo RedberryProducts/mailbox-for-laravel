@@ -2,7 +2,6 @@
 
 return [
     'enabled' => env('INBOX_ENABLED', env('APP_ENV') !== 'production'),
-    'public' => env('INBOX_PUBLIC', false),
     'store' => [
         'driver' => env('INBOX_STORE_DRIVER', 'file'),
         'resolvers' => [
@@ -17,6 +16,7 @@ return [
         'seconds' => (int) env('INBOX_RETENTION', 60 * 60 * 24),
     ],
     'gate' => env('INBOX_GATE', 'viewMailbox'),
+    'unauthorized_redirect' => env('INBOX_REDIRECT', null),
     'route' => env('INBOX_DASHBOARD_ROUTE', 'mailbox'),
     'middleware' => ['web'],
 ];

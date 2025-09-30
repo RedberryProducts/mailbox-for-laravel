@@ -40,9 +40,9 @@ A Laravel package that captures outgoing mail and stores it for in-app viewing. 
 The published `config/inbox.php` file exposes several options:
 
 - `INBOX_ENABLED` &mdash; enable the inbox even in production (defaults to non-production only).
-- `INBOX_PUBLIC` &mdash; bypass authorization and allow public access.
 - `INBOX_GATE` &mdash; ability checked by the `mailbox.authorize` middleware (defaults to `viewMailbox`).
 - `INBOX_DASHBOARD_ROUTE` &mdash; URI where the dashboard is mounted (`/mailbox` by default).
+- `INBOX_REDIRECT` &mdash; URI where the user is redirected when they are unauthorized (defaults to Laravel's Forbidden Page).
 - `INBOX_STORE_DRIVER` & `INBOX_FILE_PATH` &mdash; storage driver and path for captured messages.
 - `INBOX_RETENTION` &mdash; number of seconds before stored messages are purged.
 

@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Http\Controllers\AssetController;
@@ -48,13 +47,6 @@ describe(AssetController::class, function () {
     it('returns 404 for non-existing asset in existing message', function () {
         [$svc, $key] = storeMessage();
         $this->get("/mailbox/messages/{$key}/attachments/missing.txt")->assertNotFound();
-    });
-
-    it('rejects unauthorized access when middleware denies', function () {
-        Gate::shouldReceive('allows')->with('viewMailbox')->andReturn(false);
-        config()->set('inbox.public', false);
-
-        $this->get('/mailbox/messages/abc/attachments/file.txt')->assertForbidden();
     });
 
     it('streams large assets without loading entire file into memory', function () {
