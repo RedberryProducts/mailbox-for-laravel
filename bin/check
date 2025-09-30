@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo "Running Pint..."
+./vendor/bin/pint
+
+echo "Running PHPStan..."
+./vendor/bin/phpstan analyse --memory-limit=1G
+
+echo "Running Pest tests..."
+./vendor/bin/pest

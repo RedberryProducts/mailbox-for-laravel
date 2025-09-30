@@ -52,13 +52,13 @@ class InboxServiceProvider extends PackageServiceProvider
         });
 
         $this->publishes([
-            __DIR__.'/../dist' => public_path('vendor/mailbox'),
+            __DIR__.'/../public/vendor/mailbox' => public_path('vendor/mailbox'),
         ], 'mailbox-assets');
 
         $this->publishes([
             __DIR__.'/../config/inbox.php' => config_path('inbox.php'),
             __DIR__.'/../resources/views' => resource_path('views/vendor/inbox'),
-            __DIR__.'/../dist' => public_path('vendor/mailbox'),
+            __DIR__.'/../public/vendor/mailbox' => public_path('vendor/mailbox'),
         ], 'mailbox-install');
 
     }
