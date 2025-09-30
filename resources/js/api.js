@@ -2,11 +2,13 @@ import axios from "axios"
 
 // Read CSRF token from the Blade-injected meta tag
 const csrfToken =
-    document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ?? ""
+    document.querySelector('meta[name="csrf-token"]')?.getAttribute("content")
 
-// Create axios instance
+const mailboxPrefix =
+    document.querySelector('meta[name="mailbox-prefix"]')?.getAttribute("content")
+
 const api = axios.create({
-    baseURL: "/mailbox",
+    baseURL: `${mailboxPrefix}`,
     withCredentials: true,
     headers: {
         "X-Requested-With": "XMLHttpRequest",

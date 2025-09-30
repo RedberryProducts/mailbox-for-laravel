@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <title>Mailbox for Laravel</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="mailbox-prefix" content="{{ config('inbox.route', 'mailbox') }}">
     {{ Vite::useHotFile('vendor/mailbox/mailbox.hot')
         ->useBuildDirectory("vendor/mailbox")
         ->withEntryPoints(['resources/css/mailbox.css', 'resources/js/mailbox.js']) }}
