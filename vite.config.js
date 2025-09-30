@@ -1,26 +1,16 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname  = dirname(__filename);
+import laravel from 'laravel-vite-plugin';
 
 export default defineConfig({
     plugins: [
         vue(),
-    ],
-    build: {
-        manifest: 'manifest.json',
-        outDir: 'dist',
-        emptyOutDir: true,
-        rollupOptions: {
-            input: resolve(__dirname, 'resources/js/mailbox.js'), // single input
-            output: {
-                entryFileNames: 'assets/[name]-[hash].js',
-                chunkFileNames: 'assets/[name]-[hash].js',
-                assetFileNames: 'assets/[name]-[hash][extname]',
-            },
-        },
-    },
+        laravel({
+            hotFile: 'public/vendor/mailbox/mailbox.hot', // Most important lines
+            buildDirectory: 'vendor/mailbox', // Most important lines
+            input: ['resources/css/mailbox.css', 'resources/js/mailbox.js'],
+            refresh: true,
+        }),
+    ]
 });
