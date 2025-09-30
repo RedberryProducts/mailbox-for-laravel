@@ -29,10 +29,10 @@ describe(AuthorizeInboxMiddleware::class, function () {
     });
 
     it('redirects to inbox.unauthorized_redirect page when set in config', function () {
-        config()->set('inbox.unauthorized_redirect', '/custon-unauthorized');
+        config()->set('inbox.unauthorized_redirect', '/custom-unauthorized');
         Gate::shouldReceive('allows')->with('viewMailbox')->andReturn(false);
 
-        $this->get('/mailbox-test')->assertRedirect('/custon-unauthorized');
+        $this->get('/mailbox-test')->assertRedirect('/custom-unauthorized');
     });
 
 
