@@ -8,7 +8,7 @@ const mailboxPrefix =
     document.querySelector('meta[name="mailbox-prefix"]')?.getAttribute("content")
 
 const api = axios.create({
-    baseURL: `${mailboxPrefix}`,
+    baseURL: `/${mailboxPrefix}`,
     withCredentials: true,
     headers: {
         "X-Requested-With": "XMLHttpRequest",
