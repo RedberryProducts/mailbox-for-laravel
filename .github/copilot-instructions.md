@@ -4,7 +4,7 @@
 
 ## Project overview
 
-* This repository is a **Laravel package** that embeds a local email inbox for development and QA, similar to Mailtrap but self‑contained. It ships a Vue‑powered dashboard, storage drivers, a custom mail transport, and HTTP controllers.
+* This repository is a **Laravel package** that embeds a local email mailbox for development and QA, similar to Mailtrap but self‑contained. It ships a Vue‑powered dashboard, storage drivers, a custom mail transport, and HTTP controllers.
 * Primary goals: zero‑config local email capture, a clean UI, and **full automated test coverage** for every class and feature.
 
 ## Tech stack & versions (default)
@@ -29,14 +29,14 @@
 
 ## Architecture (high level)
 
-* **Transport**: `InboxTransport` captures `SentMessage`, normalizes it, stores payload, optionally decorates another transport.
+* **Transport**: `MailboxTransport` captures `SentMessage`, normalizes it, stores payload, optionally decorates another transport.
 * **Capture & Storage**:
 
     * `CaptureService` generates deterministic keys, persists payloads with metadata, lists/paginates, update, clear.
     * `MessageStore` (contract) with a default `FileStorage` driver.
     * `StoreManager` resolves drivers via config & custom resolvers.
-* **HTTP**: `InboxController`, `SendTestMailController`, `ClearInboxController`, `SeenController`, `AssetController` (static assets), `AuthorizeInboxMiddleware` (route gating).
-* **Support**: `MessageNormalizer` (creates canonical payload), `InboxServiceProvider`, `InstallCommand` (publishes assets/config/routes), `config/inbox.php`.
+* **HTTP**: `MailboxController`, `SendTestMailController`, `ClearMailboxController`, `SeenController`, `AssetController` (static assets), `AuthorizeMailboxMiddleware` (route gating).
+* **Support**: `MessageNormalizer` (creates canonical payload), `MailboxServiceProvider`, `InstallCommand` (publishes assets/config/routes), `config/mailbox.php`.
 
 ## Directory & naming conventions
 
@@ -106,7 +106,7 @@
     * `keys()` filters by timestamp; `delete()` removes files
     * `update()` merges atomically without data loss
     * `clear()` wipes namespace safely
-* **Transport\InboxTransport (Unit)**
+* **Transport\MailboxTransport (Unit)**
 
     * normalizes and saves message when `enabled=true` and sets `storedKey`
     * decorates underlying transport when provided
@@ -117,17 +117,17 @@
     * handles edge cases: missing headers, non‑UTF8, multiple parts
 * **Http Controllers (Feature)**
 
-    * `InboxController` returns paginated list and sorts newest‑first
-    * `SendTestMailController` sends sample mail through inbox transport
-    * `ClearInboxController` empties store and returns success
+    * `MailboxController` returns paginated list and sorts newest‑first
+    * `SendTestMailController` sends sample mail through mailbox transport
+    * `ClearMailboxController` empties store and returns success
     * `SeenController` toggles `seen_at` and returns updated entity
     * `AssetController` serves versioned assets with correct headers
 * **Middleware (Feature)**
 
-    * `AuthorizeInboxMiddleware` denies/permits based on config/closure/gate
+    * `AuthorizeMailboxMiddleware` denies/permits based on config/closure/gate
 * **Service Provider & Command (Feature)**
 
-    * `InboxServiceProvider` registers bindings, publishes assets/config/routes
+    * `MailboxServiceProvider` registers bindings, publishes assets/config/routes
     * `InstallCommand` publishes resources and prints next steps
 * **Config (Arch)**
 
@@ -154,7 +154,7 @@
 
 * “Add newest‑first sorting to `CaptureService::all()` and cover with unit & feature tests.”
 * “Implement a `S3Storage` driver behind the `MessageStore` contract with contract tests mirrored from `FileStorage`.”
-* “Generate Vue components for Inbox list with read/unread states;
+* “Generate Vue components for Mailbox list with read/unread states;
 * “Write an arch test preventing `env()` usage outside `config/` and preventing `Http\Controllers` from depending on `Storage\*` directly.”
 
 ## Documentation expectations

@@ -8,12 +8,12 @@ use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
 describe(SendTestMailController::class, function () {
     beforeEach(function () {
         Route::middleware(AuthorizeMailboxMiddleware::class)->group(function () {
-            Route::post('/mailbox/test-email', SendTestMailController::class)->name('inbox.test-email');
+            Route::post('/mailbox/test-email', SendTestMailController::class)->name('mailbox.test-email');
         });
-        config()->set('inbox.public', true);
+        config()->set('mailbox.public', true);
     });
 
-    it('sends sample mail through inbox transport and returns stored key', function () {
+    it('sends sample mail through mailbox transport and returns stored key', function () {
         $response = $this->post('/mailbox/test-email');
 
         $response->assertOk()

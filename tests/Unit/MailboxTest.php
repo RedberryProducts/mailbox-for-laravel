@@ -19,7 +19,7 @@ describe(Mailbox::class, function () {
     });
 
     it('returns paginated results when requested', function () {
-        $store = new FileStorage(sys_get_temp_dir().'/inbox-facade-'.uniqid());
+        $store = new FileStorage(sys_get_temp_dir().'/mailbox-facade-'.uniqid());
         $svc = new CaptureService($store);
         App::instance(CaptureService::class, $svc);
 

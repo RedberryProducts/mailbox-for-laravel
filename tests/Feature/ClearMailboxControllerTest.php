@@ -39,7 +39,7 @@ describe(ClearMailboxController::class, function () {
         $messagesBefore = $service->all();
         expect($messagesBefore)->toHaveCount(2);
 
-        // Clear the inbox
+        // Clear the mailbox
         $response = $this->post('/mailbox/clear');
 
         $response->assertOk()
@@ -50,10 +50,10 @@ describe(ClearMailboxController::class, function () {
         expect($messagesAfter)->toBeEmpty();
     });
 
-    it('returns json response even when inbox is already empty', function () {
+    it('returns json response even when mailbox is already empty', function () {
         $service = app(CaptureService::class);
 
-        // Ensure inbox is empty
+        // Ensure mailbox is empty
         $messagesBefore = $service->all();
         expect($messagesBefore)->toBeEmpty();
 

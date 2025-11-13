@@ -11,7 +11,7 @@ use Symfony\Component\Mime\Part\DataPart;
 describe(MailboxTransport::class, function () {
     function transport(?CaptureService $svc = null, ?TransportInterface $decorated = null, bool $enabled = true): MailboxTransport
     {
-        $svc ??= new CaptureService(new FileStorage(sys_get_temp_dir().'/inbox-transport-'.uniqid()));
+        $svc ??= new CaptureService(new FileStorage(sys_get_temp_dir().'/mailbox-transport-'.uniqid()));
         if (! $decorated) {
             $decorated = Mockery::mock(TransportInterface::class);
             $decorated->shouldReceive('send')->andReturnNull();
@@ -41,7 +41,7 @@ describe(MailboxTransport::class, function () {
     });
 
     it('uses CaptureService->storeRaw and returns storage key', function () {
-        $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/inbox-transport-'.uniqid()));
+        $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/mailbox-transport-'.uniqid()));
         $t = transport($svc);
         $t->send((new Email)->from('a@example.com')->to('b@example.com')->text('hi'));
         expect($t->getStoredKey())->not->toBeNull();
@@ -58,7 +58,7 @@ describe(MailboxTransport::class, function () {
     });
 
     it('handles message with only text part', function () {
-        $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/inbox-transport-'.uniqid()));
+        $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/mailbox-transport-'.uniqid()));
         $t = transport($svc);
         $email = (new Email)->from('a@example.com')->to('b@example.com')->text('hello');
         $t->send($email);
@@ -68,7 +68,7 @@ describe(MailboxTransport::class, function () {
     });
 
     it('handles message with only html part', function () {
-        $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/inbox-transport-'.uniqid()));
+        $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/mailbox-transport-'.uniqid()));
         $t = transport($svc);
         $email = (new Email)->from('a@example.com')->to('b@example.com')->html('<p>hi</p>');
         $t->send($email);
@@ -78,7 +78,7 @@ describe(MailboxTransport::class, function () {
     });
 
     it('handles message with attachments', function () {
-        $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/inbox-transport-'.uniqid()));
+        $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/mailbox-transport-'.uniqid()));
         $t = transport($svc);
         $email = (new Email)->from('a@example.com')->to('b@example.com')->text('body');
         $email->attach('file-content', 'doc.txt', 'text/plain');
@@ -89,7 +89,7 @@ describe(MailboxTransport::class, function () {
     });
 
     it('handles inline cid images and preserves references', function () {
-        $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/inbox-transport-'.uniqid()));
+        $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/mailbox-transport-'.uniqid()));
         $t = transport($svc);
         $email = (new Email)->from('a@example.com')->to('b@example.com')->text('body');
         $part = (new DataPart('img', 'img.txt', 'text/plain'))->asInline();
@@ -101,7 +101,7 @@ describe(MailboxTransport::class, function () {
     });
 
     it('throws a TransportException on underlying send failure and still does not corrupt store', function () {
-        $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/inbox-transport-'.uniqid()));
+        $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/mailbox-transport-'.uniqid()));
         $decorated = Mockery::mock(TransportInterface::class);
         $decorated->shouldReceive('send')->andThrow(new TransportException('fail'));
         $t = transport($svc, $decorated);
