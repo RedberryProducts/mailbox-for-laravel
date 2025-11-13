@@ -5,15 +5,15 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
-use Redberry\MailboxForLaravel\InboxServiceProvider;
+use Redberry\MailboxForLaravel\MailboxServiceProvider;
 use Redberry\MailboxForLaravel\Storage\FileStorage;
-use Redberry\MailboxForLaravel\Transport\InboxTransport;
+use Redberry\MailboxForLaravel\Transport\MailboxTransport;
 
-describe(InboxServiceProvider::class, function () {
+describe(MailboxServiceProvider::class, function () {
     it('registers config, routes, views, and install command', function () {
-        expect(config('inbox.route'))->toBe('mailbox');
-        expect(Route::has('inbox.index'))->toBeTrue();
-        expect(view()->exists('inbox::index'))->toBeTrue();
+        expect(config('mailbox.route'))->toBe('mailbox');
+        expect(Route::has('mailbox.index'))->toBeTrue();
+        expect(view()->exists('mailbox::index'))->toBeTrue();
         expect(Artisan::all())->toHaveKey('mailbox:install');
     });
 
@@ -32,26 +32,26 @@ describe(InboxServiceProvider::class, function () {
         expect($ref->getValue($service1))->toBe(app(MessageStore::class));
     });
 
-    it('registers inbox mail transport on boot', function () {
-        $mailer = app(MailManager::class)->mailer('inbox');
-        expect($mailer->getSymfonyTransport())->toBeInstanceOf(InboxTransport::class);
+    it('registers mailbox mail transport on boot', function () {
+        $mailer = app(MailManager::class)->mailer('mailbox');
+        expect($mailer->getSymfonyTransport())->toBeInstanceOf(MailboxTransport::class);
     });
 
-    it('applies configured middleware to inbox routes', function () {
-        $route = Route::getRoutes()->getByName('inbox.index');
+    it('applies configured middleware to mailbox routes', function () {
+        $route = Route::getRoutes()->getByName('mailbox.index');
         $middlewares = $route->gatherMiddleware();
         expect($middlewares)->toContain('web', 'mailbox.authorize');
     });
 
-    it('honors config(inbox.enabled)=false by not registering routes', function () {
-        putenv('INBOX_ENABLED=false');
+    it('honors config(mailbox.enabled)=false by not registering routes', function () {
+        putenv('MAILBOX_ENABLED=false');
         $this->refreshApplication();
-        expect(Route::has('inbox.index'))->toBeFalse();
-        putenv('INBOX_ENABLED');
+        expect(Route::has('mailbox.index'))->toBeFalse();
+        putenv('MAILBOX_ENABLED');
     });
 
     it('merges default config values correctly', function () {
-        expect(config('inbox.store.driver'))->toBe('file');
-        expect(config('inbox.middleware'))->toBe(['web']);
+        expect(config('mailbox.store.driver'))->toBe('file');
+        expect(config('mailbox.middleware'))->toBe(['web']);
     });
 });

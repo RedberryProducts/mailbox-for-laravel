@@ -3,11 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Http\Controllers\SeenController;
-use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeInboxMiddleware;
+use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
 
 describe(SeenController::class, function () {
     beforeEach(function () {
-        Route::middleware(AuthorizeInboxMiddleware::class)->group(function () {
+        Route::middleware(AuthorizeMailboxMiddleware::class)->group(function () {
             Route::post('/mailbox/messages/{id}/seen', SeenController::class)->name('inbox.messages.seen');
         });
         config()->set('inbox.public', true);

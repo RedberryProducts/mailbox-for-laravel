@@ -3,12 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Http\Controllers\AssetController;
-use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeInboxMiddleware;
+use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 describe(AssetController::class, function () {
     beforeEach(function () {
-        Route::middleware(AuthorizeInboxMiddleware::class)->group(function () {
+        Route::middleware(AuthorizeMailboxMiddleware::class)->group(function () {
             Route::get('/mailbox/messages/{message}/attachments/{asset}', AssetController::class);
         });
         config()->set('inbox.public', true);

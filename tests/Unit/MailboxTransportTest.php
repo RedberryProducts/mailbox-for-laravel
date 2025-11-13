@@ -2,14 +2,14 @@
 
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Storage\FileStorage;
-use Redberry\MailboxForLaravel\Transport\InboxTransport;
+use Redberry\MailboxForLaravel\Transport\MailboxTransport;
 use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Part\DataPart;
 
-describe(InboxTransport::class, function () {
-    function transport(?CaptureService $svc = null, ?TransportInterface $decorated = null, bool $enabled = true): InboxTransport
+describe(MailboxTransport::class, function () {
+    function transport(?CaptureService $svc = null, ?TransportInterface $decorated = null, bool $enabled = true): MailboxTransport
     {
         $svc ??= new CaptureService(new FileStorage(sys_get_temp_dir().'/inbox-transport-'.uniqid()));
         if (! $decorated) {
@@ -17,7 +17,7 @@ describe(InboxTransport::class, function () {
             $decorated->shouldReceive('send')->andReturnNull();
         }
 
-        return new InboxTransport($svc, $decorated, $enabled);
+        return new MailboxTransport($svc, $decorated, $enabled);
     }
 
     it('sends messages through Symfony Transport while capturing raw', function () {

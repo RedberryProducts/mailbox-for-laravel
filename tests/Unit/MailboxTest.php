@@ -2,10 +2,10 @@
 
 use Illuminate\Support\Facades\App;
 use Redberry\MailboxForLaravel\CaptureService;
-use Redberry\MailboxForLaravel\Facades\Inbox;
+use Redberry\MailboxForLaravel\Facades\Mailbox;
 use Redberry\MailboxForLaravel\Storage\FileStorage;
 
-describe(Inbox::class, function () {
+describe(Mailbox::class, function () {
     it('proxies list/get/delete to CaptureService', function () {
         $mock = Mockery::mock(CaptureService::class);
         $mock->shouldReceive('list')->once()->andReturn([]);
@@ -13,9 +13,9 @@ describe(Inbox::class, function () {
         $mock->shouldReceive('delete')->with('id')->once();
         App::instance(CaptureService::class, $mock);
 
-        Inbox::list();
-        Inbox::get('id');
-        Inbox::delete('id');
+        Mailbox::list();
+        Mailbox::get('id');
+        Mailbox::delete('id');
     });
 
     it('returns paginated results when requested', function () {
@@ -26,7 +26,7 @@ describe(Inbox::class, function () {
         $svc->store(['raw' => 'one']);
         $svc->store(['raw' => 'two']);
 
-        $page = Inbox::list(page: 2, perPage: 1);
+        $page = Mailbox::list(page: 2, perPage: 1);
         expect($page['total'])->toBe(2)
             ->and(count($page['data']))->toBe(1);
     });
@@ -36,7 +36,7 @@ describe(Inbox::class, function () {
         $svc = new CaptureService($store);
         App::instance(CaptureService::class, $svc);
 
-        expect(fn () => Inbox::get('../bad'))->toThrow(InvalidArgumentException::class);
-        expect(fn () => Inbox::delete('bad/..'))->toThrow(InvalidArgumentException::class);
+        expect(fn () => Mailbox::get('../bad'))->toThrow(InvalidArgumentException::class);
+        expect(fn () => Mailbox::delete('bad/..'))->toThrow(InvalidArgumentException::class);
     });
 });

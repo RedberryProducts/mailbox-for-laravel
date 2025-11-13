@@ -3,11 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Http\Controllers\SendTestMailController;
-use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeInboxMiddleware;
+use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
 
 describe(SendTestMailController::class, function () {
     beforeEach(function () {
-        Route::middleware(AuthorizeInboxMiddleware::class)->group(function () {
+        Route::middleware(AuthorizeMailboxMiddleware::class)->group(function () {
             Route::post('/mailbox/test-email', SendTestMailController::class)->name('inbox.test-email');
         });
         config()->set('inbox.public', true);
