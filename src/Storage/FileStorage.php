@@ -10,7 +10,7 @@ class FileStorage implements MessageStore
 
     public function __construct(?string $basePath = null)
     {
-        $this->basePath = $basePath ?: storage_path('app/mail-inbox');
+        $this->basePath = $basePath ?: storage_path('app/mailbox');
         if (! is_dir($this->basePath)) {
             @mkdir($this->basePath, 0775, true);
         }

@@ -1,6 +1,6 @@
 import {createApp} from 'vue'
 import '../css/mailbox.css'
-import InboxApp from './Components/InboxApp.vue'
+import MailboxApp from './Components/MailboxApp.vue'
 
 function readHydratedProps() {
     const el = document.getElementById('mailbox-props')
@@ -16,4 +16,4 @@ const initial = readHydratedProps()
 // Optional: expose the same URL for XHR updates (same route as Blade page)
 window.mailboxPageUrl = window.mailboxPageUrl || window.location.pathname + window.location.search
 
-createApp(InboxApp, initial).mount('#app')
+createApp(MailboxApp, initial).mount('#app')

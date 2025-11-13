@@ -65,7 +65,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Redberry\\MailboxForLaravel\\InboxServiceProvider"
+                "Redberry\\MailboxForLaravel\\MailboxServiceProvider"
             ]
         }
     },

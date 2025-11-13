@@ -8,7 +8,7 @@ use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\AbstractTransport;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 
-class InboxTransport extends AbstractTransport
+class MailboxTransport extends AbstractTransport
 {
     protected ?string $storedKey = null;
 
@@ -19,7 +19,7 @@ class InboxTransport extends AbstractTransport
 
     public function __toString(): string
     {
-        return 'inbox';
+        return 'mailbox';
     }
 
     public function getStoredKey(): ?string

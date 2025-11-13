@@ -2,26 +2,26 @@
 
 use Illuminate\Support\Facades\Route;
 use Redberry\MailboxForLaravel\Http\Controllers\AssetController;
-use Redberry\MailboxForLaravel\Http\Controllers\ClearInboxController;
-use Redberry\MailboxForLaravel\Http\Controllers\InboxController;
+use Redberry\MailboxForLaravel\Http\Controllers\ClearMailboxController;
+use Redberry\MailboxForLaravel\Http\Controllers\MailboxController;
 use Redberry\MailboxForLaravel\Http\Controllers\SeenController;
 use Redberry\MailboxForLaravel\Http\Controllers\SendTestMailController;
 
-if (! config('inbox.enabled', true)) {
+if (! config('mailbox.enabled', true)) {
     return;
 }
 
 Route::middleware(array_merge(
-    config('inbox.middleware', ['web']),
+    config('mailbox.middleware', ['web']),
     ['mailbox.authorize']
 ))
-    ->prefix(config('inbox.route', 'mailbox'))
-    ->name('inbox.')
+    ->prefix(config('mailbox.route', 'mailbox'))
+    ->name('mailbox.')
     ->group(function () {
-        Route::get('/', InboxController::class)
+        Route::get('/', MailboxController::class)
             ->name('index');
 
-        Route::post('/clear', ClearInboxController::class)
+        Route::post('/clear', ClearMailboxController::class)
             ->name('clear');
 
         Route::post('/test-email', SendTestMailController::class)

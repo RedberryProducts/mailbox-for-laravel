@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Redberry\MailboxForLaravel\CaptureService;
 
-class ClearInboxController
+class ClearMailboxController
 {
     public function __invoke(Request $request, CaptureService $service): View|JsonResponse
     {
