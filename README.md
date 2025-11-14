@@ -4,11 +4,13 @@ A Laravel package that captures outgoing mail and stores it for in-app viewing. 
 
 ## Features
 
-- Registers configuration, routes, views, and an install command for publishing assets and config.
-- Adds a `mailbox` mailer transport that persists every sent email for later inspection.
-- Web dashboard at `/mailbox` (configurable) with authorization middleware.
-- Store messages on disk by default with automatic pruning.
-- Works out of the box in non-production environments.
+- **Self-contained Inertia.js dashboard** — completely isolated from your host application's frontend stack
+- Registers configuration, routes, views, and an install command for publishing assets and config
+- Adds a `mailbox` mailer transport that persists every sent email for later inspection
+- Web dashboard at `/mailbox` (configurable) with authorization middleware
+- Store messages on disk by default with automatic pruning
+- Works out of the box in non-production environments
+- **Works with any frontend stack** — Vue, React, Blade-only, or even other Inertia apps
 
 ## Installation
 
@@ -31,6 +33,30 @@ A Laravel package that captures outgoing mail and stores it for in-app viewing. 
 4. Visit the dashboard at [http://localhost/mailbox](http://localhost/mailbox)
 
 > **Note:** The package is auto-discovered by Laravel and the `mailbox` mail transport is automatically registered. No manual service provider or mailer configuration is needed.
+
+## Architecture
+
+### Scoped Inertia.js Integration
+
+This package uses **Inertia.js** as its communication layer but operates in complete isolation from your host application:
+
+- **Independent Inertia stack** — The package has its own Inertia middleware (`HandleInertiaRequests`) and root layout
+- **Namespaced components** — All Inertia pages use the `mailbox::` prefix (e.g., `mailbox::Dashboard`)
+- **Separate entry point** — Uses `resources/js/dashboard.js` as its dedicated JavaScript entry
+- **Scoped assets** — Built assets are published to `public/vendor/mailbox/` with their own manifest
+- **No conflicts** — Works alongside your application's existing Inertia setup (if any) without interference
+
+### No Host Dependencies
+
+The dashboard works regardless of your host application's frontend stack:
+
+- ✅ Works with Laravel + Blade only
+- ✅ Works with Laravel + Vue (without Inertia)
+- ✅ Works with Laravel + React (without Inertia)
+- ✅ Works with Laravel + Inertia (Vue or React)
+- ✅ Works with any other frontend framework
+
+The package bundles its own frontend dependencies and doesn't require your application to install or configure Inertia.
 
 ## Configuration
 

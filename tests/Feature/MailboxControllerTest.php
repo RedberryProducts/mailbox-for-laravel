@@ -36,7 +36,7 @@ describe(MailboxController::class, function () {
         $response = $this->get(route('mailbox.index'));
 
         $response->assertStatus(200);
-        
+
         $response->assertInertia(fn (Assert $page) => $page
             ->component('mailbox::Dashboard')
             ->has('messages', 2)
@@ -49,7 +49,7 @@ describe(MailboxController::class, function () {
         $response = $this->get(route('mailbox.index'));
 
         $response->assertStatus(200);
-        
+
         $response->assertInertia(fn (Assert $page) => $page
             ->component('mailbox::Dashboard')
             ->has('messages', 0)
@@ -70,7 +70,7 @@ describe(MailboxController::class, function () {
         $response = $this->get(route('mailbox.index'));
 
         $response->assertStatus(200);
-        
+
         $response->assertInertia(fn (Assert $page) => $page
             ->component('mailbox::Dashboard')
             ->has('messages', 1)
@@ -93,7 +93,7 @@ describe(MailboxController::class, function () {
         $response = $this->get(route('mailbox.index'));
 
         $response->assertStatus(200);
-        
+
         $response->assertInertia(fn (Assert $page) => $page
             ->component('mailbox::Dashboard')
             ->has('messages', 3)
@@ -116,7 +116,7 @@ describe(MailboxController::class, function () {
         $response = $this->get(route('mailbox.index'));
 
         $response->assertStatus(200);
-        
+
         $response->assertInertia(fn (Assert $page) => $page
             ->component('mailbox::Dashboard')
             ->has('messages', 1)

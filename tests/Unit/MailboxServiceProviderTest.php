@@ -13,7 +13,7 @@ describe(MailboxServiceProvider::class, function () {
     it('registers config, routes, views, and install command', function () {
         expect(config('mailbox.route'))->toBe('mailbox');
         expect(Route::has('mailbox.index'))->toBeTrue();
-        expect(view()->exists('mailbox::index'))->toBeTrue();
+        expect(view()->exists('mailbox::layout'))->toBeTrue();
         expect(Artisan::all())->toHaveKey('mailbox:install');
     });
 

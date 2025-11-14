@@ -2,7 +2,6 @@
 
 namespace Redberry\MailboxForLaravel\Http\Middleware;
 
-use Closure;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
