@@ -4,7 +4,7 @@ namespace Redberry\MailboxForLaravel\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Redberry\MailboxForLaravel\InboxServiceProvider;
+use Redberry\MailboxForLaravel\MailboxServiceProvider;
 
 class TestCase extends Orchestra
 {
@@ -21,7 +21,7 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         return [
-            InboxServiceProvider::class,
+            MailboxServiceProvider::class,
         ];
     }
 
@@ -29,8 +29,8 @@ class TestCase extends Orchestra
     {
         config()->set('database.default', 'testing');
 
-        $app['config']->set('mail.mailers.inbox', ['transport' => 'inbox']);
-        $app['config']->set('mail.default', 'inbox');
+        $app['config']->set('mail.mailers.mailbox', ['transport' => 'mailbox']);
+        $app['config']->set('mail.default', 'mailbox');
 
     }
 }

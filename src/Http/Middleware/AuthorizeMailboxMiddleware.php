@@ -5,14 +5,14 @@ namespace Redberry\MailboxForLaravel\Http\Middleware;
 use Closure;
 use Illuminate\Support\Facades\Gate;
 
-class AuthorizeInboxMiddleware
+class AuthorizeMailboxMiddleware
 {
     public function handle($request, Closure $next)
     {
-        $ability = config('inbox.gate', 'viewMailbox');
+        $ability = config('mailbox.gate', 'viewMailbox');
 
         if (! Gate::allows($ability)) {
-            $redirect = config('inbox.unauthorized_redirect');
+            $redirect = config('mailbox.unauthorized_redirect');
 
             if ($redirect) {
                 return redirect($redirect);

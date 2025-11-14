@@ -22,10 +22,10 @@
 
                 <!-- Optional search -->
                 <div v-if="searchable" class="md:col-span-4">
-                    <label class="sr-only" for="inbox-search">Search</label>
+                    <label class="sr-only" for="mailbox-search">Search</label>
                     <div class="relative">
                         <input
-                            id="inbox-search"
+                            id="mailbox-search"
                             :placeholder="searchPlaceholder"
                             v-model="q"
                             @input="$emit('update:query', q)"

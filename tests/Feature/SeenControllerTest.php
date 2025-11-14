@@ -3,14 +3,14 @@
 use Illuminate\Support\Facades\Route;
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Http\Controllers\SeenController;
-use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeInboxMiddleware;
+use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
 
 describe(SeenController::class, function () {
     beforeEach(function () {
-        Route::middleware(AuthorizeInboxMiddleware::class)->group(function () {
-            Route::post('/mailbox/messages/{id}/seen', SeenController::class)->name('inbox.messages.seen');
+        Route::middleware(AuthorizeMailboxMiddleware::class)->group(function () {
+            Route::post('/mailbox/messages/{id}/seen', SeenController::class)->name('mailbox.messages.seen');
         });
-        config()->set('inbox.public', true);
+        config()->set('mailbox.public', true);
 
         // Clear any existing messages before each test
         $service = app(CaptureService::class);

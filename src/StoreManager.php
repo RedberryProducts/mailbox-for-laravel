@@ -9,8 +9,8 @@ class StoreManager
 {
     public function create(): MessageStore
     {
-        $driver = config('inbox.store.driver', 'file');
-        $resolvers = config('inbox.store.resolvers', []);
+        $driver = config('mailbox.store.driver', 'file');
+        $resolvers = config('mailbox.store.resolvers', []);
 
         // Check for a custom resolver first, if available and it should implement MessageStore
         $customStore = $this->resolveCustomStore($driver, $resolvers);
@@ -19,7 +19,7 @@ class StoreManager
         }
 
         return match ($driver) {
-            'file' => new FileStorage(config('inbox.store.file.path', storage_path('mailbox'))),
+            'file' => new FileStorage(config('mailbox.store.file.path', storage_path('mailbox'))),
             default => throw new \InvalidArgumentException("Unsupported storage driver [{$driver}]"),
         };
     }

@@ -1,11 +1,11 @@
 <?php
 
 use Redberry\MailboxForLaravel\CaptureService;
-use Redberry\MailboxForLaravel\Http\Controllers\InboxController;
+use Redberry\MailboxForLaravel\Http\Controllers\MailboxController;
 
-describe(InboxController::class, function () {
+describe(MailboxController::class, function () {
     beforeEach(function () {
-        config()->set('inbox.public', true);
+        config()->set('mailbox.public', true);
 
         // Clear any existing messages before each test
         $service = app(CaptureService::class);
@@ -32,13 +32,13 @@ describe(InboxController::class, function () {
         $key1 = $service->store($payload1);
         $key2 = $service->store($payload2);
 
-        $controller = new InboxController;
+        $controller = new MailboxController;
         $request = request();
 
         $result = $controller->__invoke($request, $service);
 
         expect($result)->toBeInstanceOf(\Illuminate\Contracts\View\View::class);
-        expect($result->name())->toBe('inbox::index');
+        expect($result->name())->toBe('mailbox::index');
 
         $data = $result->getData();
         expect($data)->toHaveKey('data');
@@ -49,13 +49,13 @@ describe(InboxController::class, function () {
 
     it('handles empty message list', function () {
         $service = app(CaptureService::class);
-        $controller = new InboxController;
+        $controller = new MailboxController;
         $request = request();
 
         $result = $controller->__invoke($request, $service);
 
         expect($result)->toBeInstanceOf(\Illuminate\Contracts\View\View::class);
-        expect($result->name())->toBe('inbox::index');
+        expect($result->name())->toBe('mailbox::index');
 
         $data = $result->getData();
         expect($data)->toHaveKey('data');
@@ -75,7 +75,7 @@ describe(InboxController::class, function () {
 
         $service->store($payload);
 
-        $controller = new InboxController;
+        $controller = new MailboxController;
         $request = request();
 
         $result = $controller->__invoke($request, $service);
@@ -99,7 +99,7 @@ describe(InboxController::class, function () {
             $service->store($payload);
         }
 
-        $controller = new InboxController;
+        $controller = new MailboxController;
         $request = request();
 
         $result = $controller->__invoke($request, $service);
@@ -121,7 +121,7 @@ describe(InboxController::class, function () {
 
         $service->store($payload);
 
-        $controller = new InboxController;
+        $controller = new MailboxController;
         $request = request();
 
         $result = $controller->__invoke($request, $service);

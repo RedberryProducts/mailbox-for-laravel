@@ -1,11 +1,11 @@
 # Mailbox for Laravel
 
-A Laravel package that captures outgoing mail and stores it for in-app viewing. It adds an `inbox` mail transport, a web dashboard for browsing messages and attachments, and convenient development defaults.
+A Laravel package that captures outgoing mail and stores it for in-app viewing. It adds a `mailbox` mail transport, a web dashboard for browsing messages and attachments, and convenient development defaults.
 
 ## Features
 
 - Registers configuration, routes, views, and an install command for publishing assets and config.
-- Adds an `inbox` mailer transport that persists every sent email for later inspection.
+- Adds a `mailbox` mailer transport that persists every sent email for later inspection.
 - Web dashboard at `/mailbox` (configurable) with authorization middleware.
 - Store messages on disk by default with automatic pruning.
 - Works out of the box in non-production environments.
@@ -16,39 +16,36 @@ A Laravel package that captures outgoing mail and stores it for in-app viewing. 
    ```bash
    composer require redberry/mailbox-for-laravel --dev
    ```
-2. Publish public assets and configuration:
+
+2. Publish the package assets:
    ```bash
    php artisan mailbox:install
-   # or
-   php artisan vendor:publish --tag=mailbox-install
    ```
-3. Register the `inbox` mailer driver in `config/mail.php`:
-   ```php
-   'mailers' => [
-       // ...
-       'inbox' => ['transport' => 'inbox'],
-   ],
-   ```
-4. Use the `inbox` mailer by setting it in your `.env`:
+   This will publish the configuration file to `config/mailbox.php` and the frontend assets to `public/vendor/mailbox`.
+
+3. Configure your application to use the mailbox mailer in your `.env`:
    ```env
-   MAIL_MAILER=inbox
+   MAIL_MAILER=mailbox
    ```
-5. Go to [http://localhost/mailbox](http://localhost/mailbox)
+
+4. Visit the dashboard at [http://localhost/mailbox](http://localhost/mailbox)
+
+> **Note:** The package is auto-discovered by Laravel and the `mailbox` mail transport is automatically registered. No manual service provider or mailer configuration is needed.
 
 ## Configuration
 
-The published `config/inbox.php` file exposes several options:
+The published `config/mailbox.php` file exposes several options:
 
-- `INBOX_ENABLED` &mdash; enable the inbox even in production (defaults to non-production only).
-- `INBOX_GATE` &mdash; ability checked by the `mailbox.authorize` middleware (defaults to `viewMailbox`).
-- `INBOX_DASHBOARD_ROUTE` &mdash; URI where the dashboard is mounted (`/mailbox` by default).
-- `INBOX_REDIRECT` &mdash; URI where the user is redirected when they are unauthorized (defaults to Laravel's Forbidden Page).
-- `INBOX_STORE_DRIVER` & `INBOX_FILE_PATH` &mdash; storage driver and path for captured messages.
-- `INBOX_RETENTION` &mdash; number of seconds before stored messages are purged.
+- `MAILBOX_ENABLED` &mdash; enable the mailbox even in production (defaults to non-production only).
+- `MAILBOX_GATE` &mdash; ability checked by the `mailbox.authorize` middleware (defaults to `viewMailbox`).
+- `MAILBOX_DASHBOARD_ROUTE` &mdash; URI where the dashboard is mounted (`/mailbox` by default).
+- `MAILBOX_REDIRECT` &mdash; URI where the user is redirected when they are unauthorized (defaults to Laravel's Forbidden Page).
+- `MAILBOX_STORE_DRIVER` & `MAILBOX_FILE_PATH` &mdash; storage driver and path for captured messages.
+- `MAILBOX_RETENTION` &mdash; number of seconds before stored messages are purged.
 
 ## Usage
 
-Visit the dashboard route to browse stored messages. Attachments and inline assets are served through dedicated routes. Access is protected by the `mailbox.authorize` middleware which uses Laravel's Gate system; define the `viewMailbox` ability or set `INBOX_PUBLIC=true` to expose it without authentication.
+Visit the dashboard route to browse stored messages. Attachments and inline assets are served through dedicated routes. Access is protected by the `mailbox.authorize` middleware which uses Laravel's Gate system; define the `viewMailbox` ability or set `MAILBOX_PUBLIC=true` to expose it without authentication.
 
 ## Testing
 

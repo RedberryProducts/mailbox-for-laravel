@@ -138,7 +138,7 @@ function sendTestMail() {
         })
 }
 
-function refreshInbox() {
+function refreshMailbox() {
     location.reload()
 }
 
@@ -177,7 +177,7 @@ function clearMessages() {
                     </button>
 
                     <button
-                        @click="refreshInbox"
+                        @click="refreshMailbox"
                         class="rounded-full bg-slate-200 px-3 py-1 text-xs text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
                         Refresh
                     </button>

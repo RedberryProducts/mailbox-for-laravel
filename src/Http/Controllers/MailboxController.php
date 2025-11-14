@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
 use Redberry\MailboxForLaravel\CaptureService;
 
-class InboxController
+class MailboxController
 {
     public function __invoke(Request $request, CaptureService $service): \Illuminate\Contracts\View\View
     {
@@ -17,6 +17,6 @@ class InboxController
         ];
 
         // Otherwise, render the Blade view and hydrate initial props
-        return View::make('inbox::index', ['data' => $payload]);
+        return View::make('mailbox::index', ['data' => $payload]);
     }
 }

@@ -2,15 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 use Redberry\MailboxForLaravel\CaptureService;
-use Redberry\MailboxForLaravel\Http\Controllers\ClearInboxController;
-use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeInboxMiddleware;
+use Redberry\MailboxForLaravel\Http\Controllers\ClearMailboxController;
+use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
 
-describe(ClearInboxController::class, function () {
+describe(ClearMailboxController::class, function () {
     beforeEach(function () {
-        Route::middleware(AuthorizeInboxMiddleware::class)->group(function () {
-            Route::post('/mailbox/clear', ClearInboxController::class)->name('inbox.clear');
+        Route::middleware(AuthorizeMailboxMiddleware::class)->group(function () {
+            Route::post('/mailbox/clear', ClearMailboxController::class)->name('mailbox.clear');
         });
-        config()->set('inbox.public', true);
+        config()->set('mailbox.public', true);
 
         // Clear any existing messages before each test
         $service = app(CaptureService::class);
@@ -39,7 +39,7 @@ describe(ClearInboxController::class, function () {
         $messagesBefore = $service->all();
         expect($messagesBefore)->toHaveCount(2);
 
-        // Clear the inbox
+        // Clear the mailbox
         $response = $this->post('/mailbox/clear');
 
         $response->assertOk()
@@ -50,10 +50,10 @@ describe(ClearInboxController::class, function () {
         expect($messagesAfter)->toBeEmpty();
     });
 
-    it('returns json response even when inbox is already empty', function () {
+    it('returns json response even when mailbox is already empty', function () {
         $service = app(CaptureService::class);
 
-        // Ensure inbox is empty
+        // Ensure mailbox is empty
         $messagesBefore = $service->all();
         expect($messagesBefore)->toBeEmpty();
 

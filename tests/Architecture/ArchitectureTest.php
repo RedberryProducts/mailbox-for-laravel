@@ -26,7 +26,7 @@ $rules = [
     'all middleware names end with Middleware',
     'all controllers end with Controller',
     'all contracts interfaces end with interface name or reside in Contracts namespace',
-    'config keys use prefix "inbox." only',
+    'config keys use prefix "mailbox." only',
     'tests reside in /tests and use Pest test files ending with Test.php',
     'classes have strict_types declaration (if you adopt it)',
     'no class suppresses PHPStan baseline for level >= your target',
