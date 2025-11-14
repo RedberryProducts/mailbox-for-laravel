@@ -5,6 +5,7 @@ namespace Redberry\MailboxForLaravel;
 use Illuminate\Mail\MailManager;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Gate;
+use Redberry\MailboxForLaravel\Commands\DevLinkCommand;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
 use Redberry\MailboxForLaravel\Transport\MailboxTransport;
@@ -23,6 +24,12 @@ class MailboxServiceProvider extends PackageServiceProvider
             ->hasCommands([
                 Commands\InstallCommand::class,
             ]);
+
+        if ($this->app->environment('local')) {
+            $this->commands([
+                DevLinkCommand::class,
+            ]);
+        }
 
     }
 
@@ -44,7 +51,8 @@ class MailboxServiceProvider extends PackageServiceProvider
     public function packageBooted(): void
     {
         $this->app->make(Router::class)
-            ->aliasMiddleware('mailbox.authorize', AuthorizeMailboxMiddleware::class);
+            ->aliasMiddleware('mailbox.authorize', AuthorizeMailboxMiddleware::class)
+            ->aliasMiddleware('mailbox.inertia', Http\Middleware\HandleInertiaRequests::class);
 
         Gate::define('viewMailbox', function ($user = null) {
             // This closure only runs when Gate::allows() is called, i.e. during a request

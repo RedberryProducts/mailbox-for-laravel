@@ -1,20 +1,22 @@
 <script setup>
 import { computed, ref } from 'vue'
-import AppHeader from './AppHeader.vue'
-import MailListItem from './MailListItem.vue'
-import EmailDialog from './EmailDialog.vue'
-import { get, post } from '../api'
+import { router } from '@inertiajs/vue3'
+import AppHeader from '../Components/AppHeader.vue'
+import MailListItem from '../Components/MailListItem.vue'
+import EmailDialog from '../Components/EmailDialog.vue'
 
 const props = defineProps({
     messages: { type: [Object, Array], default: () => ({}) },
     title: { type: String, default: 'Mailbox' },
     subtitle: { type: String, default: '' },
+    mailboxPrefix: { type: String, default: 'mailbox' },
+    csrfToken: { type: String, default: '' },
 })
 
 const query = ref('')
 
 /**
- * Local “just-seen” tracker to avoid mutating props.
+ * Local "just-seen" tracker to avoid mutating props.
  * If an item has no seen_at from server but gets opened now,
  * we put its id into this Set to render as read immediately.
  */
@@ -56,14 +58,19 @@ async function openItem(row) {
     if (isUnread(row)) {
         locallySeen.value.add(row.id)
 
-        // Fire-and-forget marking request
-        // Adjust the URL to your backend route (example below).
-        // Expected: backend sets seen_at for this message id.
-        post(`/messages/${encodeURIComponent(row.id)}/seen`)
-            .catch(() => {
-                // If server fails, we can revert local state
-                locallySeen.value.delete(row.id)
-            })
+        // Fire-and-forget marking request using Inertia's router
+        router.post(
+            `/${props.mailboxPrefix}/messages/${encodeURIComponent(row.id)}/seen`,
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onError: () => {
+                    // If server fails, we can revert local state
+                    locallySeen.value.delete(row.id)
+                }
+            }
+        )
     }
 }
 
@@ -119,43 +126,48 @@ function makeSnippet(text, html) {
 }
 
 function stripHtml(s) {
-    return String(s)
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-        .replace(/<[^>]+>/g, '')
+    // Create a simple but more robust HTML stripper
+    let result = String(s)
+    // Remove script tags and their content
+    result = result.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    // Remove style tags and their content
+    result = result.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    // Remove all remaining HTML tags
+    result = result.replace(/<[^>]+>/g, '')
+    // Decode common HTML entities
+    result = result.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+    return result
 }
 
 function sendTestMail() {
-    post('/test-email')
-        .then((r) => {
-            if (r.status !== 200) throw new Error('Failed to send test mail')
+    router.post(`/${props.mailboxPrefix}/test-email`, {}, {
+        preserveState: false,
+        onSuccess: () => {
             alert('Test mail sent! It should arrive in a few seconds.')
-            location.reload()
-        })
-        .catch((e) => {
-            console.error(e)
-            alert('Error: ' + e.message)
-        })
+        },
+        onError: () => {
+            alert('Error sending test mail')
+        }
+    })
 }
 
 function refreshMailbox() {
-    location.reload()
+    router.reload()
 }
 
 function clearMessages() {
     if (!confirm('Are you sure you want to clear all messages? This action cannot be undone.')) {
         return
     }
-    post('/clear', { method: 'POST' })
-        .then((r) => {
-            if (r.status !== 200) throw new Error('Failed to clear messages')
+    router.post(`/${props.mailboxPrefix}/clear`, {}, {
+        preserveState: false,
+        onSuccess: () => {
             alert('All messages cleared.')
-            location.reload()
-        })
-        .catch((e) => {
-            console.error(e)
-            alert('Error: ' + e.message)
-        })
+        },
+        onError: () => {
+            alert('Error clearing messages')
+        }
+    })
 }
 </script>
 
@@ -203,7 +215,6 @@ function clearMessages() {
                 </div>
             </template>
         </AppHeader>
-
         <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
             <div
                 v-if="filtered.length"

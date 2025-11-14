@@ -1,5 +1,6 @@
 <?php
 
+use Inertia\Testing\AssertableInertia as Assert;
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Http\Controllers\MailboxController;
 
@@ -12,7 +13,7 @@ describe(MailboxController::class, function () {
         $service->clearAll();
     });
 
-    it('returns view with paginated list of messages sorted newest-first', function () {
+    it('returns inertia response with paginated list of messages sorted newest-first', function () {
         $service = app(CaptureService::class);
 
         // Store messages with different timestamps to test sorting
@@ -32,36 +33,27 @@ describe(MailboxController::class, function () {
         $key1 = $service->store($payload1);
         $key2 = $service->store($payload2);
 
-        $controller = new MailboxController;
-        $request = request();
+        $response = $this->get(route('mailbox.index'));
 
-        $result = $controller->__invoke($request, $service);
+        $response->assertStatus(200);
 
-        expect($result)->toBeInstanceOf(\Illuminate\Contracts\View\View::class);
-        expect($result->name())->toBe('mailbox::index');
-
-        $data = $result->getData();
-        expect($data)->toHaveKey('data');
-        expect($data['data'])->toHaveKey('messages');
-        expect($data['data']['messages'])->toBeArray();
-        expect($data['data']['messages'])->toHaveCount(2);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('mailbox::Dashboard')
+            ->has('messages', 2)
+            ->has('title')
+            ->has('subtitle')
+        );
     });
 
     it('handles empty message list', function () {
-        $service = app(CaptureService::class);
-        $controller = new MailboxController;
-        $request = request();
+        $response = $this->get(route('mailbox.index'));
 
-        $result = $controller->__invoke($request, $service);
+        $response->assertStatus(200);
 
-        expect($result)->toBeInstanceOf(\Illuminate\Contracts\View\View::class);
-        expect($result->name())->toBe('mailbox::index');
-
-        $data = $result->getData();
-        expect($data)->toHaveKey('data');
-        expect($data['data'])->toHaveKey('messages');
-        expect($data['data']['messages'])->toBeArray();
-        expect($data['data']['messages'])->toBeEmpty();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('mailbox::Dashboard')
+            ->has('messages', 0)
+        );
     });
 
     it('normalizes message data structure for both paginated and non-paginated responses', function () {
@@ -75,15 +67,14 @@ describe(MailboxController::class, function () {
 
         $service->store($payload);
 
-        $controller = new MailboxController;
-        $request = request();
+        $response = $this->get(route('mailbox.index'));
 
-        $result = $controller->__invoke($request, $service);
+        $response->assertStatus(200);
 
-        $data = $result->getData();
-        // Should handle both paginated (with 'data' key) and non-paginated message arrays
-        expect($data['data']['messages'])->toBeArray();
-        expect($data['data']['messages'])->toHaveCount(1);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('mailbox::Dashboard')
+            ->has('messages', 1)
+        );
     });
 
     it('uses CaptureService to retrieve all messages', function () {
@@ -99,13 +90,14 @@ describe(MailboxController::class, function () {
             $service->store($payload);
         }
 
-        $controller = new MailboxController;
-        $request = request();
+        $response = $this->get(route('mailbox.index'));
 
-        $result = $controller->__invoke($request, $service);
+        $response->assertStatus(200);
 
-        $data = $result->getData();
-        expect($data['data']['messages'])->toHaveCount(3);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('mailbox::Dashboard')
+            ->has('messages', 3)
+        );
     });
 
     it('properly formats data structure for Vue.js consumption', function () {
@@ -121,21 +113,20 @@ describe(MailboxController::class, function () {
 
         $service->store($payload);
 
-        $controller = new MailboxController;
-        $request = request();
+        $response = $this->get(route('mailbox.index'));
 
-        $result = $controller->__invoke($request, $service);
+        $response->assertStatus(200);
 
-        $data = $result->getData();
-        expect($data)->toHaveKey('data');
-        expect($data['data'])->toHaveKey('messages');
-
-        $message = $data['data']['messages'][0];
-        expect($message)->toHaveKey('subject', 'Test Email');
-        expect($message)->toHaveKey('from');
-        expect($message)->toHaveKey('to');
-        expect($message)->toHaveKey('html', '<p>Test content</p>');
-        expect($message)->toHaveKey('id');
-        expect($message)->toHaveKey('timestamp');
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('mailbox::Dashboard')
+            ->has('messages', 1)
+            ->has('messages.0.subject')
+            ->where('messages.0.subject', 'Test Email')
+            ->has('messages.0.from')
+            ->has('messages.0.to')
+            ->has('messages.0.html')
+            ->has('messages.0.id')
+            ->has('messages.0.timestamp')
+        );
     });
 });

@@ -91,25 +91,26 @@ final class MessageNormalizer
             $size = null;
 
             if ($storeAttachmentsInline) {
-                // getBody() can be string|resource
+                /** @var string|resource $body */
                 $body = $part->getBody();
+
                 if (is_resource($body)) {
-                    $body = stream_get_contents($body);
+                    $body = stream_get_contents($body) ?: '';
                 }
-                if (is_string($body)) {
-                    $size = strlen($body);
-                    $bodyBase64 = base64_encode($body);
-                }
+
+                // at this point $body is definitely a string
+                $size = strlen($body);
+                $bodyBase64 = base64_encode($body);
             }
 
             $attachments[] = array_filter([
                 'filename' => $filename,
                 'contentType' => $contentType,
-                'disposition' => $disposition, // e.g. attachment/inline; filename=...
-                'contentId' => $contentId,   // for cid: images
+                'disposition' => $disposition,
+                'contentId' => $contentId,
                 'inline' => $contentId !== null,
                 'size' => $size,
-                'content' => $bodyBase64,  // base64 or null
+                'content' => $bodyBase64,
             ], static fn ($v) => $v !== null);
         }
 
