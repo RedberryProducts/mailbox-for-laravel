@@ -104,13 +104,13 @@ final class MessageNormalizer
             }
 
             $attachments[] = array_filter([
-                'filename'     => $filename,
-                'contentType'  => $contentType,
-                'disposition'  => $disposition,
-                'contentId'    => $contentId,
-                'inline'       => $contentId !== null,
-                'size'         => $size,
-                'content'      => $bodyBase64,
+                'filename' => $filename,
+                'contentType' => $contentType,
+                'disposition' => $disposition,
+                'contentId' => $contentId,
+                'inline' => $contentId !== null,
+                'size' => $size,
+                'content' => $bodyBase64,
             ], static fn ($v) => $v !== null);
         }
 
