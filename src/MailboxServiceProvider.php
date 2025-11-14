@@ -44,7 +44,8 @@ class MailboxServiceProvider extends PackageServiceProvider
     public function packageBooted(): void
     {
         $this->app->make(Router::class)
-            ->aliasMiddleware('mailbox.authorize', AuthorizeMailboxMiddleware::class);
+            ->aliasMiddleware('mailbox.authorize', AuthorizeMailboxMiddleware::class)
+            ->aliasMiddleware('mailbox.inertia', Http\Middleware\HandleInertiaRequests::class);
 
         Gate::define('viewMailbox', function ($user = null) {
             // This closure only runs when Gate::allows() is called, i.e. during a request

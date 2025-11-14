@@ -1,20 +1,11 @@
 {
-  "resources/css/mailbox.css": {
-    "file": "assets/mailbox-D7iedG_3.css",
-    "src": "resources/css/mailbox.css",
-    "isEntry": true,
-    "names": [
-      "mailbox.css"
-    ]
-  },
-  "resources/js/mailbox.js": {
-    "file": "assets/mailbox-CbUoJoid.js",
-    "name": "mailbox",
-    "src": "resources/js/mailbox.js",
+  "resources/js/dashboard.js": {
+    "file": "assets/dashboard-CrUfu3oA.js",
+    "name": "dashboard",
+    "src": "resources/js/dashboard.js",
     "isEntry": true,
     "css": [
-      "assets/mailbox-DscuMJRI.css",
-      "assets/mailbox-D7iedG_3.css"
+      "assets/dashboard-DDAVBPfu.css"
     ]
   }
 }
