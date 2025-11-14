@@ -126,10 +126,17 @@ function makeSnippet(text, html) {
 }
 
 function stripHtml(s) {
-    return String(s)
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-        .replace(/<[^>]+>/g, '')
+    // Create a simple but more robust HTML stripper
+    let result = String(s)
+    // Remove script tags and their content
+    result = result.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    // Remove style tags and their content
+    result = result.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    // Remove all remaining HTML tags
+    result = result.replace(/<[^>]+>/g, '')
+    // Decode common HTML entities
+    result = result.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+    return result
 }
 
 function sendTestMail() {
