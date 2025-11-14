@@ -16,24 +16,21 @@ A Laravel package that captures outgoing mail and stores it for in-app viewing. 
    ```bash
    composer require redberry/mailbox-for-laravel --dev
    ```
-2. Publish public assets and configuration:
+
+2. Publish the package assets:
    ```bash
    php artisan mailbox:install
-   # or
-   php artisan vendor:publish --tag=mailbox-install
    ```
-3. Register the `mailbox` mailer driver in `config/mail.php`:
-   ```php
-   'mailers' => [
-       // ...
-       'mailbox' => ['transport' => 'mailbox'],
-   ],
-   ```
-4. Use the `mailbox` mailer by setting it in your `.env`:
+   This will publish the configuration file to `config/mailbox.php` and the frontend assets to `public/vendor/mailbox`.
+
+3. Configure your application to use the mailbox mailer in your `.env`:
    ```env
    MAIL_MAILER=mailbox
    ```
-5. Go to [http://localhost/mailbox](http://localhost/mailbox)
+
+4. Visit the dashboard at [http://localhost/mailbox](http://localhost/mailbox)
+
+> **Note:** The package is auto-discovered by Laravel and the `mailbox` mail transport is automatically registered. No manual service provider or mailer configuration is needed.
 
 ## Configuration
 
