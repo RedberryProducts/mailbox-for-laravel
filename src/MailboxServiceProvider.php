@@ -5,6 +5,7 @@ namespace Redberry\MailboxForLaravel;
 use Illuminate\Mail\MailManager;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Gate;
+use Redberry\MailboxForLaravel\Commands\DevLinkCommand;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
 use Redberry\MailboxForLaravel\Transport\MailboxTransport;
@@ -24,18 +25,24 @@ class MailboxServiceProvider extends PackageServiceProvider
                 Commands\InstallCommand::class,
             ]);
 
+        if ($this->app->environment('local')) {
+            $this->commands([
+                DevLinkCommand::class,
+            ]);
+        }
+
     }
 
     public function registeringPackage(): void
     {
-        $this->app->singleton(MessageStore::class, fn () => (new StoreManager)->create());
-        $this->app->singleton(CaptureService::class, fn () => new CaptureService(app(MessageStore::class)));
+        $this->app->singleton(MessageStore::class, fn() => (new StoreManager)->create());
+        $this->app->singleton(CaptureService::class, fn() => new CaptureService(app(MessageStore::class)));
 
         if (config('app.env') !== 'production' || config('mailbox.enabled', false)) {
-            $this->app->singleton(MailboxTransport::class, fn () => new MailboxTransport(app(CaptureService::class)));
+            $this->app->singleton(MailboxTransport::class, fn() => new MailboxTransport(app(CaptureService::class)));
 
             $this->app->afterResolving(MailManager::class, function (MailManager $manager) {
-                $manager->extend('mailbox', fn ($config) => app(MailboxTransport::class));
+                $manager->extend('mailbox', fn($config) => app(MailboxTransport::class));
             });
         }
 
@@ -49,7 +56,7 @@ class MailboxServiceProvider extends PackageServiceProvider
 
         Gate::define('viewMailbox', function ($user = null) {
             // This closure only runs when Gate::allows() is called, i.e. during a request
-            return ! app()->environment('production');
+            return !app()->environment('production');
         });
 
         $this->publishes([
