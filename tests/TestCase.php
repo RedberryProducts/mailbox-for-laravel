@@ -3,11 +3,19 @@
 namespace Redberry\MailboxForLaravel\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Testing\TestResponse;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Redberry\MailboxForLaravel\MailboxServiceProvider;
 
 class TestCase extends Orchestra
 {
+    /**
+     * The latest test response (if any).
+     *
+     * @var TestResponse|null
+     */
+    protected static ?TestResponse $latestResponse = null;
+
     protected function setUp(): void
     {
         parent::setUp();
