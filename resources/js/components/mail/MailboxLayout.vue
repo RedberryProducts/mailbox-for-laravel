@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import axios from 'axios'
 import MailboxFilterBar from '@/components/mail/MailboxFilterBar.vue'
 import MailboxList from '@/components/mail/MailboxList.vue'
 import MailboxPreview from '@/components/mail/MailboxPreview.vue'
@@ -73,21 +74,12 @@ const handleSelectMessage = (id: string) => {
         return
     }
 
-    // Call backend endpoint to mark as seen using Inertia's axios
-    // Since this is a JSON API endpoint (not an Inertia response),
-    // we use router.post with async handling
-    fetch(`/mailbox/messages/${id}/seen`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-        },
-    })
-        .then((response) => response.json())
-        .then((data) => {
+    // Use axios (part of Inertia stack) for JSON API endpoint
+    axios
+        .post(`/mailbox/messages/${id}/seen`)
+        .then((response) => {
             // Update local state with the seen_at timestamp
-            msg.seen_at = data.seen_at
+            msg.seen_at = response.data.seen_at
         })
         .catch((error) => {
             console.error('Failed to mark message as seen', error)
