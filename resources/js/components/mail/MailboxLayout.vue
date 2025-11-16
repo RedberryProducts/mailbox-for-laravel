@@ -15,6 +15,7 @@ interface Message {
     html_body: string
     text_body: string
     raw_body: string
+    seen_at: string | null
 }
 
 const props = defineProps<{
@@ -66,6 +67,32 @@ const handleRecipientChange = (recipient: string) => {
 
 const handleSelectMessage = (id: string) => {
     selectedMessageId.value = id
+
+    const msg = props.messages.find((m) => m.id === id)
+    if (!msg || msg.seen_at) {
+        return
+    }
+
+    // Call backend endpoint to mark as seen using Inertia's axios
+    // Since this is a JSON API endpoint (not an Inertia response),
+    // we use router.post with async handling
+    fetch(`/mailbox/messages/${id}/seen`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        },
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            // Update local state with the seen_at timestamp
+            msg.seen_at = data.seen_at
+        })
+        .catch((error) => {
+            console.error('Failed to mark message as seen', error)
+            // We do NOT revert selection; worst case the message appears unread until next reload.
+        })
 }
 
 const handleViewChange = (view: TabType) => {

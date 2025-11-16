@@ -6,6 +6,7 @@ namespace Redberry\MailboxForLaravel\DTO;
 
 use Illuminate\Support\Carbon;
 use Spatie\LaravelData\Data;
+
 use function array_filter;
 use function array_map;
 use function array_values;
@@ -89,14 +90,15 @@ class MailboxMessageData extends Data
         )));
 
         return [
-            'id'         => $this->id,
-            'subject'    => $this->subject ?? '(No subject)',
-            'from'       => $this->sender['email'] ?? ($this->from[0]['email'] ?? ''),
-            'to'         => $toEmails,
+            'id' => $this->id,
+            'subject' => $this->subject ?? '(No subject)',
+            'from' => $this->sender['email'] ?? ($this->from[0]['email'] ?? ''),
+            'to' => $toEmails,
             'created_at' => $this->saved_at ?? Carbon::createFromTimestamp($this->timestamp)->toIso8601String(),
-            'html_body'  => $this->html,
-            'text_body'  => $this->text,
-            'raw_body'   => $this->raw,
+            'html_body' => $this->html,
+            'text_body' => $this->text,
+            'raw_body' => $this->raw,
+            'seen_at' => $this->seen_at,
         ];
     }
 }

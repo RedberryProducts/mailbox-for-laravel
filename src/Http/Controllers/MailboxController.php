@@ -22,7 +22,7 @@ class MailboxController
 
         return Inertia::render('mailbox::Dashboard', [
             'messages' => array_map(
-                fn(MailboxMessageData $m) => $m->toFrontendArray(),
+                fn (MailboxMessageData $m) => $m->toFrontendArray(),
                 $messages,
             ),
             'meta' => [

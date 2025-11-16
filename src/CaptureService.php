@@ -8,9 +8,7 @@ use Redberry\MailboxForLaravel\DTO\MailboxMessageData;
 
 class CaptureService
 {
-    public function __construct(protected MessageStore $storage)
-    {
-    }
+    public function __construct(protected MessageStore $storage) {}
 
     /**
      * Persist the raw message and metadata.
@@ -71,7 +69,7 @@ class CaptureService
         foreach ($this->storage->keys() as $key) {
             $raw = $this->storage->retrieve($key);
 
-            if (!$raw) {
+            if (! $raw) {
                 continue;
             }
 
@@ -79,7 +77,7 @@ class CaptureService
         }
 
         // Sort by timestamp (newest first)
-        uasort($messages, fn(MailboxMessageData $a, MailboxMessageData $b) => $b->timestamp <=> $a->timestamp);
+        uasort($messages, fn (MailboxMessageData $a, MailboxMessageData $b) => $b->timestamp <=> $a->timestamp);
 
         return $messages;
     }
@@ -134,7 +132,7 @@ class CaptureService
 
     protected function assertKey(string $key): void
     {
-        if (!preg_match('/^[A-Za-z0-9_.\-]+$/', $key)) {
+        if (! preg_match('/^[A-Za-z0-9_.\-]+$/', $key)) {
             throw new InvalidArgumentException('Invalid id');
         }
     }
