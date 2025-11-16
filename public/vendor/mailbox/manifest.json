@@ -1,11 +1,11 @@
 {
   "resources/js/dashboard.js": {
-    "file": "assets/dashboard-BEXDqIeC.js",
+    "file": "assets/dashboard-BXOvpFyd.js",
     "name": "dashboard",
     "src": "resources/js/dashboard.js",
     "isEntry": true,
     "css": [
-      "assets/dashboard-BfTrk46o.css"
+      "assets/dashboard-BLexhjeW.css"
     ]
   }
 }
