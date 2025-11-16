@@ -9,7 +9,7 @@ describe(Mailbox::class, function () {
     it('proxies list/get/delete to CaptureService', function () {
         $mock = Mockery::mock(CaptureService::class);
         $mock->shouldReceive('list')->once()->andReturn([]);
-        $mock->shouldReceive('get')->with('id')->once()->andReturn(['foo']);
+        $mock->shouldReceive('get')->with('id')->once()->andReturn(null); // Returns MailboxMessageData or null
         $mock->shouldReceive('delete')->with('id')->once();
         App::instance(CaptureService::class, $mock);
 

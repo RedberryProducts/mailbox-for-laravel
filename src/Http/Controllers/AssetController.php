@@ -14,7 +14,7 @@ class AssetController
 
         abort_unless((bool) $payload, 404);
 
-        $attachment = collect($payload['attachments'] ?? [])
+        $attachment = collect($payload->attachments ?? [])
             ->first(fn ($a) => ($a['filename'] ?? null) === $asset);
         abort_unless($attachment, 404);
 

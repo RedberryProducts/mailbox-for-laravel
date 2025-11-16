@@ -55,5 +55,10 @@ class TestCase extends Orchestra
         $app['config']->set('inertia.testing.ensure_pages_exist', false);
         $app['config']->set('inertia.testing.page_paths', []);
 
+        // Load spatie/laravel-data config to fix transformation context issues
+        $dataConfig = require __DIR__.'/../config/data.php';
+        foreach ($dataConfig as $key => $value) {
+            $app['config']->set("data.{$key}", $value);
+        }
     }
 }

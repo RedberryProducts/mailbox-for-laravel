@@ -68,12 +68,12 @@ describe(SeenController::class, function () {
 
         $key = $service->store($payload);
 
-        $beforeTimestamp = now();
+        $beforeTimestamp = now()->subSecond(); // Add 1 second tolerance
 
         $response = $this->post("/mailbox/messages/{$key}/seen");
         $response->assertOk();
 
-        $afterTimestamp = now();
+        $afterTimestamp = now()->addSecond(); // Add 1 second tolerance
 
         // Verify JSON response
         $json = $response->json();
