@@ -56,6 +56,7 @@ class MailboxMessageData extends Data
         $timestamp = (int) ($message['timestamp'] ?? time());
         $id = (string) ($message['id'] ?? ('email_'.md5($message['raw'] ?? '').'_'.microtime(true)));
 
+        // @phpstan-ignore new.static (This is safe - Data class is designed for inheritance)
         return new static(
             timestamp: $timestamp,
             id: $id,
@@ -85,7 +86,7 @@ class MailboxMessageData extends Data
     public function toFrontendArray(): array
     {
         $toEmails = array_values(array_filter(array_map(
-            static fn (array $r) => $r['email'] ?? null,
+            static fn (array $r) => $r['email'],
             $this->to,
         )));
 

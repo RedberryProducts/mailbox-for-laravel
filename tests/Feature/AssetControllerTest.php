@@ -67,4 +67,18 @@ describe(AssetController::class, function () {
         $response->assertOk();
         expect($response->baseResponse)->toBeInstanceOf(StreamedResponse::class);
     });
+
+    it('returns 404 when attachment has no content or path', function () {
+        $svc = app(CaptureService::class);
+        $key = $svc->store([
+            'attachments' => [[
+                'filename' => 'empty.txt',
+                'contentType' => 'text/plain',
+                // No 'content' or 'path' field
+            ]],
+        ]);
+
+        $response = $this->get("/mailbox/messages/{$key}/attachments/empty.txt");
+        $response->assertNotFound();
+    });
 });

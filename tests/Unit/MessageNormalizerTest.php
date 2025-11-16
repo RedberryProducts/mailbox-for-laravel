@@ -162,4 +162,23 @@ describe(MessageNormalizer::class, function () {
         expect($payload['version'])->toBe(1)
             ->and(strtotime($payload['saved_at']))->toBeInt();
     });
+
+    it('handles RawMessage fallback with minimal structure', function () {
+        $rawMessage = new Symfony\Component\Mime\RawMessage('From: test@example.com\r\nSubject: Test\r\n\r\nBody');
+
+        $payload = MessageNormalizer::normalize($rawMessage);
+
+        expect($payload['version'])->toBe(1)
+            ->and($payload['subject'])->toBeNull()
+            ->and($payload['from'])->toBe([])
+            ->and($payload['to'])->toBe([])
+            ->and($payload['cc'])->toBe([])
+            ->and($payload['bcc'])->toBe([])
+            ->and($payload['reply_to'])->toBe([])
+            ->and($payload['text'])->toBeNull()
+            ->and($payload['html'])->toBeNull()
+            ->and($payload['headers'])->toBe([])
+            ->and($payload['attachments'])->toBe([])
+            ->and($payload['raw'])->toBeInstanceOf(Symfony\Component\Mime\RawMessage::class);
+    });
 });
