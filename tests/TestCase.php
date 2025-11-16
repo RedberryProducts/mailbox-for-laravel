@@ -66,5 +66,16 @@ class TestCase extends Orchestra
         foreach ($dataConfig as $key => $value) {
             $app['config']->set("data.{$key}", $value);
         }
+
+        // Make sure package views are registered (this is usually in your SP boot)
+        // but we don't hurt anything by making sure:
+        // $this is optional if your SP already calls loadViewsFrom
+        $app['config']->set('view.paths', [
+            base_path('resources/views'),
+        ]);
+
+        // 👇 This is the important part for fixing the error in CI:
+        // Tell Inertia to use your package layout as the root view
+        $app['config']->set('inertia.view', 'mailbox::layout');
     }
 }
