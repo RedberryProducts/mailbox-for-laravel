@@ -54,7 +54,7 @@ describe(FileStorage::class, function () {
 
     it('returns empty array when keys() called on non-existent directory', function () {
         $store = new FileStorage(sys_get_temp_dir().'/non-existent-'.uniqid());
-        
+
         expect(iterator_to_array($store->keys()))->toBe([]);
     });
 
@@ -69,7 +69,7 @@ describe(FileStorage::class, function () {
 
     it('handles update on non-existent key', function () {
         $store = storage();
-        
+
         $result = $store->update('nonexistent', ['seen_at' => 'now']);
         expect($result)->toBeNull();
     });
@@ -79,7 +79,7 @@ describe(FileStorage::class, function () {
         $store->store('test', ['raw' => 'test', 'timestamp' => 1000, 'seen_at' => null]);
 
         $updated = $store->update('test', ['seen_at' => '2024-01-01']);
-        
+
         expect($updated)->toHaveKey('seen_at', '2024-01-01')
             ->and($updated)->toHaveKey('raw', 'test');
     });
