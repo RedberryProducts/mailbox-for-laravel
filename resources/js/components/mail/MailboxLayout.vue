@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import MailboxFilterBar from '@/components/mail/MailboxFilterBar.vue'
 import MailboxList from '@/components/mail/MailboxList.vue'
 import MailboxPreview from '@/components/mail/MailboxPreview.vue'
+import axios from 'axios'
 
 type TabType = 'html' | 'text' | 'raw'
 
@@ -15,6 +16,7 @@ interface Message {
     html_body: string
     text_body: string
     raw_body: string
+    seen_at: string | null
 }
 
 const props = defineProps<{
@@ -64,8 +66,26 @@ const handleRecipientChange = (recipient: string) => {
     selectedRecipient.value = recipient
 }
 
-const handleSelectMessage = (id: string) => {
+const handleSelectMessage = async (id: string) => {
     selectedMessageId.value = id
+
+    const msg = props.messages.find((m) => m.id === id)
+    if (!msg || msg.seen_at) {
+        return
+    }
+
+    try {
+        // Call backend endpoint to mark as seen
+        const { data } = await axios.post(
+            `/mailbox/messages/${id}/seen`,
+        )
+
+        // Optimistically update local state
+        msg.seen_at = data.seen_at
+    } catch (error) {
+        console.error('Failed to mark message as seen', error)
+        // We do NOT revert selection; worst case the message appears unread until next reload.
+    }
 }
 
 const handleViewChange = (view: TabType) => {
