@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { formatDistanceToNow } from 'date-fns'
+import {computed} from 'vue'
+import {formatDistanceToNow} from 'date-fns'
 
 interface Message {
     id: string
@@ -64,7 +64,7 @@ const toClasses = computed(() => [
             <!-- Unread dot indicator -->
             <span
                 v-if="!props.message.seen_at"
-                class="h-2 w-2 rounded-full bg-primary flex-shrink-0"
+                :class="['h-2 w-2 rounded-full bg-primary flex-shrink-0', props.isSelected ? 'bg-primary-foreground' : 'bg-primary']"
             />
         </div>
     </button>
