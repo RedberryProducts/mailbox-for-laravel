@@ -11,8 +11,6 @@ class TestCase extends Orchestra
 {
     /**
      * The latest test response (if any).
-     *
-     * @var TestResponse|null
      */
     protected static ?TestResponse $latestResponse = null;
 
