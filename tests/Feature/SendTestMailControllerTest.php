@@ -39,31 +39,25 @@ describe(SendTestMailController::class, function () {
         $key = $response->json('key');
         $storedMessage = $service->retrieve($key);
 
-        expect($storedMessage)->toHaveKey('version', 1);
-        expect($storedMessage)->toHaveKey('subject', 'Test Mailbox for Laravel');
-        expect($storedMessage)->toHaveKey('from');
-        expect($storedMessage['from'])->toBeArray();
-        expect($storedMessage['from'][0])->toEqual([
+        expect($storedMessage->version)->toBe(1);
+        expect($storedMessage->subject)->toBe('Test Mailbox for Laravel');
+        expect($storedMessage->from)->toBeArray();
+        expect($storedMessage->from[0])->toEqual([
             'email' => 'hello@example.com',
             'name' => 'Laravel',
         ]);
-        expect($storedMessage)->toHaveKey('sender');
-        expect($storedMessage['sender'])->toEqual([
+        expect($storedMessage->sender)->toEqual([
             'name' => 'Laravel',
             'email' => 'hello@example.com',
         ]);
-        expect($storedMessage)->toHaveKey('to');
-        expect($storedMessage['to'][0])->toEqual([
+        expect($storedMessage->to[0])->toEqual([
             'email' => 'recipient@example.com',
         ]);
-        expect($storedMessage)->toHaveKey('html');
-        expect($storedMessage['html'])->toContain('<h1>Hello from Mailbox for Laravel</h1>');
-        expect($storedMessage)->toHaveKey('raw');
-        expect($storedMessage['raw'])->toContain('From: Laravel <hello@example.com>');
-        expect($storedMessage)->toHaveKey('saved_at');
-        expect($storedMessage)->toHaveKey('headers');
-        expect($storedMessage['headers'])->toHaveKey('MIME-Version', '1.0');
-        expect($storedMessage['headers'])->toHaveKey('Content-Type', 'text/html; charset=utf-8');
+        expect($storedMessage->html)->toContain('<h1>Hello from Mailbox for Laravel</h1>');
+        expect($storedMessage->raw)->toContain('From: Laravel <hello@example.com>');
+        expect($storedMessage->saved_at)->not->toBeNull();
+        expect($storedMessage->headers)->toHaveKey('MIME-Version', '1.0');
+        expect($storedMessage->headers)->toHaveKey('Content-Type', 'text/html; charset=utf-8');
     });
 
     it('creates test message with RFC3339 timestamp format', function () {
@@ -75,7 +69,7 @@ describe(SendTestMailController::class, function () {
         $key = $response->json('key');
         $storedMessage = $service->retrieve($key);
 
-        expect($storedMessage['saved_at'])->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/');
+        expect($storedMessage->saved_at)->toMatch('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/');
     });
 
     it('includes proper MIME headers and raw message format', function () {
@@ -87,7 +81,7 @@ describe(SendTestMailController::class, function () {
         $key = $response->json('key');
         $storedMessage = $service->retrieve($key);
 
-        $rawMessage = $storedMessage['raw'];
+        $rawMessage = $storedMessage->raw;
 
         expect($rawMessage)->toContain('From: Laravel <hello@example.com>');
         expect($rawMessage)->toContain('To: recipient@example.com');
@@ -107,12 +101,12 @@ describe(SendTestMailController::class, function () {
         $key = $response->json('key');
         $storedMessage = $service->retrieve($key);
 
-        expect($storedMessage['cc'])->toBeArray()->toBeEmpty();
-        expect($storedMessage['bcc'])->toBeArray()->toBeEmpty();
-        expect($storedMessage['reply_to'])->toBeArray()->toBeEmpty();
-        expect($storedMessage['attachments'])->toBeArray()->toBeEmpty();
-        expect($storedMessage['text'])->toBeNull();
-        expect($storedMessage['date'])->toBeNull();
-        expect($storedMessage['message_id'])->toBeNull();
+        expect($storedMessage->cc)->toBeArray()->toBeEmpty();
+        expect($storedMessage->bcc)->toBeArray()->toBeEmpty();
+        expect($storedMessage->reply_to)->toBeArray()->toBeEmpty();
+        expect($storedMessage->attachments)->toBeArray()->toBeEmpty();
+        expect($storedMessage->text)->toBe('');
+        expect($storedMessage->date)->toBeNull();
+        expect($storedMessage->message_id)->toBeNull();
     });
 });

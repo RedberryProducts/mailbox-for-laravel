@@ -14,7 +14,7 @@ class HandleInertiaRequests extends Middleware
      *
      * @var string
      */
-    protected $rootView = 'mailbox::layout';
+    protected $rootView = 'mailbox::app';
 
     /**
      * Determines the current asset version.

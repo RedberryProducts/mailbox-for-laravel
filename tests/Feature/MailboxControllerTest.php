@@ -124,9 +124,9 @@ describe(MailboxController::class, function () {
             ->where('messages.0.subject', 'Test Email')
             ->has('messages.0.from')
             ->has('messages.0.to')
-            ->has('messages.0.html')
+            ->has('messages.0.html_body')
             ->has('messages.0.id')
-            ->has('messages.0.timestamp')
+            ->has('messages.0.created_at')
         );
     });
 });

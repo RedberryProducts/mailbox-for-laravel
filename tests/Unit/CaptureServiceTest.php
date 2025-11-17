@@ -17,7 +17,7 @@ describe(CaptureService::class, function () {
         $key = $svc->store(['raw' => 'hello']);
 
         expect($key)->not->toBeEmpty();
-        expect($svc->retrieve($key)['raw'])->toBe('hello');
+        expect($svc->retrieve($key)->raw)->toBe('hello');
     });
 
     it('lists all messages ordered by timestamp desc', function () {
@@ -33,7 +33,7 @@ describe(CaptureService::class, function () {
         $svc = service();
         $key = $svc->store(['raw' => 'foo']);
 
-        expect($svc->retrieve($key)['raw'])->toBe('foo');
+        expect($svc->retrieve($key)->raw)->toBe('foo');
     });
 
     it('deletes a message by id', function () {
@@ -50,7 +50,7 @@ describe(CaptureService::class, function () {
 
         expect($key)->not->toBeEmpty();
         $retrieved = $svc->retrieve($key);
-        expect($retrieved['raw'])->toBe('raw email content');
+        expect($retrieved->raw)->toBe('raw email content');
     });
 
     it('returns all messages when list called with default perPage', function () {
@@ -59,14 +59,16 @@ describe(CaptureService::class, function () {
         $svc->store(['raw' => 'message2']);
         $svc->store(['raw' => 'message3']);
 
-        // Call list with default PHP_INT_MAX - this should hit line 80
+        // Call list with default PHP_INT_MAX - this should return data, total, page, per_page
         $result = $svc->list();
 
-        expect($result)->toHaveCount(3);
-        expect(is_array($result))->toBeTrue();
+        expect($result)->toHaveKey('data');
+        expect($result)->toHaveKey('total');
+        expect($result['data'])->toHaveCount(3);
+        expect($result['total'])->toBe(3);
 
         // Verify all messages are present by checking raw content
-        $rawContents = array_map(fn ($msg) => $msg['raw'], $result);
+        $rawContents = array_map(fn ($msg) => $msg->raw, $result['data']);
         expect($rawContents)->toContain('message1');
         expect($rawContents)->toContain('message2');
         expect($rawContents)->toContain('message3');

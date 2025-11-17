@@ -51,4 +51,36 @@ describe(FileStorage::class, function () {
         expect($paths)->toHaveCount(1)
             ->and(basename($paths[0]))->toBe('___weird.json');
     });
+
+    it('returns empty array when keys() called on non-existent directory', function () {
+        $store = new FileStorage(sys_get_temp_dir().'/non-existent-'.uniqid());
+
+        expect(iterator_to_array($store->keys()))->toBe([]);
+    });
+
+    it('filters keys by since timestamp', function () {
+        $store = storage();
+        $store->store('old', ['raw' => 'old', 'timestamp' => 1000]);
+        $store->store('new', ['raw' => 'new', 'timestamp' => 2000]);
+
+        $keys = iterator_to_array($store->keys(1500));
+        expect($keys)->toBe(['new']);
+    });
+
+    it('handles update on non-existent key', function () {
+        $store = storage();
+
+        $result = $store->update('nonexistent', ['seen_at' => 'now']);
+        expect($result)->toBeNull();
+    });
+
+    it('successfully updates existing key', function () {
+        $store = storage();
+        $store->store('test', ['raw' => 'test', 'timestamp' => 1000, 'seen_at' => null]);
+
+        $updated = $store->update('test', ['seen_at' => '2024-01-01']);
+
+        expect($updated)->toHaveKey('seen_at', '2024-01-01')
+            ->and($updated)->toHaveKey('raw', 'test');
+    });
 });

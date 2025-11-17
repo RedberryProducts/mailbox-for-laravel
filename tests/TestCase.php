@@ -3,11 +3,18 @@
 namespace Redberry\MailboxForLaravel\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Testing\TestResponse;
+use Inertia\Inertia;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Redberry\MailboxForLaravel\MailboxServiceProvider;
 
 class TestCase extends Orchestra
 {
+    /**
+     * The latest test response (if any).
+     */
+    protected static ?TestResponse $latestResponse = null;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -55,5 +62,17 @@ class TestCase extends Orchestra
         $app['config']->set('inertia.testing.ensure_pages_exist', false);
         $app['config']->set('inertia.testing.page_paths', []);
 
+        // Load spatie/laravel-data config to fix transformation context issues
+        $dataConfig = require __DIR__.'/../config/data.php';
+        foreach ($dataConfig as $key => $value) {
+            $app['config']->set("data.{$key}", $value);
+        }
+
+        // Make sure package views are registered (this is usually in your SP boot)
+        // but we don't hurt anything by making sure:
+        // $this is optional if your SP already calls loadViewsFrom
+        $app['config']->set('view.paths', [
+            base_path('resources/views'),
+        ]);
     }
 }
