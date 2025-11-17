@@ -5,7 +5,6 @@ namespace Redberry\MailboxForLaravel;
 use Illuminate\Mail\MailManager;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Gate;
-use Inertia\Inertia;
 use Redberry\MailboxForLaravel\Commands\DevLinkCommand;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
