@@ -10,7 +10,7 @@ describe(HandleInertiaRequests::class, function () {
         $property = $reflection->getProperty('rootView');
         $property->setAccessible(true);
 
-        expect($property->getValue($middleware))->toBe('mailbox::layout');
+        expect($property->getValue($middleware))->toBe('mailbox::app');
     });
 
     it('shares mailbox prefix in props', function () {
