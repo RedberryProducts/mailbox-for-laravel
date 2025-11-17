@@ -74,7 +74,5 @@ class TestCase extends Orchestra
         $app['config']->set('view.paths', [
             base_path('resources/views'),
         ]);
-
-        Inertia::setRootView('mailbox::app');
     }
 }
