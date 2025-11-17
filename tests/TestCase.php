@@ -4,6 +4,7 @@ namespace Redberry\MailboxForLaravel\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Testing\TestResponse;
+use Inertia\Inertia;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Redberry\MailboxForLaravel\MailboxServiceProvider;
 
@@ -74,8 +75,6 @@ class TestCase extends Orchestra
             base_path('resources/views'),
         ]);
 
-        // 👇 This is the important part for fixing the error in CI:
-        // Tell Inertia to use your package layout as the root view
-        $app['config']->set('inertia.view', 'mailbox::layout');
+        Inertia::setRootView('mailbox::app');
     }
 }
