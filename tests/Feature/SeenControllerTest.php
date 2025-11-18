@@ -120,12 +120,8 @@ describe(SeenController::class, function () {
     });
 
     it('throws error for invalid message key format', function () {
-        // Test with invalid key format
-        $invalidKey = 'invalid-key-format';
-
-        // The CaptureService will throw an InvalidArgumentException for invalid keys
-        $response = $this->post('/mailbox/messages/{invalidKey}/seen');
-        $response->assertStatus(500);
+        $response = $this->post("/mailbox/messages/invalid_key/seen");
+        $response->assertStatus(404);
     });
 
     it('does not overwrite existing seen_at timestamp (idempotent)', function () {

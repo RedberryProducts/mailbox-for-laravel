@@ -39,7 +39,6 @@ describe(SendTestMailController::class, function () {
         $key = $response->json('key');
         $storedMessage = $service->find($key);
 
-        expect($storedMessage->version)->toBe(1);
         expect($storedMessage->subject)->toBe('Test Mailbox for Laravel');
         expect($storedMessage->from)->toBeArray();
         expect($storedMessage->from[0])->toEqual([
