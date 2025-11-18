@@ -8,7 +8,8 @@ describe(StoreManager::class, function () {
     it('creates a file-based MessageStore when driver=file', function () {
         config(['mailbox.store.driver' => 'file']);
 
-        $store = (new StoreManager)->create();
+        $manager = app()->make(StoreManager::class);
+        $store = $manager->driver();
 
         expect($store)->toBeInstanceOf(FileStorage::class);
     });
@@ -16,7 +17,9 @@ describe(StoreManager::class, function () {
     it('throws when an unknown driver is configured', function () {
         config(['mailbox.store.driver' => 'foo']);
 
-        expect(fn () => (new StoreManager)->create())
+        $manager = app()->make(StoreManager::class);
+        
+        expect(fn () => $manager->driver())
             ->toThrow(InvalidArgumentException::class);
     });
 
@@ -25,34 +28,37 @@ describe(StoreManager::class, function () {
         {
             public array $stored = [];
 
-            public function store(string $key, array $value): void
+            public function store(array $payload): string|int
             {
-                $this->stored[$key] = $value;
+                $id = $payload['id'] ?? 'msg_'.uniqid();
+                $this->stored[$id] = $payload;
+
+                return $id;
             }
 
-            public function retrieve(string $key): ?array
+            public function find(string $id): ?array
             {
-                return $this->stored[$key] ?? null;
+                return $this->stored[$id] ?? null;
             }
 
-            public function keys(?int $since = null): iterable
+            public function paginate(int $page, int $perPage): array
             {
-                return array_keys($this->stored);
+                return array_values($this->stored);
             }
 
-            public function delete(string $key): void
+            public function delete(string $id): void
             {
-                unset($this->stored[$key]);
+                unset($this->stored[$id]);
             }
 
-            public function update(string $key, array $value): ?array
+            public function update(string $id, array $changes): ?array
             {
-                if (! isset($this->stored[$key])) {
+                if (! isset($this->stored[$id])) {
                     return null;
                 }
-                $this->stored[$key] = array_merge($this->stored[$key], $value);
+                $this->stored[$id] = array_merge($this->stored[$id], $changes);
 
-                return $this->stored[$key];
+                return $this->stored[$id];
             }
 
             public function purgeOlderThan(int $seconds): void
@@ -60,33 +66,37 @@ describe(StoreManager::class, function () {
                 $this->stored = [];
             }
 
-            public function clear(): bool
+            public function clear(): void
             {
                 $this->stored = [];
-
-                return true;
             }
         };
 
-        Config::set('mailbox.store.driver', 'memory');
-        Config::set('mailbox.store.resolvers', [
-            'memory' => fn () => $custom,
+        config([
+            'mailbox.store.driver' => 'memory',
+            'mailbox.store.resolvers' => [
+                'memory' => fn () => $custom,
+            ],
         ]);
 
-        $store = (new StoreManager)->create();
+        $manager = app()->make(StoreManager::class);
+        $store = $manager->driver();
 
         expect($store)->toBe($custom);
     });
 
     it('passes configuration options to store implementations', function () {
-        $tmp = sys_get_temp_dir().'/mailbox-tests';
+        $tmp = sys_get_temp_dir().'/mailbox-tests-'.uniqid();
         @mkdir($tmp, 0777, true);
+        
         config([
             'mailbox.store.driver' => 'file',
             'mailbox.store.file' => ['path' => $tmp],
         ]);
 
-        $store = (new StoreManager)->create();
+        $manager = app()->make(StoreManager::class);
+        $store = $manager->driver();
+        
         expect($store)->toBeInstanceOf(FileStorage::class)
             ->and($store->getBasePath())->toBe($tmp);
     });

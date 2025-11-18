@@ -41,6 +41,11 @@ class FileStorage implements MessageStore
         }
     }
 
+    public function getBasePath(): string
+    {
+        return $this->basePath;
+    }
+
     public function store(array $payload): string
     {
         $id = $payload['id'] ?? null;

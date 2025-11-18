@@ -62,9 +62,9 @@ describe(MailboxTransport::class, function () {
         $t = transport($svc);
         $email = (new Email)->from('a@example.com')->to('b@example.com')->text('hello');
         $t->send($email);
-        $payload = $svc->get($t->getStoredKey());
+        $payload = $svc->find($t->getStoredKey());
         expect($payload->text)->toBe('hello')
-            ->and($payload->html)->toBe('');
+            ->and($payload->html)->toBeNull();
     });
 
     it('handles message with only html part', function () {
@@ -72,9 +72,9 @@ describe(MailboxTransport::class, function () {
         $t = transport($svc);
         $email = (new Email)->from('a@example.com')->to('b@example.com')->html('<p>hi</p>');
         $t->send($email);
-        $payload = $svc->get($t->getStoredKey());
+        $payload = $svc->find($t->getStoredKey());
         expect($payload->html)->toBe('<p>hi</p>')
-            ->and($payload->text)->toBe('');
+            ->and($payload->text)->toBeNull();
     });
 
     it('handles message with attachments', function () {
@@ -83,7 +83,7 @@ describe(MailboxTransport::class, function () {
         $email = (new Email)->from('a@example.com')->to('b@example.com')->text('body');
         $email->attach('file-content', 'doc.txt', 'text/plain');
         $t->send($email);
-        $payload = $svc->get($t->getStoredKey());
+        $payload = $svc->find($t->getStoredKey());
         expect($payload->attachments)->toHaveCount(1)
             ->and($payload->attachments[0]['filename'])->toBe('doc.txt');
     });
@@ -96,7 +96,7 @@ describe(MailboxTransport::class, function () {
         $part->setContentId('cid1@example.com');
         $email->addPart($part);
         $t->send($email);
-        $payload = $svc->get($t->getStoredKey());
+        $payload = $svc->find($t->getStoredKey());
         expect($payload->attachments[0]['contentId'])->toBe('cid1@example.com');
     });
 
@@ -108,6 +108,6 @@ describe(MailboxTransport::class, function () {
         $email = (new Email)->from('a@example.com')->to('b@example.com')->text('body');
         expect(fn () => $t->send($email))->toThrow(TransportException::class);
         // message stored despite failure
-        expect($svc->get($t->getStoredKey())->text)->toBe('body');
+        expect($svc->find($t->getStoredKey())->text)->toBe('body');
     });
 });
