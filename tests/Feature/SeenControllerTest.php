@@ -31,7 +31,7 @@ describe(SeenController::class, function () {
         $key = $service->store($payload);
 
         // Verify message is initially unseen
-        $message = $service->retrieve($key);
+        $message = $service->find($key);
 
         expect($message->seen_at)->toBeNull();
 
@@ -48,7 +48,7 @@ describe(SeenController::class, function () {
         expect($json['seen_at'])->toBeString();
 
         // Verify message is now marked as seen
-        $updatedMessage = $service->retrieve($key);
+        $updatedMessage = $service->find($key);
         expect($updatedMessage->seen_at)->not->toBeNull();
         expect($updatedMessage->seen_at)->toBeString();
 
@@ -87,7 +87,7 @@ describe(SeenController::class, function () {
         expect($seenDate->lte($afterTimestamp))->toBeTrue();
 
         // Verify timestamp is within expected range
-        $updatedMessage = $service->retrieve($key);
+        $updatedMessage = $service->find($key);
         $seenAt = $updatedMessage->seen_at;
 
         expect($seenAt)->toBeString();
@@ -161,7 +161,7 @@ describe(SeenController::class, function () {
         expect($secondSeenAt)->toBe($firstSeenAt);
 
         // Also verify in storage
-        $message = $service->retrieve($key);
+        $message = $service->find($key);
         expect($message->seen_at)->toBe($firstSeenAt);
     });
 

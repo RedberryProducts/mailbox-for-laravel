@@ -103,13 +103,13 @@ describe(ClearMailboxController::class, function () {
         $key = $service->store($payload);
 
         // Verify message exists
-        expect($service->retrieve($key))->not->toBeNull();
+        expect($service->find($key))->not->toBeNull();
 
         $response = $this->post('/mailbox/clear');
         $response->assertOk();
 
         // Verify clearAll was effective
-        expect($service->retrieve($key))->toBeNull();
+        expect($service->find($key))->toBeNull();
         expect($service->all())->toBeEmpty();
     });
 
