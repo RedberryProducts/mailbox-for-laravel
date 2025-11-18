@@ -60,7 +60,7 @@ describe(FileStorage::class, function () {
         $newId = $store->store(['id' => 'new', 'raw' => 'y', 'timestamp' => time()]);
 
         $store->purgeOlderThan(50);
-        
+
         expect($store->find($oldId))->toBeNull()
             ->and($store->find($newId))->not->toBeNull();
     });

@@ -20,7 +20,7 @@ describe(MailboxServiceProvider::class, function () {
     it('binds MessageStore contract to StoreManager->driver() result', function () {
         // Force file driver for this test
         config(['mailbox.store.driver' => 'file']);
-        
+
         $store = app(MessageStore::class);
         expect($store)->toBeInstanceOf(FileStorage::class);
     });
@@ -28,14 +28,14 @@ describe(MailboxServiceProvider::class, function () {
     it('binds CaptureService with MessageStore dependency', function () {
         $service1 = app(CaptureService::class);
         $service2 = app(CaptureService::class);
-        
+
         // Both instances should use the same MessageStore instance
         $ref = new ReflectionProperty(CaptureService::class, 'storage');
         $ref->setAccessible(true);
-        
+
         $storage1 = $ref->getValue($service1);
         $storage2 = $ref->getValue($service2);
-        
+
         // Verify both services are configured correctly
         expect($storage1)->toBeInstanceOf(MessageStore::class)
             ->and($storage2)->toBeInstanceOf(MessageStore::class);

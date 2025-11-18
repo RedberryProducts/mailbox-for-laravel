@@ -22,7 +22,7 @@ describe(MessageStore::class, function () {
 
     it('describes return types and error behavior', function () {
         $ref = new ReflectionClass(MessageStore::class);
-        
+
         $storeReturnType = $ref->getMethod('store')->getReturnType();
         expect($storeReturnType)->not->toBeNull();
         // store returns string|int

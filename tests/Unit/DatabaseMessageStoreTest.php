@@ -1,7 +1,5 @@
 <?php
 
-use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Redberry\MailboxForLaravel\Models\MailboxMessage;
 use Redberry\MailboxForLaravel\Storage\DatabaseMessageStore;
@@ -54,13 +52,13 @@ describe(DatabaseMessageStore::class, function () {
 
     it('generates id when not provided', function () {
         $store = new DatabaseMessageStore;
-        
+
         // DatabaseMessageStore now generates IDs like FileStorage
         $id = $store->store([
             'raw' => 'content without id',
             'timestamp' => time(),
         ]);
-        
+
         expect($id)->not->toBeEmpty();
         expect($store->find($id))->not->toBeNull();
     });
@@ -94,7 +92,7 @@ describe(DatabaseMessageStore::class, function () {
         $results = $store->paginate(1, 10);
 
         expect($results)->toHaveCount(3);
-        
+
         // Results are returned as array with numeric keys, ordered by timestamp desc
         expect($results[0]['id'])->toBe('new')
             ->and($results[1]['id'])->toBe('mid')
@@ -127,7 +125,7 @@ describe(DatabaseMessageStore::class, function () {
 
         expect($updated)->toBeArray()
             ->and($updated['raw'])->toBe('original');
-        
+
         // seen_at gets cast to datetime by the model
         expect($updated['seen_at'])->not->toBeNull();
     });

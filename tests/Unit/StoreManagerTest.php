@@ -18,7 +18,7 @@ describe(StoreManager::class, function () {
         config(['mailbox.store.driver' => 'foo']);
 
         $manager = app()->make(StoreManager::class);
-        
+
         expect(fn () => $manager->driver())
             ->toThrow(InvalidArgumentException::class);
     });
@@ -88,7 +88,7 @@ describe(StoreManager::class, function () {
     it('passes configuration options to store implementations', function () {
         $tmp = sys_get_temp_dir().'/mailbox-tests-'.uniqid();
         @mkdir($tmp, 0777, true);
-        
+
         config([
             'mailbox.store.driver' => 'file',
             'mailbox.store.file' => ['path' => $tmp],
@@ -96,7 +96,7 @@ describe(StoreManager::class, function () {
 
         $manager = app()->make(StoreManager::class);
         $store = $manager->driver();
-        
+
         expect($store)->toBeInstanceOf(FileStorage::class)
             ->and($store->getBasePath())->toBe($tmp);
     });
