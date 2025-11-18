@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Redberry\MailboxForLaravel\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -13,23 +15,15 @@ class MailboxController
     public function __invoke(Request $request, CaptureService $service): Response
     {
         $page = (int) $request->input('page', 1);
-        $perPage = (int) $request->input('per_page', 20);
+        $perPage = (int) $request->input('per_page', 10);
 
-        $result = $service->list($page, $perPage);
-
-        /** @var MailboxMessageData[] $messages */
-        $messages = $result['data'];
+        $messages = $service->list($page, $perPage);
 
         return Inertia::render('mailbox::Dashboard', [
             'messages' => array_map(
-                fn (MailboxMessageData $m) => $m->toFrontendArray(),
+                static fn (MailboxMessageData $m) => $m->toFrontendArray(),
                 $messages,
             ),
-            'meta' => [
-                'total' => $result['total'],
-                'page' => $result['page'],
-                'per_page' => $result['per_page'],
-            ],
             'title' => 'Mailbox for Laravel',
             'subtitle' => 'Local email capture and testing',
         ]);

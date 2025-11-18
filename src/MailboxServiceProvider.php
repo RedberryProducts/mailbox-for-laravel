@@ -24,40 +24,142 @@ class MailboxServiceProvider extends PackageServiceProvider
             ->hasCommands([
                 Commands\InstallCommand::class,
             ]);
+    }
+
+    public function registeringPackage(): void
+    {
+        $this->registerStorage();
+        $this->registerCaptureService();
+        $this->registerTransport();
+        $this->registerDevCommands();
+    }
+
+    public function packageBooted(): void
+    {
+        $this->configureMailboxConnection();
+        $this->registerMiddleware();
+        $this->registerGate();
+        $this->registerPublishing();
+    }
+
+    /**
+     * Bind the MessageStore implementation (via StoreManager).
+     */
+    protected function registerStorage(): void
+    {
+        // StoreManager must receive the container.
+        $this->app->singleton(StoreManager::class, function ($app) {
+            return new StoreManager($app);
+        });
+
+        // MessageStore resolved by the manager (backwards-compatible with ->create()).
+        $this->app->singleton(MessageStore::class, function ($app) {
+            /** @var StoreManager $manager */
+            $manager = $app->make(StoreManager::class);
+
+            return $manager->driver(); // uses default driver from config
+        });
+    }
+
+    /**
+     * Bind the CaptureService, which depends on MessageStore.
+     */
+    protected function registerCaptureService(): void
+    {
+        $this->app->singleton(CaptureService::class, static function () {
+            return new CaptureService(app(MessageStore::class));
+        });
+    }
+
+    /**
+     * Register the custom "mailbox" mail transport, but only when enabled.
+     *
+     * Condition is intentionally preserved:
+     *   - enabled on all non-production envs
+     *   - OR when mailbox.enabled is explicitly true
+     */
+    protected function registerTransport(): void
+    {
+        if (config('app.env') === 'production' && !config('mailbox.enabled', false)) {
+            return;
+        }
+
+        $this->app->singleton(MailboxTransport::class, static function () {
+            return new MailboxTransport(app(CaptureService::class));
+        });
+
+        $this->app->afterResolving(MailManager::class, function (MailManager $manager): void {
+            $manager->extend('mailbox', static function ($config) {
+                return app(MailboxTransport::class);
+            });
+        });
+    }
+
+    /**
+     * Register additional dev-only commands (e.g. DevLinkCommand) in local env.
+     */
+    protected function registerDevCommands(): void
+    {
+        if (!$this->app->runningInConsole()) {
+            return;
+        }
 
         if ($this->app->environment('local')) {
             $this->commands([
                 DevLinkCommand::class,
             ]);
         }
-
     }
 
-    public function registeringPackage(): void
+    /**
+     * Configure the dedicated "mailbox" SQLite connection.
+     *
+     * This keeps the test inbox DB completely isolated.
+     */
+    protected function configureMailboxConnection(): void
     {
-        $this->app->singleton(MessageStore::class, fn () => (new StoreManager)->create());
-        $this->app->singleton(CaptureService::class, fn () => new CaptureService(app(MessageStore::class)));
-
-        if (config('app.env') !== 'production' || config('mailbox.enabled', false)) {
-            $this->app->singleton(MailboxTransport::class, fn () => new MailboxTransport(app(CaptureService::class)));
-
-            $this->app->afterResolving(MailManager::class, function (MailManager $manager) {
-                $manager->extend('mailbox', fn ($config) => app(MailboxTransport::class));
-            });
-        }
-
+        config([
+            'database.connections.mailbox' => [
+                'driver' => 'sqlite',
+                'database' => storage_path('app/mailbox/mailbox.sqlite'),
+                'prefix' => '',
+                'foreign_key_constraints' => true,
+            ],
+        ]);
     }
 
-    public function packageBooted(): void
+    /**
+     * Register middleware aliases for the mailbox dashboard.
+     */
+    protected function registerMiddleware(): void
     {
-        $this->app->make(Router::class)
-            ->aliasMiddleware('mailbox.authorize', AuthorizeMailboxMiddleware::class)
-            ->aliasMiddleware('mailbox.inertia', Http\Middleware\HandleInertiaRequests::class);
+        /** @var Router $router */
+        $router = $this->app->make(Router::class);
 
-        Gate::define('viewMailbox', function ($user = null) {
-            // This closure only runs when Gate::allows() is called, i.e. during a request
-            return ! app()->environment('production');
+        $router->aliasMiddleware('mailbox.authorize', AuthorizeMailboxMiddleware::class);
+        $router->aliasMiddleware('mailbox.inertia', Http\Middleware\HandleInertiaRequests::class);
+    }
+
+    /**
+     * Gate that controls access to the mailbox dashboard.
+     *
+     * Default behavior: allow everything except production.
+     */
+    protected function registerGate(): void
+    {
+        Gate::define('viewMailbox', static function ($user = null): bool {
+            return !app()->environment('production');
         });
+    }
+
+    /**
+     * Asset/config/views publishing for the host application.
+     */
+    protected function registerPublishing(): void
+    {
+        if (!$this->app->runningInConsole()) {
+            return;
+        }
 
         $this->publishes([
             __DIR__.'/../public/vendor/mailbox' => public_path('vendor/mailbox'),
@@ -68,6 +170,5 @@ class MailboxServiceProvider extends PackageServiceProvider
             __DIR__.'/../resources/views' => resource_path('views/vendor/mailbox'),
             __DIR__.'/../public/vendor/mailbox' => public_path('vendor/mailbox'),
         ], 'mailbox-install');
-
     }
 }

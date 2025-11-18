@@ -32,6 +32,7 @@ describe(SeenController::class, function () {
 
         // Verify message is initially unseen
         $message = $service->retrieve($key);
+
         expect($message->seen_at)->toBeNull();
 
         // Mark as seen

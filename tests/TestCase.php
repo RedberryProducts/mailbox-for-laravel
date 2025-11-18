@@ -3,6 +3,8 @@
 namespace Redberry\MailboxForLaravel\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use Illuminate\Testing\TestResponse;
 use Inertia\Inertia;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -19,14 +21,23 @@ class TestCase extends Orchestra
     {
         parent::setUp();
 
+        config()->set('database.connections.mailbox', [
+            'driver' => 'sqlite',
+            'database' => storage_path('framework/testing/mailbox.sqlite'),
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+        ]);
+
+        $this->refreshMailboxDatabase();
+
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName
+            fn(string $modelName
             ) => 'Redberry\\MailboxForLaravel\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
 
         // Create fake Vite manifest for tests to avoid build requirements
         $manifestPath = base_path('public/vendor/mailbox');
-        if (! file_exists($manifestPath)) {
+        if (!file_exists($manifestPath)) {
             mkdir($manifestPath, 0755, true);
         }
 
@@ -73,6 +84,29 @@ class TestCase extends Orchestra
         // $this is optional if your SP already calls loadViewsFrom
         $app['config']->set('view.paths', [
             base_path('resources/views'),
+        ]);
+    }
+
+    protected function refreshMailboxDatabase(): void
+    {
+        $dbPath = config('database.connections.mailbox.database');
+
+        // Ensure folder exists
+        if (!File::exists(dirname($dbPath))) {
+            File::makeDirectory(dirname($dbPath), 0755, true);
+        }
+
+        // Delete old DB file so it's 100% clean
+        if (File::exists($dbPath)) {
+            File::delete($dbPath);
+        }
+
+        // Run ONLY your package migrations on the mailbox connection
+        Artisan::call('migrate', [
+            '--database' => 'mailbox',
+            '--path' => realpath(__DIR__.'/../database/migrations'),
+            '--realpath' => true,
+            '--force' => true,
         ]);
     }
 }
