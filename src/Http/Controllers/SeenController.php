@@ -1,15 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Redberry\MailboxForLaravel\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Redberry\MailboxForLaravel\CaptureService;
+use Redberry\MailboxForLaravel\DTO\MailboxMessageData;
 
 class SeenController
 {
     public function __invoke(string $id, CaptureService $service): JsonResponse
     {
-        $message = $service->retrieve($id);
+        /** @var MailboxMessageData|null $message */
+        $message = $service->find($id);
 
         if (! $message) {
             return response()->json([
@@ -17,9 +21,14 @@ class SeenController
             ], 404);
         }
 
-        // Only update if not already seen (idempotent)
+        // Idempotent: if already seen, don't touch it
         if (! $message->seen_at) {
-            $message = $service->update($id, ['seen_at' => now()->toIso8601String()]);
+            $updated = $service->markSeen($id);
+
+            // In case something went wrong in storage, fall back to original
+            if ($updated) {
+                $message = $updated;
+            }
         }
 
         return response()->json([
