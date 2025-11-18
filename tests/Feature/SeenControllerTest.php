@@ -120,7 +120,7 @@ describe(SeenController::class, function () {
     });
 
     it('throws error for invalid message key format', function () {
-        $response = $this->post("/mailbox/messages/invalid_key/seen");
+        $response = $this->post('/mailbox/messages/invalid_key/seen');
         $response->assertStatus(404);
     });
 
