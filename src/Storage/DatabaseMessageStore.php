@@ -54,7 +54,7 @@ class DatabaseMessageStore implements MessageStore
     {
         $record = MailboxMessage::query()->find($id);
 
-        if (!$record) {
+        if (! $record) {
             return null;
         }
 

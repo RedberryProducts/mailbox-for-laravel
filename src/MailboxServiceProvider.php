@@ -47,17 +47,15 @@ class MailboxServiceProvider extends PackageServiceProvider
      */
     protected function registerStorage(): void
     {
-        // StoreManager must receive the container.
-        $this->app->singleton(StoreManager::class, function ($app) {
+        $this->app->bind(StoreManager::class, function ($app) {
             return new StoreManager($app);
         });
 
-        // MessageStore resolved by the manager (backwards-compatible with ->create()).
-        $this->app->singleton(MessageStore::class, function ($app) {
+        $this->app->bind(MessageStore::class, function ($app) {
             /** @var StoreManager $manager */
             $manager = $app->make(StoreManager::class);
 
-            return $manager->driver(); // uses default driver from config
+            return $manager->driver();
         });
     }
 
@@ -66,7 +64,7 @@ class MailboxServiceProvider extends PackageServiceProvider
      */
     protected function registerCaptureService(): void
     {
-        $this->app->singleton(CaptureService::class, static function () {
+        $this->app->bind(CaptureService::class, static function () {
             return new CaptureService(app(MessageStore::class));
         });
     }
@@ -80,17 +78,17 @@ class MailboxServiceProvider extends PackageServiceProvider
      */
     protected function registerTransport(): void
     {
-        if (config('app.env') === 'production' && !config('mailbox.enabled', false)) {
+        if (config('app.env') === 'production' && ! config('mailbox.enabled', false)) {
             return;
         }
 
-        $this->app->singleton(MailboxTransport::class, static function () {
-            return new MailboxTransport(app(CaptureService::class));
+        $this->app->bind(MailboxTransport::class, function ($app) {
+            return new MailboxTransport($app->make(CaptureService::class));
         });
 
-        $this->app->afterResolving(MailManager::class, function (MailManager $manager): void {
-            $manager->extend('mailbox', static function ($config) {
-                return app(MailboxTransport::class);
+        $this->app->afterResolving(MailManager::class, function (MailManager $manager, $app): void {
+            $manager->extend('mailbox', function () use ($app) {
+                return $app->make(MailboxTransport::class);
             });
         });
     }
@@ -100,7 +98,7 @@ class MailboxServiceProvider extends PackageServiceProvider
      */
     protected function registerDevCommands(): void
     {
-        if (!$this->app->runningInConsole()) {
+        if (! $this->app->runningInConsole()) {
             return;
         }
 
@@ -148,7 +146,7 @@ class MailboxServiceProvider extends PackageServiceProvider
     protected function registerGate(): void
     {
         Gate::define('viewMailbox', static function ($user = null): bool {
-            return !app()->environment('production');
+            return ! app()->environment('production');
         });
     }
 
@@ -157,7 +155,7 @@ class MailboxServiceProvider extends PackageServiceProvider
      */
     protected function registerPublishing(): void
     {
-        if (!$this->app->runningInConsole()) {
+        if (! $this->app->runningInConsole()) {
             return;
         }
 

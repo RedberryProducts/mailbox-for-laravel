@@ -11,6 +11,7 @@ class MailboxMessage extends Model
     use HasFactory;
 
     protected $connection = 'mailbox';
+
     protected $table = 'mailbox_messages';
 
     /**
@@ -22,19 +23,19 @@ class MailboxMessage extends Model
      * Cast fields into correct PHP types
      */
     protected $casts = [
-        'timestamp'   => 'integer',     // stored as BIGINT
-        'seen_at'     => 'datetime',
-        'version'     => 'integer',
-        'saved_at'    => 'datetime',
-        'date'        => 'datetime',
+        'timestamp' => 'integer',
+        'seen_at' => 'datetime',
+        'version' => 'integer',
+        'saved_at' => 'datetime',
+        'date' => 'datetime',
 
-        'from'        => 'array',
-        'sender'      => 'array',
-        'to'          => 'array',
-        'cc'          => 'array',
-        'bcc'         => 'array',
-        'reply_to'    => 'array',
-        'headers'     => 'array',
+        'from' => 'array',
+        'sender' => 'array',
+        'to' => 'array',
+        'cc' => 'array',
+        'bcc' => 'array',
+        'reply_to' => 'array',
+        'headers' => 'array',
         'attachments' => 'array',
     ];
 

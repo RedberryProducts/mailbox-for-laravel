@@ -14,8 +14,8 @@ use Redberry\MailboxForLaravel\Storage\FileStorage;
  * Central manager for mailbox storage drivers.
  *
  * Usage:
- *   $store = app(StoreManager::class)->driver();       // default from config
- *   $store = app(StoreManager::class)->driver('file'); // specific driver
+ *   $store = app(StoreManager::class)->driver();
+ *   $store = app(StoreManager::class)->driver('file');
  */
 class StoreManager extends Manager
 {
@@ -47,7 +47,7 @@ class StoreManager extends Manager
      */
     protected function createDatabaseDriver(): MessageStore
     {
-        return new DatabaseMessageStore();
+        return new DatabaseMessageStore;
     }
 
     /**
@@ -87,7 +87,6 @@ class StoreManager extends Manager
     {
         $name = $driver ?? $this->getDefaultDriver();
 
-        // If we have an explicit creator (file/database/etc.), use it.
         if (method_exists($this, 'create'.ucfirst($name).'Driver')) {
             /** @var MessageStore $store */
             $store = parent::driver($name);
@@ -95,7 +94,6 @@ class StoreManager extends Manager
             return $store;
         }
 
-        // Otherwise treat it as a "custom" driver resolved via config.
         return $this->createCustomDriver();
     }
 }

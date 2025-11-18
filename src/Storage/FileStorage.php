@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Redberry\MailboxForLaravel\Storage;
 
+use const DIRECTORY_SEPARATOR;
+use const JSON_THROW_ON_ERROR;
+
 use Illuminate\Support\Str;
-use InvalidArgumentException;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 
 use function array_slice;
@@ -21,9 +23,6 @@ use function rtrim;
 use function unlink;
 use function usort;
 
-use const DIRECTORY_SEPARATOR;
-use const JSON_THROW_ON_ERROR;
-
 /**
  * JSON file–based storage driver.
  *
@@ -37,7 +36,7 @@ class FileStorage implements MessageStore
     {
         $this->basePath = $basePath ?: storage_path('app/mail-inbox');
 
-        if (!is_dir($this->basePath)) {
+        if (! is_dir($this->basePath)) {
             @mkdir($this->basePath, 0o775, true);
         }
     }
@@ -48,11 +47,10 @@ class FileStorage implements MessageStore
         $payload['timestamp'] ??= time();
         $payload['saved_at'] ??= now()->toIso8601String();
 
-        if (!is_string($id) || $id === '') {
+        if (! is_string($id) || $id === '') {
             $id = $this->generateId($payload, (int) $payload['timestamp']);
             $payload['id'] = $id;
         }
-
 
         $path = $this->pathFor($id);
         file_put_contents($path, json_encode($payload, JSON_THROW_ON_ERROR));
@@ -64,7 +62,7 @@ class FileStorage implements MessageStore
     {
         $path = $this->pathFor($id);
 
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             return null;
         }
 
@@ -97,17 +95,16 @@ class FileStorage implements MessageStore
 
             $decoded = json_decode($contents, true);
 
-            if (!is_array($decoded)) {
+            if (! is_array($decoded)) {
                 continue;
             }
 
             $messages[] = $decoded;
         }
 
-        // Order by timestamp DESC by default
         usort(
             $messages,
-            static fn(array $a, array $b): int => ((int) ($b['timestamp'] ?? 0)) <=> ((int) ($a['timestamp'] ?? 0)),
+            static fn (array $a, array $b): int => ((int) ($b['timestamp'] ?? 0)) <=> ((int) ($a['timestamp'] ?? 0)),
         );
 
         $offset = ($page - 1) * $perPage;
@@ -158,7 +155,7 @@ class FileStorage implements MessageStore
 
             $decoded = json_decode($contents, true);
 
-            if (!is_array($decoded)) {
+            if (! is_array($decoded)) {
                 continue;
             }
 
@@ -183,7 +180,6 @@ class FileStorage implements MessageStore
     {
         return rtrim($this->basePath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$id.'.json';
     }
-
 
     /**
      * Generate a filesystem-safe, reasonably unique id.

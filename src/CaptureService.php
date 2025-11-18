@@ -17,8 +17,7 @@ class CaptureService
 {
     public function __construct(
         protected MessageStore $storage,
-    ) {
-    }
+    ) {}
 
     /**
      * Persist the raw message payload and metadata.
@@ -61,7 +60,7 @@ class CaptureService
         $items = $this->storage->paginate($page, $perPage);
 
         return array_map(
-            static fn(array $data): MailboxMessageData => MailboxMessageData::from($data),
+            static fn (array $data): MailboxMessageData => MailboxMessageData::from($data),
             $items,
         );
     }
@@ -76,7 +75,7 @@ class CaptureService
         $items = $this->storage->paginate(1, PHP_INT_MAX);
 
         return array_map(
-            static fn(array $data): MailboxMessageData => MailboxMessageData::from($data),
+            static fn (array $data): MailboxMessageData => MailboxMessageData::from($data),
             $items,
         );
     }

@@ -45,8 +45,7 @@ class MailboxMessageData extends Data
         public ?string $raw = null,
         public ?string $saved_at = null,
         public ?string $seen_at = null,
-    ) {
-    }
+    ) {}
 
     /**
      * Convert into a compact frontend-friendly array.
@@ -66,8 +65,8 @@ class MailboxMessageData extends Data
     public function toFrontendArray(): array
     {
         $toEmails = array_values(array_filter(array_map(
-            static function (array $recipient): ?string {
-                return $recipient['email'] ?? null;
+            static function (array $recipient): string {
+                return $recipient['email'];
             },
             $this->to ?? [],
         )));

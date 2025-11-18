@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Redberry\MailboxForLaravel\Http\Controllers\AssetController;
 use Redberry\MailboxForLaravel\Http\Controllers\ClearMailboxController;
 use Redberry\MailboxForLaravel\Http\Controllers\MailboxController;
 use Redberry\MailboxForLaravel\Http\Controllers\SeenController;
@@ -27,7 +26,5 @@ Route::middleware(array_merge(
         Route::post('/test-email', SendTestMailController::class)
             ->name('test-email');
 
-        Route::get('/messages/{message}/attachments/{asset}', AssetController::class)
-            ->name('asset');
         Route::post('/messages/{id}/seen', SeenController::class)->name('messages.seen');
     });

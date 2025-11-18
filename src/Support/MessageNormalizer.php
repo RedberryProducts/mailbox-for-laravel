@@ -8,7 +8,6 @@ use DateTimeInterface;
 use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
-use Symfony\Component\Mime\Header\Headers;
 use Symfony\Component\Mime\Part\DataPart;
 use Symfony\Component\Mime\RawMessage;
 
@@ -32,7 +31,6 @@ final class MessageNormalizer
             return self::normalizeEmail($message, $envelope, $raw, $storeAttachmentsInline);
         }
 
-        // RawMessage (non-Email) fallback
         return self::normalizeRaw($message, $envelope, $raw);
     }
 
@@ -98,7 +96,6 @@ final class MessageNormalizer
                     $body = stream_get_contents($body) ?: '';
                 }
 
-                // at this point $body is definitely a string
                 $size = strlen($body);
                 $bodyBase64 = base64_encode($body);
             }
@@ -114,7 +111,6 @@ final class MessageNormalizer
             ], static fn ($v) => $v !== null);
         }
 
-        // Prefer explicitly set envelope sender/recipients, fallback to headers
         $sender = $envelope?->getSender()
             ? self::addressToArray($envelope->getSender())
             : self::addressesToArray($email->getFrom())[0] ?? null;
@@ -128,7 +124,7 @@ final class MessageNormalizer
 
             'message_id' => self::firstHeader($email, 'Message-ID'),
             'subject' => $email->getSubject(),
-            'date' => self::firstHeader($email, 'Date'), // raw date header for fidelity
+            'date' => self::firstHeader($email, 'Date'),
 
             'from' => self::addressesToArray($email->getFrom()),
             'sender' => $sender,
@@ -140,10 +136,10 @@ final class MessageNormalizer
             'text' => $email->getTextBody(),
             'html' => $email->getHtmlBody(),
 
-            'headers' => $headers,       // full header map
-            'attachments' => $attachments,   // metadata (+ content if enabled)
+            'headers' => $headers,
+            'attachments' => $attachments,
 
-            'raw' => $raw,  // raw email source if provided
+            'raw' => $raw,
         ];
 
         return $payload;

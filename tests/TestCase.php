@@ -31,13 +31,13 @@ class TestCase extends Orchestra
         $this->refreshMailboxDatabase();
 
         Factory::guessFactoryNamesUsing(
-            fn(string $modelName
+            fn (string $modelName
             ) => 'Redberry\\MailboxForLaravel\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
 
         // Create fake Vite manifest for tests to avoid build requirements
         $manifestPath = base_path('public/vendor/mailbox');
-        if (!file_exists($manifestPath)) {
+        if (! file_exists($manifestPath)) {
             mkdir($manifestPath, 0755, true);
         }
 
@@ -92,7 +92,7 @@ class TestCase extends Orchestra
         $dbPath = config('database.connections.mailbox.database');
 
         // Ensure folder exists
-        if (!File::exists(dirname($dbPath))) {
+        if (! File::exists(dirname($dbPath))) {
             File::makeDirectory(dirname($dbPath), 0755, true);
         }
 

@@ -21,11 +21,9 @@ class SeenController
             ], 404);
         }
 
-        // Idempotent: if already seen, don't touch it
         if (! $message->seen_at) {
             $updated = $service->markSeen($id);
 
-            // In case something went wrong in storage, fall back to original
             if ($updated) {
                 $message = $updated;
             }

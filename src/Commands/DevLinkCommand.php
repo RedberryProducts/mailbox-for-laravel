@@ -16,16 +16,13 @@ class DevLinkCommand extends Command
         $target = base_path('packages/redberry/mailbox-for-laravel/public/vendor/mailbox');
         $link = public_path('vendor/mailbox');
 
-        // Ensure parent directory exists
         $parentDir = dirname($link);
-        if (!File::exists($parentDir)) {
+        if (! File::exists($parentDir)) {
             File::makeDirectory($parentDir, 0755, true);
         }
 
-        // FULL CLEANUP — handle directories, files, symlinks, ghost links
         $this->cleanup($link);
 
-        // Create the symlink
         symlink($target, $link);
 
         $this->info('Mailbox dev assets linked:');
@@ -39,24 +36,22 @@ class DevLinkCommand extends Command
      */
     protected function cleanup(string $path): void
     {
-        // If it doesn't exist at all, nothing to clean
-        if (!file_exists($path) && !is_link($path)) {
+        if (! file_exists($path) && ! is_link($path)) {
             return;
         }
 
-        // If it is a symlink (even broken) — unlink it
         if (is_link($path)) {
             @unlink($path);
+
             return;
         }
 
-        // If it is a directory — delete it entirely
         if (is_dir($path)) {
             File::deleteDirectory($path);
+
             return;
         }
 
-        // Fallback: if it's a regular file — remove it
         @unlink($path);
     }
 }

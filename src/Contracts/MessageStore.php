@@ -20,7 +20,7 @@ interface MessageStore
      *                                         - raw: string (optional but recommended)
      *                                         - timestamp: int (UNIX timestamp)
      */
-    public function store(array $payload): string | int;
+    public function store(array $payload): string|int;
 
     /**
      * Retrieve a single payload by id.
@@ -32,8 +32,8 @@ interface MessageStore
     /**
      * Retrieve a page of payloads.
      *
-     * @param  int  $page      1-based page index
-     * @param  int  $perPage   number of items per page
+     * @param  int  $page  1-based page index
+     * @param  int  $perPage  number of items per page
      * @return array<int, array<string, mixed>>
      */
     public function paginate(int $page, int $perPage): array;
@@ -42,7 +42,7 @@ interface MessageStore
      * Apply partial updates to a payload by id.
      *
      * @param  array<string, mixed>  $changes
-     * @return array<string, mixed>|null  The updated payload, or null if not found.
+     * @return array<string, mixed>|null The updated payload, or null if not found.
      */
     public function update(string $id, array $changes): ?array;
 

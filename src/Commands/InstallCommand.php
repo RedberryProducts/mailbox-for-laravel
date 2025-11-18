@@ -16,7 +16,6 @@ class InstallCommand extends Command
         if ($this->option('dev')) {
             $this->info('Dev mode: linking assets (reusing mailbox:dev-link)...');
 
-            // Reuse existing command to avoid duplication
             $this->call('mailbox:dev-link');
 
         } else {
@@ -41,6 +40,7 @@ class InstallCommand extends Command
 
         if (! $connection) {
             $this->error("Database connection [{$connectionName}] is not configured.");
+
             return;
         }
 

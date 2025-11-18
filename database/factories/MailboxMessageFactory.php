@@ -3,8 +3,8 @@
 namespace Redberry\MailboxForLaravel\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Redberry\MailboxForLaravel\Models\MailboxMessage;
 use Illuminate\Support\Str;
+use Redberry\MailboxForLaravel\Models\MailboxMessage;
 
 class MailboxMessageFactory extends Factory
 {
@@ -36,7 +36,7 @@ class MailboxMessageFactory extends Factory
                 'name' => 'Sender Name',
             ],
             'to' => [
-                ['email' => 'recipient@example.com']
+                ['email' => 'recipient@example.com'],
             ],
             'cc' => [],
             'bcc' => [],
@@ -66,7 +66,7 @@ EOT,
      */
     public function seen(): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'seen_at' => now(),
         ]);
     }
