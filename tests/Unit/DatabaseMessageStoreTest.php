@@ -52,15 +52,17 @@ describe(DatabaseMessageStore::class, function () {
         expect(MailboxMessage::query()->find('test-msg-1'))->not->toBeNull();
     });
 
-    it('requires id to be provided when storing', function () {
+    it('generates id when not provided', function () {
         $store = new DatabaseMessageStore;
         
-        // DatabaseMessageStore requires an ID unlike FileStorage
-        // Without an id, updateOrCreate will fail with NOT NULL constraint
-        expect(fn () => $store->store([
+        // DatabaseMessageStore now generates IDs like FileStorage
+        $id = $store->store([
             'raw' => 'content without id',
             'timestamp' => time(),
-        ]))->toThrow(QueryException::class);
+        ]);
+        
+        expect($id)->not->toBeEmpty();
+        expect($store->find($id))->not->toBeNull();
     });
 
     it('finds a message by id', function () {

@@ -23,12 +23,18 @@ class DatabaseMessageStore implements MessageStore
         $payload['timestamp'] ??= time();
         $payload['saved_at'] ??= now()->toDateTimeString();
 
+        // Generate ID if not provided, same logic as FileStorage
+        if (! is_string($id) || $id === '') {
+            $id = $this->generateId($payload, (int) $payload['timestamp']);
+            $payload['id'] = $id;
+        }
+
         $message = MailboxMessage::query()->updateOrCreate(
             ['id' => $id],
             $payload,
         );
 
-        return $id ?? $message->id;
+        return $id;
     }
 
     public function find(string $id): ?array
@@ -87,5 +93,16 @@ class DatabaseMessageStore implements MessageStore
     public function clear(): void
     {
         MailboxMessage::query()->delete();
+    }
+
+    /**
+     * Generate a unique id for messages without one.
+     */
+    protected function generateId(array $payload, int $timestamp): string
+    {
+        $payloadString = json_encode($payload);
+        $hash = substr(sha1($payloadString.$timestamp.microtime(true)), 0, 32);
+
+        return "email_{$timestamp}_{$hash}";
     }
 }
