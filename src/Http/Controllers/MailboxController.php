@@ -15,7 +15,7 @@ class MailboxController
     public function __invoke(Request $request, CaptureService $service): Response
     {
         $page = (int) $request->input('page', 1);
-        $perPage = (int) ($request->input('per_page') ?: config('mailbox.pagination.per_page', 20));
+        $perPage = (int) ($request->input('per_page') ?: config('mailbox.pagination.per_page'));
 
         $result = $service->list($page, $perPage);
 
