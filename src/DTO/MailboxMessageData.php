@@ -79,7 +79,7 @@ class MailboxMessageData extends Data
 
         return [
             'id' => $this->id,
-            'subject' => $this->subject !== null && $this->subject !== '' ? $this->subject : '(No subject)',
+            'subject' => ($this->subject ?: null) ?? '(No subject)',
             'from' => $this->sender['email'] ?? ($this->from[0]['email'] ?? ''),
             'to' => $toEmails,
             'created_at' => $createdAt ?? Carbon::now()->toIso8601String(),
