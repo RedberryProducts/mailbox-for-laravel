@@ -37,7 +37,7 @@ class FileStorage implements MessageStore
         $this->basePath = $basePath ?: storage_path('app/mail-inbox');
 
         if (! is_dir($this->basePath)) {
-            @mkdir($this->basePath, 0o775, true);
+            @mkdir($this->basePath, 0775, true);
         }
     }
 
