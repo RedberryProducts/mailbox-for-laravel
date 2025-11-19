@@ -8,9 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::connection(config('mailbox.connection', 'mailbox'))
-            ->create('mailbox_messages', function (Blueprint $table) {
-                $table->bigIncrements('id');
+        Schema::connection(config('mailbox.store.database.connection', 'mailbox'))
+            ->create(config('mailbox.store.database.table'), function (Blueprint $table) {
+                $table->string('id')->primary();
 
                 $table->unsignedBigInteger('timestamp')->index();
                 $table->timestampTz('seen_at')->nullable();
@@ -40,7 +40,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::connection(config('mailbox.connection', 'mailbox'))
-            ->dropIfExists('mailbox_messages');
+        Schema::connection(config('mailbox.store.database.connection', 'mailbox'))
+            ->dropIfExists(config('mailbox.store.database.table'));
     }
 };

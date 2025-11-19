@@ -36,8 +36,9 @@ describe(AuthorizeMailboxMiddleware::class, function () {
     });
 
     it('denies access in production when config forbids public access', function () {
-        config()->set('mailbox.public', false);
-        $this->app->detectEnvironment(fn () => 'production');
+        config()->set('mailbox.enabled', false);
+        config()->set('app.env', 'production');
+
         Gate::shouldReceive('allows')->with('viewMailbox')->andReturn(false);
 
         $this->get('/mailbox-test')->assertForbidden();

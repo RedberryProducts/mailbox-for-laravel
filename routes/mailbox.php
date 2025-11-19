@@ -6,7 +6,7 @@ use Redberry\MailboxForLaravel\Http\Controllers\MailboxController;
 use Redberry\MailboxForLaravel\Http\Controllers\SeenController;
 use Redberry\MailboxForLaravel\Http\Controllers\SendTestMailController;
 
-if (! config('mailbox.enabled', true)) {
+if (! config('mailbox.enabled')) {
     return;
 }
 
