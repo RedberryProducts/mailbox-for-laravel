@@ -64,8 +64,8 @@ class MailboxServiceProvider extends PackageServiceProvider
      */
     protected function registerCaptureService(): void
     {
-        $this->app->bind(CaptureService::class, static function () {
-            return new CaptureService(app(MessageStore::class));
+        $this->app->bind(CaptureService::class, function ($app) {
+            return new CaptureService($app->make(MessageStore::class));
         });
     }
 
