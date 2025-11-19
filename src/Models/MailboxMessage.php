@@ -60,7 +60,6 @@ class MailboxMessage extends Model
         return config('mailbox.store.database.table', parent::getTable());
     }
 
-
     protected static function newFactory(): MailboxMessageFactory
     {
         return MailboxMessageFactory::new();
