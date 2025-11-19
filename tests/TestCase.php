@@ -61,6 +61,7 @@ class TestCase extends Orchestra
         ]);
 
         $app['config']->set('mailbox.store.database.connection', 'testing');
+        $app['config']->set('mailbox.store.database.table', 'mailbox_messages');
 
         $app['config']->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
 

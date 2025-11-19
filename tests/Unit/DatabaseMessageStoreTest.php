@@ -1,42 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
 use Redberry\MailboxForLaravel\Models\MailboxMessage;
 use Redberry\MailboxForLaravel\Storage\DatabaseMessageStore;
 
 describe(DatabaseMessageStore::class, function () {
-    beforeEach(function () {
-        // Drop and recreate if it exists
-        Schema::connection('mailbox')->dropIfExists('mailbox_messages');
-
-        // Create the mailbox_messages table
-        Schema::connection('mailbox')->create('mailbox_messages', function ($table) {
-            $table->string('id')->primary();
-            $table->integer('timestamp')->index();
-            $table->text('raw')->nullable();
-            $table->string('subject')->nullable();
-            $table->json('from')->nullable();
-            $table->json('to')->nullable();
-            $table->json('cc')->nullable();
-            $table->json('bcc')->nullable();
-            $table->json('reply_to')->nullable();
-            $table->text('text')->nullable();
-            $table->text('html')->nullable();
-            $table->json('headers')->nullable();
-            $table->json('attachments')->nullable();
-            $table->string('message_id')->nullable();
-            $table->string('date')->nullable();
-            $table->json('sender')->nullable();
-            $table->string('saved_at')->nullable();
-            $table->string('seen_at')->nullable();
-            $table->timestamps();
-        });
-    });
-
-    afterEach(function () {
-        Schema::connection('mailbox')->dropIfExists('mailbox_messages');
-    });
-
     it('stores a message and returns id', function () {
         $store = new DatabaseMessageStore;
         $id = $store->store([
