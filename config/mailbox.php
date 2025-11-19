@@ -24,4 +24,13 @@ return [
     'route' => env('MAILBOX_DASHBOARD_ROUTE', 'mailbox'),
     'middleware' => ['web'],
 
+    'polling' => [
+        'enabled' => (bool) env('MAILBOX_POLLING_ENABLED', true),
+        'interval' => (int) env('MAILBOX_POLLING_INTERVAL', 5000), // milliseconds
+    ],
+
+    'pagination' => [
+        'per_page' => (int) env('MAILBOX_PER_PAGE', 20),
+    ],
+
 ];

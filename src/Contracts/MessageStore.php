@@ -39,6 +39,11 @@ interface MessageStore
     public function paginate(int $page, int $perPage): array;
 
     /**
+     * Get the total count of all stored messages.
+     */
+    public function count(): int;
+
+    /**
      * Apply partial updates to a payload by id.
      *
      * @param  array<string, mixed>  $changes

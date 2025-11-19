@@ -69,9 +69,12 @@ describe(CaptureService::class, function () {
 
         $result = $svc->list();
 
-        expect($result)->toBeArray();
-        expect($result)->toHaveCount(3);
-        expect($result[0])->toBeInstanceOf(MailboxMessageData::class);
+        expect($result)->toBeArray()
+            ->and($result)->toHaveKeys(['data', 'total', 'per_page', 'current_page', 'has_more', 'latest_timestamp'])
+            ->and($result['data'])->toHaveCount(3)
+            ->and($result['data'][0])->toBeInstanceOf(MailboxMessageData::class)
+            ->and($result['total'])->toBe(3)
+            ->and($result['has_more'])->toBeFalse();
     });
 
     it('returns paginated results when perPage is specified', function () {
@@ -82,9 +85,13 @@ describe(CaptureService::class, function () {
 
         $result = $svc->list(1, 2);
 
-        expect($result)->toBeArray();
-        expect($result)->toHaveCount(2);
-        expect($result[0])->toBeInstanceOf(MailboxMessageData::class);
+        expect($result)->toBeArray()
+            ->and($result)->toHaveKeys(['data', 'total', 'per_page', 'current_page', 'has_more', 'latest_timestamp'])
+            ->and($result['data'])->toHaveCount(2)
+            ->and($result['data'][0])->toBeInstanceOf(MailboxMessageData::class)
+            ->and($result['total'])->toBe(3)
+            ->and($result['has_more'])->toBeTrue()
+            ->and($result['latest_timestamp'])->toBe(3000);
     });
 
     it('marks message as seen', function () {
