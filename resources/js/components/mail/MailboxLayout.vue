@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import {ref, computed} from 'vue'
+import {ref, computed, watch, onMounted} from 'vue'
 import axios from 'axios'
+import { usePage } from '@inertiajs/vue3'
 import MailboxFilterBar from '@/components/mail/MailboxFilterBar.vue'
 import MailboxList from '@/components/mail/MailboxList.vue'
 import MailboxPreview from '@/components/mail/MailboxPreview.vue'
+import { useMailboxPolling } from '@/composables/useMailboxPolling'
 
 type TabType = 'html' | 'text' | 'raw'
 
@@ -19,23 +21,121 @@ interface Message {
     seen_at: string | null
 }
 
+interface PaginationMeta {
+    total: number
+    per_page: number
+    current_page: number
+    has_more: boolean
+    latest_timestamp: number | null
+}
+
+interface PollingConfig {
+    enabled: boolean
+    interval: number
+}
+
 const props = defineProps<{
     messages: Message[]
+    pagination: PaginationMeta
+    polling: PollingConfig
     title: string
     subtitle: string
 }>()
 
-const selectedMessageId = ref<string | null>(
-    null,
-)
+// Local state for messages (merged from polling + infinite scroll)
+const localMessages = ref<Message[]>([...props.messages])
+
+const selectedMessageId = ref<string | null>(null)
 const selectedRecipient = ref<string>('all')
 const activeTab = ref<TabType>('html')
+const listContainerRef = ref<HTMLElement | null>(null)
+const isLoadingMore = ref(false)
 
-// unique recipients from messages
+// Get the Inertia page props to access the updated messages from server
+const page = usePage()
+
+// Watch for changes in the Inertia page props and merge messages
+watch(() => page.props.messages, (newMessages) => {
+    if (newMessages) {
+        mergeMessages(newMessages as Message[])
+    }
+}, { deep: true })
+
+// Watch for changes in props.messages on initial load
+watch(() => props.messages, (newMessages) => {
+    localMessages.value = [...newMessages]
+}, { immediate: true })
+
+// Setup polling using the composable
+const { isPolling } = useMailboxPolling(
+    props.polling,
+    props.pagination.latest_timestamp
+)
+
+// Deduplicate and merge messages by ID
+// Polling adds new messages at the top, infinite scroll appends at bottom
+function mergeMessages(newMessages: Message[]) {
+    const messageMap = new Map<string, Message>()
+    
+    // Add existing messages to map
+    localMessages.value.forEach(msg => {
+        messageMap.set(msg.id, msg)
+    })
+    
+    // Add/update with new messages (newer ones override)
+    newMessages.forEach(msg => {
+        messageMap.set(msg.id, msg)
+    })
+    
+    // Convert back to array and sort by timestamp (newest first)
+    localMessages.value = Array.from(messageMap.values()).sort((a, b) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+}
+
+// Handle infinite scroll - load more when scrolling near bottom
+function handleScroll(event: Event) {
+    const target = event.target as HTMLElement
+    const scrollTop = target.scrollTop
+    const scrollHeight = target.scrollHeight
+    const clientHeight = target.clientHeight
+    
+    // Load more when within 200px of bottom
+    if (scrollHeight - scrollTop - clientHeight < 200 && !isLoadingMore.value && props.pagination.has_more) {
+        loadMoreMessages()
+    }
+}
+
+async function loadMoreMessages() {
+    if (isLoadingMore.value || !props.pagination.has_more) {
+        return
+    }
+    
+    isLoadingMore.value = true
+    
+    const nextPage = props.pagination.current_page + 1
+    
+    try {
+        // Use Inertia router through page navigation
+        const response = await axios.get(`/mailbox?page=${nextPage}`)
+        
+        // Merge the new messages (append at bottom)
+        if (response.data.props?.messages) {
+            const newMessages = response.data.props.messages as Message[]
+            localMessages.value = [...localMessages.value, ...newMessages]
+        }
+    } catch (error) {
+        console.error('Failed to load more messages', error)
+    } finally {
+        isLoadingMore.value = false
+    }
+}
+
+// unique recipients from local messages
 const recipients = computed(() => {
     const set = new Set<string>()
 
-    props.messages.forEach((msg) => {
+    localMessages.value.forEach((msg) => {
         msg.to.forEach((r) => set.add(r))
     })
 
@@ -45,18 +145,18 @@ const recipients = computed(() => {
 // filtered messages (by recipient)
 const filteredMessages = computed(() => {
     if (selectedRecipient.value === 'all') {
-        return props.messages
+        return localMessages.value
     }
 
-    return props.messages.filter((msg) =>
+    return localMessages.value.filter((msg) =>
         msg.to.includes(selectedRecipient.value),
     )
 })
 
-// selected message (from all messages, same as React version)
+// selected message (from all messages)
 const selectedMessage = computed<Message | null>(() => {
     return (
-        props.messages.find(
+        localMessages.value.find(
             (msg) => msg.id === selectedMessageId.value,
         ) || null
     )
@@ -69,7 +169,7 @@ const handleRecipientChange = (recipient: string) => {
 const handleSelectMessage = (id: string) => {
     selectedMessageId.value = id
 
-    const msg = props.messages.find((m) => m.id === id)
+    const msg = localMessages.value.find((m) => m.id === id)
     if (!msg || msg.seen_at) {
         return
     }
@@ -116,11 +216,18 @@ const handleViewChange = (view: TabType) => {
                     @recipient-change="handleRecipientChange"
                 />
 
-                <MailboxList
-                    :messages="filteredMessages"
-                    :selected-id="selectedMessageId"
-                    @select="handleSelectMessage"
-                />
+                <div class="flex-1 overflow-y-auto" @scroll="handleScroll" ref="listContainerRef">
+                    <MailboxList
+                        :messages="filteredMessages"
+                        :selected-id="selectedMessageId"
+                        @select="handleSelectMessage"
+                    />
+                    
+                    <!-- Loading indicator for infinite scroll -->
+                    <div v-if="isLoadingMore" class="p-4 text-center text-sm text-muted-foreground">
+                        Loading more messages...
+                    </div>
+                </div>
             </div>
 
             <!-- Preview Panel -->
