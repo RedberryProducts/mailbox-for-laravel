@@ -10,8 +10,6 @@ class MailboxMessage extends Model
 {
     use HasFactory;
 
-    protected $connection = 'mailbox';
-
     protected $table = 'mailbox_messages';
 
     /**
@@ -45,6 +43,23 @@ class MailboxMessage extends Model
         'headers' => 'array',
         'attachments' => 'array',
     ];
+
+    /**
+     * Use the configured connection instead of a hardcoded one.
+     */
+    public function getConnectionName()
+    {
+        return config('mailbox.store.database.connection', parent::getConnectionName());
+    }
+
+    /**
+     * Also resolve the table name from config so it's consistent everywhere.
+     */
+    public function getTable()
+    {
+        return config('mailbox.store.database.table', parent::getTable());
+    }
+
 
     protected static function newFactory(): MailboxMessageFactory
     {

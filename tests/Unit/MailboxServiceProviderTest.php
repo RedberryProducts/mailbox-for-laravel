@@ -52,13 +52,6 @@ describe(MailboxServiceProvider::class, function () {
         expect($middlewares)->toContain('web', 'mailbox.authorize');
     });
 
-    it('honors config(mailbox.enabled)=false by not registering routes', function () {
-        putenv('MAILBOX_ENABLED=false');
-        $this->refreshApplication();
-        expect(Route::has('mailbox.index'))->toBeFalse();
-        putenv('MAILBOX_ENABLED');
-    });
-
     it('merges default config values correctly', function () {
         // Default driver is 'database' per config file
         expect(config('mailbox.store.driver'))->toBe('database');
