@@ -23,18 +23,12 @@ class DatabaseMessageStore implements MessageStore
         $payload['timestamp'] ??= time();
         $payload['saved_at'] ??= now()->toDateTimeString();
 
-        // Generate ID if not provided, same logic as FileStorage
-        if (! is_string($id) || $id === '') {
-            $id = $this->generateId($payload, (int) $payload['timestamp']);
-            $payload['id'] = $id;
-        }
-
         $message = MailboxMessage::query()->updateOrCreate(
             ['id' => $id],
             $payload,
         );
 
-        return $id;
+        return $message->id;
     }
 
     public function find(string $id): ?array

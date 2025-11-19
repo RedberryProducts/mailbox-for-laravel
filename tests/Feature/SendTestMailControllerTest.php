@@ -13,7 +13,8 @@ describe(SendTestMailController::class, function () {
         config()->set('mailbox.public', true);
     });
 
-    it('sends sample mail through mailbox transport and returns stored key', function () {
+    it('sends sample mail through mailbox transport and returns stored key when using "file" driver', function () {
+        config()->set('mailbox.store.driver', 'file');
         $response = $this->post('/mailbox/test-email');
 
         $response->assertOk()
@@ -26,8 +27,28 @@ describe(SendTestMailController::class, function () {
             ]);
 
         $key = $response->json('key');
-        expect($key)->toBeString();
-        expect($key)->toMatch('/^email_\d+_[a-f0-9]+$/');
+
+        expect($key)->toBeString()
+            ->and($key)->toMatch('/^email_\d+_[a-f0-9]+$/');
+    });
+
+
+    it('sends sample mail through mailbox transport and returns stored key when using "database" driver', function () {
+        config()->set('mailbox.store.driver', 'database');
+        $response = $this->post('/mailbox/test-email');
+
+        $response->assertOk()
+            ->assertJson([
+                'status' => 'stored',
+            ])
+            ->assertJsonStructure([
+                'status',
+                'key',
+            ]);
+
+        $key = $response->json('key');
+
+        expect($key)->toBeInt();
     });
 
     it('stores a properly formatted test message with all required fields', function () {

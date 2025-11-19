@@ -60,7 +60,6 @@ describe(SeenController::class, function () {
     it('updates seen_at field with current timestamp and returns JSON', function () {
         $service = app(CaptureService::class);
 
-        // Store a message
         $payload = [
             'subject' => 'Test Email',
             'from' => [['email' => 'test@example.com']],
@@ -69,22 +68,21 @@ describe(SeenController::class, function () {
 
         $key = $service->store($payload);
 
-        $beforeTimestamp = now()->subSecond(); // Add 1 second tolerance
+        $beforeTimestamp = now()->subSecond();
 
         $response = $this->post("/mailbox/messages/{$key}/seen");
         $response->assertOk();
 
-        $afterTimestamp = now()->addSecond(); // Add 1 second tolerance
+        $afterTimestamp = now()->addSecond();
 
-        // Verify JSON response
         $json = $response->json();
-        expect($json['id'])->toBe($key);
-        expect($json['seen_at'])->toBeString();
+        expect((int) $json['id'])->toBe($key)
+            ->and($json['seen_at'])->toBeString();
 
         $seenDate = Carbon\Carbon::parse($json['seen_at']);
-        expect($seenDate)->toBeInstanceOf(Carbon\Carbon::class);
-        expect($seenDate->gte($beforeTimestamp))->toBeTrue();
-        expect($seenDate->lte($afterTimestamp))->toBeTrue();
+        expect($seenDate)->toBeInstanceOf(Carbon\Carbon::class)
+            ->and($seenDate->gte($beforeTimestamp))->toBeTrue()
+            ->and($seenDate->lte($afterTimestamp))->toBeTrue();
 
         // Verify timestamp is within expected range
         $updatedMessage = $service->find($key);
@@ -92,9 +90,9 @@ describe(SeenController::class, function () {
 
         expect($seenAt)->toBeString();
         $seenDate = Carbon\Carbon::parse($seenAt);
-        expect($seenDate)->toBeInstanceOf(Carbon\Carbon::class);
-        expect($seenDate->gte($beforeTimestamp))->toBeTrue();
-        expect($seenDate->lte($afterTimestamp))->toBeTrue();
+        expect($seenDate)->toBeInstanceOf(Carbon\Carbon::class)
+            ->and($seenDate->gte($beforeTimestamp))->toBeTrue()
+            ->and($seenDate->lte($afterTimestamp))->toBeTrue();
     });
 
     it('returns 404 for non-existent message', function () {

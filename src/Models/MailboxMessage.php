@@ -13,13 +13,6 @@ class MailboxMessage extends Model
     protected $table = 'mailbox_messages';
 
     /**
-     * The primary key is a string, not an auto-incrementing integer
-     */
-    protected $keyType = 'string';
-
-    public $incrementing = false;
-
-    /**
      * Allow mass assignment
      */
     protected $guarded = [];
