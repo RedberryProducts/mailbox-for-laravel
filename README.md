@@ -104,9 +104,9 @@ php artisan mailbox:install --dev
 php artisan mailbox:install --refresh
 ```
 
-### 3. Configure Your Mail Driver
+### 3. Configure Your Mail Driver **Required:**
 
-**Required:** Set your mail driver to `mailbox` to capture outgoing emails.
+Set your mail driver to `mailbox` to capture outgoing emails.
 
 Add to your `.env`:
 
@@ -114,7 +114,7 @@ Add to your `.env`:
 MAIL_MAILER=mailbox
 ```
 
-Alternatively, configure it per-mailer in `config/mail.php`:
+Configure you new mailer, that will use `mailbox` transport `config/mail.php`:
 
 ```php
 'mailers' => [
