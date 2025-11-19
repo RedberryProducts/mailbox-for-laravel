@@ -35,7 +35,7 @@ class InstallCommand extends Command
     public function runMigrations(): void
     {
         $command = $this->option('refresh') ? 'migrate:refresh' : 'migrate';
-        $connectionName = config('mailbox.connection', 'mailbox');
+        $connectionName = config('mailbox.store.database.connection', 'mailbox');
         $connection = config("database.connections.{$connectionName}");
 
         if (! $connection) {
