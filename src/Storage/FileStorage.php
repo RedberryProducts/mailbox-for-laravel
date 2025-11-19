@@ -117,6 +117,13 @@ class FileStorage implements MessageStore
         return array_slice($messages, $offset, $perPage);
     }
 
+    public function count(): int
+    {
+        $files = glob($this->basePath.'/*.json') ?: [];
+
+        return count($files);
+    }
+
     public function update(string $id, array $changes): ?array
     {
         $existing = $this->find($id);

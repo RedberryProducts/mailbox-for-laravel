@@ -70,6 +70,11 @@ describe(StoreManager::class, function () {
             {
                 $this->stored = [];
             }
+
+            public function count(): int
+            {
+                return count($this->stored);
+            }
         };
 
         config([

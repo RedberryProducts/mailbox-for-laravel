@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import {ref, computed} from 'vue'
+import { ref, computed, watch } from 'vue'
 import axios from 'axios'
+import { usePage, router } from '@inertiajs/vue3'
 import MailboxFilterBar from '@/components/mail/MailboxFilterBar.vue'
 import MailboxList from '@/components/mail/MailboxList.vue'
 import MailboxPreview from '@/components/mail/MailboxPreview.vue'
+import { useMailboxPolling } from '@/composables/useMailboxPolling'
+import { Button } from '@/components/ui/button'
 
 type TabType = 'html' | 'text' | 'raw'
 
@@ -19,23 +22,129 @@ interface Message {
     seen_at: string | null
 }
 
+interface PaginationMeta {
+    total: number
+    per_page: number
+    current_page: number
+    has_more: boolean
+    latest_timestamp: number | null
+}
+
+interface PollingConfig {
+    enabled: boolean
+    interval: number
+}
+
 const props = defineProps<{
     messages: Message[]
+    pagination: PaginationMeta
+    polling: PollingConfig
     title: string
     subtitle: string
 }>()
 
-const selectedMessageId = ref<string | null>(
-    null,
-)
+// Typed Inertia page props
+const page = usePage<{
+    messages: Message[]
+    pagination: PaginationMeta
+    polling: PollingConfig
+    title: string
+    subtitle: string
+}>()
+
+// Local accumulated messages (pages 1..N)
+const localMessages = ref<Message[]>([...props.messages])
+
+// Pagination state that belongs to *the client*, not the server
+const currentPage = ref<number>(props.pagination.current_page)
+const hasMore = ref<boolean>(props.pagination.has_more)
+
+const selectedMessageId = ref<string | null>(null)
 const selectedRecipient = ref<string>('all')
 const activeTab = ref<TabType>('html')
+const isLoadingMore = ref(false)
 
-// unique recipients from messages
+// Start polling – this should only reload `messages` (not `pagination`)
+useMailboxPolling(props.polling, props.pagination.latest_timestamp)
+
+/**
+ * Deduplicate and merge messages by ID.
+ * - Polling: new messages (top).
+ * - Load-more: more pages (bottom).
+ */
+function mergeMessages(newMessages: Message[]) {
+    const map = new Map<string, Message>()
+
+    // Existing first
+    localMessages.value.forEach((msg) => {
+        map.set(msg.id, msg)
+    })
+
+    // Override / add new ones
+    newMessages.forEach((msg) => {
+        map.set(msg.id, msg)
+    })
+
+    // Sort newest first
+    localMessages.value = Array.from(map.values()).sort((a, b) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+}
+
+/**
+ * Whenever Inertia sends updated `messages` props (polling OR load-more),
+ * merge them into local state instead of replacing.
+ *
+ * IMPORTANT:
+ * - Polling should *not* send `pagination` (we only listen to messages here).
+ * - Load-more will send messages + pagination, but we still merge messages here.
+ */
+watch(
+    () => page.props.messages as Message[] | undefined,
+    (newMessages) => {
+        if (!newMessages) return
+        mergeMessages(newMessages)
+    },
+)
+
+// Load next page via Inertia (not axios).
+// URL stays `/mailbox` and pagination is tracked locally.
+function loadMoreMessages() {
+    if (isLoadingMore.value || !hasMore.value) {
+        return
+    }
+
+    isLoadingMore.value = true
+
+    const nextPage = currentPage.value + 1
+
+    router.get(
+        '/mailbox', // or route('mailbox.inbox') if you have a named route
+        { page: nextPage },
+        {
+            only: ['messages', 'pagination'],
+            preserveScroll: true,
+            preserveState: true,
+            preserveUrl: true, // keep /mailbox instead of /mailbox?page=N
+            replace: true,     // don't spam history
+            onSuccess: () => {
+                // Update local pagination from latest server meta
+                const pagination = page.props.pagination as PaginationMeta
+                currentPage.value = pagination.current_page
+                hasMore.value = pagination.has_more
+            },
+            onFinish: () => {
+                isLoadingMore.value = false
+            },
+        },
+    )
+}
+
+// unique recipients from local messages
 const recipients = computed(() => {
     const set = new Set<string>()
 
-    props.messages.forEach((msg) => {
+    localMessages.value.forEach((msg) => {
         msg.to.forEach((r) => set.add(r))
     })
 
@@ -45,18 +154,18 @@ const recipients = computed(() => {
 // filtered messages (by recipient)
 const filteredMessages = computed(() => {
     if (selectedRecipient.value === 'all') {
-        return props.messages
+        return localMessages.value
     }
 
-    return props.messages.filter((msg) =>
+    return localMessages.value.filter((msg) =>
         msg.to.includes(selectedRecipient.value),
     )
 })
 
-// selected message (from all messages, same as React version)
+// selected message
 const selectedMessage = computed<Message | null>(() => {
     return (
-        props.messages.find(
+        localMessages.value.find(
             (msg) => msg.id === selectedMessageId.value,
         ) || null
     )
@@ -69,21 +178,17 @@ const handleRecipientChange = (recipient: string) => {
 const handleSelectMessage = (id: string) => {
     selectedMessageId.value = id
 
-    const msg = props.messages.find((m) => m.id === id)
-    if (!msg || msg.seen_at) {
-        return
-    }
+    const msg = localMessages.value.find((m) => m.id === id)
+    if (!msg || msg.seen_at) return
 
-    // Use axios (part of Inertia stack) for JSON API endpoint
+    // Plain JSON endpoint – axios is fine here.
     axios
         .post(`/mailbox/messages/${id}/seen`)
         .then((response) => {
-            // Update local state with the seen_at timestamp
             msg.seen_at = response.data.seen_at
         })
         .catch((error) => {
             console.error('Failed to mark message as seen', error)
-            // We do NOT revert selection; worst case the message appears unread until next reload.
         })
 }
 
@@ -116,11 +221,25 @@ const handleViewChange = (view: TabType) => {
                     @recipient-change="handleRecipientChange"
                 />
 
-                <MailboxList
-                    :messages="filteredMessages"
-                    :selected-id="selectedMessageId"
-                    @select="handleSelectMessage"
-                />
+                <div class="flex-1 overflow-y-auto">
+                    <MailboxList
+                        :messages="filteredMessages"
+                        :selected-id="selectedMessageId"
+                        @select="handleSelectMessage"
+                    />
+
+                    <!-- Load More button -->
+                    <div v-if="hasMore" class="p-4 text-center">
+                        <Button
+                            @click="loadMoreMessages"
+                            :disabled="isLoadingMore"
+                            variant="outline"
+                            class="w-full"
+                        >
+                            {{ isLoadingMore ? 'Loading...' : 'Load More' }}
+                        </Button>
+                    </div>
+                </div>
             </div>
 
             <!-- Preview Panel -->

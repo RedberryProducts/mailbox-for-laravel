@@ -50,7 +50,7 @@ class CaptureService
     /**
      * Paginated list of messages as DTOs.
      *
-     * @return array<int, MailboxMessageData>
+     * @return array{data: array<int, MailboxMessageData>, total: int, per_page: int, current_page: int, has_more: bool, latest_timestamp: int|null}
      */
     public function list(int $page = 1, int $perPage = 10): array
     {
@@ -58,11 +58,24 @@ class CaptureService
         $perPage = max(1, $perPage);
 
         $items = $this->storage->paginate($page, $perPage);
+        $total = $this->storage->count();
 
-        return array_map(
+        $messages = array_map(
             static fn (array $data): MailboxMessageData => MailboxMessageData::from($data),
             $items,
         );
+
+        // Get the latest timestamp from the first message (sorted newest first)
+        $latestTimestamp = isset($messages[0]) ? $messages[0]->timestamp : null;
+
+        return [
+            'data' => $messages,
+            'total' => $total,
+            'per_page' => $perPage,
+            'current_page' => $page,
+            'has_more' => ($page * $perPage) < $total,
+            'latest_timestamp' => $latestTimestamp,
+        ];
     }
 
     /**

@@ -42,6 +42,15 @@ describe(MailboxController::class, function () {
             ->has('messages', 2)
             ->has('title')
             ->has('subtitle')
+            ->has('pagination')
+            ->has('pagination.total')
+            ->has('pagination.per_page')
+            ->has('pagination.current_page')
+            ->has('pagination.has_more')
+            ->has('pagination.latest_timestamp')
+            ->has('polling')
+            ->has('polling.enabled')
+            ->has('polling.interval')
         );
     });
 
@@ -53,6 +62,8 @@ describe(MailboxController::class, function () {
         $response->assertInertia(fn (Assert $page) => $page
             ->component('mailbox::Dashboard')
             ->has('messages', 0)
+            ->has('pagination')
+            ->has('polling')
         );
     });
 
@@ -74,6 +85,8 @@ describe(MailboxController::class, function () {
         $response->assertInertia(fn (Assert $page) => $page
             ->component('mailbox::Dashboard')
             ->has('messages', 1)
+            ->has('pagination')
+            ->has('polling')
         );
     });
 
@@ -97,6 +110,8 @@ describe(MailboxController::class, function () {
         $response->assertInertia(fn (Assert $page) => $page
             ->component('mailbox::Dashboard')
             ->has('messages', 3)
+            ->has('pagination')
+            ->has('polling')
         );
     });
 
@@ -127,6 +142,56 @@ describe(MailboxController::class, function () {
             ->has('messages.0.html_body')
             ->has('messages.0.id')
             ->has('messages.0.created_at')
+            ->has('pagination')
+            ->has('polling')
+        );
+    });
+
+    it('returns pagination metadata with has_more flag', function () {
+        $service = app(CaptureService::class);
+
+        // Store 5 messages
+        for ($i = 1; $i <= 5; $i++) {
+            $service->store([
+                'subject' => "Test Email {$i}",
+                'from' => [['email' => "test{$i}@example.com"]],
+                'raw' => "Email {$i} content",
+                'timestamp' => 1000 + $i,
+            ]);
+        }
+
+        // Request first page with 2 items per page
+        $response = $this->get(route('mailbox.index', ['page' => 1, 'per_page' => 2]));
+
+        $response->assertStatus(200);
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('mailbox::Dashboard')
+            ->has('messages', 2)
+            ->has('pagination', fn (Assert $pagination) => $pagination
+                ->where('total', 5)
+                ->where('per_page', 2)
+                ->where('current_page', 1)
+                ->where('has_more', true)
+                ->has('latest_timestamp')
+            )
+        );
+    });
+
+    it('returns polling configuration from config', function () {
+        config(['mailbox.polling.enabled' => true]);
+        config(['mailbox.polling.interval' => 3000]);
+
+        $response = $this->get(route('mailbox.index'));
+
+        $response->assertStatus(200);
+
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('mailbox::Dashboard')
+            ->has('polling', fn (Assert $polling) => $polling
+                ->where('enabled', true)
+                ->where('interval', 3000)
+            )
         );
     });
 });

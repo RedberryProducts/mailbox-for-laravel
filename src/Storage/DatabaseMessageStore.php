@@ -50,6 +50,11 @@ class DatabaseMessageStore implements MessageStore
             ->toArray();
     }
 
+    public function count(): int
+    {
+        return MailboxMessage::query()->count();
+    }
+
     public function update(string $id, array $changes): ?array
     {
         $record = MailboxMessage::query()->find($id);
