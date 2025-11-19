@@ -3,7 +3,7 @@
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 
 describe(MessageStore::class, function () {
-    it('defines required methods: store, retrieve, keys, update, delete, purgeOlderThan, clear', function () {
+    it('defines required methods: store, find, paginate, update, delete, purgeOlderThan, clear', function () {
         $methods = array_map(
             fn ($m) => $m->getName(),
             (new ReflectionClass(MessageStore::class))->getMethods()
@@ -11,10 +11,10 @@ describe(MessageStore::class, function () {
 
         expect($methods)->toBe([
             'store',
-            'retrieve',
-            'keys',
-            'delete',
+            'find',
+            'paginate',
             'update',
+            'delete',
             'purgeOlderThan',
             'clear',
         ]);
@@ -22,14 +22,17 @@ describe(MessageStore::class, function () {
 
     it('describes return types and error behavior', function () {
         $ref = new ReflectionClass(MessageStore::class);
-        $store = $ref->getMethod('store')->getReturnType();
-        expect($store)->not->toBeNull();
-        expect($store->getName())->toBe('void');
 
-        $retrieve = $ref->getMethod('retrieve')->getReturnType();
-        expect($retrieve?->getName())->toBe('array');
-        expect($retrieve?->allowsNull())->toBeTrue();
+        $storeReturnType = $ref->getMethod('store')->getReturnType();
+        expect($storeReturnType)->not->toBeNull();
+        // store returns string|int
+        expect($storeReturnType->__toString())->toBe('string|int');
 
-        expect($ref->getMethod('keys')->getReturnType()?->getName())->toBe('iterable');
+        $findReturnType = $ref->getMethod('find')->getReturnType();
+        // find returns ?array
+        expect($findReturnType->allowsNull())->toBeTrue();
+
+        $paginateReturnType = $ref->getMethod('paginate')->getReturnType();
+        expect($paginateReturnType?->getName())->toBe('array');
     });
 });

@@ -1,48 +1,55 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Redberry\MailboxForLaravel\Contracts;
 
+/**
+ * Storage abstraction for mailbox messages.
+ *
+ * Implementations are responsible for persisting a canonical payload array.
+ * The payload MUST contain an "id" key that is unique per message.
+ */
 interface MessageStore
 {
     /**
-     * Persist an email payload.
+     * Persist an email payload and return its id.
      *
-     * @param  string  $key  Unique key (you generate it).
-     * @param  array  $value  Associative array payload; MUST include at least: ['raw' => string, 'timestamp' => int]
+     * @param  array<string, mixed>  $payload  MUST include at least:
+     *                                         - id: string
+     *                                         - raw: string (optional but recommended)
+     *                                         - timestamp: int (UNIX timestamp)
      */
-    public function store(string $key, array $value): void;
+    public function store(array $payload): string|int;
 
     /**
-     * Retrieve a single payload by key.
+     * Retrieve a single payload by id.
      *
-     * @param  string  $key  Unique key to retrieve the payload.
-     * @return array|null Returns the payload array or null if not found.
+     * @return array<string, mixed>|null
      */
-    public function retrieve(string $key): ?array;
+    public function find(string $id): ?array;
 
     /**
-     * Retrieve multiple payload keys optionally filtered by a UNIX timestamp (>= since).
+     * Retrieve a page of payloads.
      *
-     *
-     * @return iterable<string> Keys
+     * @param  int  $page  1-based page index
+     * @param  int  $perPage  number of items per page
+     * @return array<int, array<string, mixed>>
      */
-    public function keys(?int $since = null): iterable;
+    public function paginate(int $page, int $perPage): array;
 
     /**
-     * Delete a payload by key.
+     * Apply partial updates to a payload by id.
      *
-     * @param  string  $key  Unique key to delete the payload.
+     * @param  array<string, mixed>  $changes
+     * @return array<string, mixed>|null The updated payload, or null if not found.
      */
-    public function delete(string $key): void;
+    public function update(string $id, array $changes): ?array;
 
     /**
-     * Update an existing payload by merging the provided value array.
-     *
-     * @param  string  $key  Unique key to update the payload.
-     * @param  array  $value  Associative array with values to merge into the existing payload.
-     * @return array|null Returns the updated payload or null if not found.
+     * Delete a single payload by id.
      */
-    public function update(string $key, array $value): ?array;
+    public function delete(string $id): void;
 
     /**
      * Remove payloads older than $seconds (relative to now).
@@ -54,5 +61,5 @@ interface MessageStore
     /**
      * Remove all stored payloads.
      */
-    public function clear(): bool;
+    public function clear(): void;
 }

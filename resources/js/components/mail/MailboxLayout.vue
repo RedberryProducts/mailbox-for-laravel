@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import {ref, computed} from 'vue'
 import axios from 'axios'
 import MailboxFilterBar from '@/components/mail/MailboxFilterBar.vue'
 import MailboxList from '@/components/mail/MailboxList.vue'
@@ -26,7 +26,7 @@ const props = defineProps<{
 }>()
 
 const selectedMessageId = ref<string | null>(
-    props.messages[0]?.id ?? null,
+    null,
 )
 const selectedRecipient = ref<string>('all')
 const activeTab = ref<TabType>('html')

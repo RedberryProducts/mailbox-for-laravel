@@ -1,16 +1,41 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Redberry\MailboxForLaravel\Storage;
 
+use const DIRECTORY_SEPARATOR;
+use const JSON_THROW_ON_ERROR;
+
+use Illuminate\Support\Str;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 
+use function array_slice;
+use function file_get_contents;
+use function file_put_contents;
+use function glob;
+use function is_array;
+use function is_dir;
+use function is_file;
+use function json_decode;
+use function json_encode;
+use function rtrim;
+use function unlink;
+use function usort;
+
+/**
+ * JSON file–based storage driver.
+ *
+ * This is ideal for local/dev environments: simple, no DB required.
+ */
 class FileStorage implements MessageStore
 {
     protected string $basePath;
 
     public function __construct(?string $basePath = null)
     {
-        $this->basePath = $basePath ?: storage_path('app/mailbox');
+        $this->basePath = $basePath ?: storage_path('app/mail-inbox');
+
         if (! is_dir($this->basePath)) {
             @mkdir($this->basePath, 0775, true);
         }
@@ -21,51 +46,96 @@ class FileStorage implements MessageStore
         return $this->basePath;
     }
 
-    public function store(string $key, array $value): void
+    public function store(array $payload): string
     {
-        $path = $this->pathFor($key);
-        $value['timestamp'] ??= time();
+        $id = $payload['id'] ?? null;
+        $payload['timestamp'] ??= time();
+        $payload['saved_at'] ??= now()->toIso8601String();
 
-        file_put_contents($path, json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        if (! is_string($id) || $id === '') {
+            $id = $this->generateId($payload, (int) $payload['timestamp']);
+            $payload['id'] = $id;
+        }
+
+        $path = $this->pathFor($id);
+        file_put_contents($path, json_encode($payload, JSON_THROW_ON_ERROR));
+
+        return $id;
     }
 
-    public function retrieve(string $key): ?array
+    public function find(string $id): ?array
     {
-        $path = $this->pathFor($key);
+        $path = $this->pathFor($id);
+
         if (! is_file($path)) {
             return null;
         }
 
-        $raw = file_get_contents($path);
-        $data = json_decode($raw, true);
+        $contents = file_get_contents($path);
 
-        return is_array($data) ? $data : null;
-    }
-
-    public function keys(?int $since = null): iterable
-    {
-        if (! is_dir($this->basePath)) {
-            return [];
+        if ($contents === false || $contents === '') {
+            return null;
         }
 
-        $files = glob($this->basePath.DIRECTORY_SEPARATOR.'*.json') ?: [];
-        foreach ($files as $file) {
-            $key = basename($file, '.json');
+        $decoded = json_decode($contents, true);
 
-            if ($since) {
-                $payload = $this->retrieve($key);
-                if (! $payload || ($payload['timestamp'] ?? 0) < $since) {
-                    continue;
-                }
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    public function paginate(int $page, int $perPage): array
+    {
+        $page = max(1, $page);
+        $perPage = max(1, $perPage);
+
+        $files = glob($this->basePath.'/*.json') ?: [];
+
+        $messages = [];
+
+        foreach ($files as $file) {
+            $contents = file_get_contents($file);
+
+            if ($contents === false || $contents === '') {
+                continue;
             }
 
-            yield $key;
+            $decoded = json_decode($contents, true);
+
+            if (! is_array($decoded)) {
+                continue;
+            }
+
+            $messages[] = $decoded;
         }
+
+        usort(
+            $messages,
+            static fn (array $a, array $b): int => ((int) ($b['timestamp'] ?? 0)) <=> ((int) ($a['timestamp'] ?? 0)),
+        );
+
+        $offset = ($page - 1) * $perPage;
+
+        return array_slice($messages, $offset, $perPage);
     }
 
-    public function delete(string $key): void
+    public function update(string $id, array $changes): ?array
     {
-        $path = $this->pathFor($key);
+        $existing = $this->find($id);
+
+        if ($existing === null) {
+            return null;
+        }
+
+        $updated = array_merge($existing, $changes);
+
+        $this->store($updated);
+
+        return $updated;
+    }
+
+    public function delete(string $id): void
+    {
+        $path = $this->pathFor($id);
+
         if (is_file($path)) {
             @unlink($path);
         }
@@ -73,45 +143,57 @@ class FileStorage implements MessageStore
 
     public function purgeOlderThan(int $seconds): void
     {
-        $cut = time() - $seconds;
+        if ($seconds <= 0) {
+            return;
+        }
 
-        foreach ($this->keys() as $key) {
-            $payload = $this->retrieve($key);
-            if (! $payload) {
+        $cutoff = time() - $seconds;
+
+        $files = glob($this->basePath.'/*.json') ?: [];
+
+        foreach ($files as $file) {
+            $contents = file_get_contents($file);
+
+            if ($contents === false || $contents === '') {
                 continue;
             }
-            if (($payload['timestamp'] ?? 0) < $cut) {
-                $this->delete($key);
+
+            $decoded = json_decode($contents, true);
+
+            if (! is_array($decoded)) {
+                continue;
+            }
+
+            $timestamp = (int) ($decoded['timestamp'] ?? 0);
+
+            if ($timestamp > 0 && $timestamp < $cutoff) {
+                @unlink($file);
             }
         }
     }
 
-    protected function pathFor(string $key): string
+    public function clear(): void
     {
-        $key = preg_replace('/[^A-Za-z0-9_\-]/', '_', $key);
+        $files = glob($this->basePath.'/*.json') ?: [];
 
-        return $this->basePath.DIRECTORY_SEPARATOR.$key.'.json';
+        foreach ($files as $file) {
+            @unlink($file);
+        }
     }
 
-    public function update(string $key, array $value): ?array
+    protected function pathFor(string $id): string
     {
-        $existing = $this->retrieve($key);
-        if (! $existing) {
-            return null;
-        }
-
-        $updated = array_merge($existing, $value);
-        $this->store($key, $updated);
-
-        return $updated;
+        return rtrim($this->basePath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$id.'.json';
     }
 
-    public function clear(): bool
+    /**
+     * Generate a filesystem-safe, reasonably unique id.
+     */
+    protected function generateId(array $payload, int $timestamp): string
     {
-        foreach ($this->keys() as $key) {
-            $this->delete($key);
-        }
+        $payloadString = json_encode($payload);
+        $hash = substr(sha1($payloadString.$timestamp.microtime(true).Str::random(8)), 0, 32);
 
-        return true;
+        return "email_{$timestamp}_{$hash}";
     }
 }

@@ -1,139 +1,128 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Redberry\MailboxForLaravel;
 
 use InvalidArgumentException;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\DTO\MailboxMessageData;
 
+/**
+ * High-level mailbox API that the rest of the package uses.
+ *
+ * This service is storage-driver-agnostic and only talks to MessageStore.
+ */
 class CaptureService
 {
-    public function __construct(protected MessageStore $storage) {}
+    public function __construct(
+        protected MessageStore $storage,
+    ) {}
 
     /**
-     * Persist the raw message and metadata.
+     * Persist the raw message payload and metadata.
      *
-     * @param  array  $payload  - raw email payload (text, html, headers, etc.)
+     * @param  array<string, mixed>  $payload
      */
-    public function store(array $payload): string
+    public function store(array $payload): string|int
     {
-        $raw = $payload['raw'] ?? '';
-        $id = 'email_'.md5($raw).'_'.microtime(true);
+        $timestamp = isset($payload['timestamp'])
+            ? (int) $payload['timestamp']
+            : time();
 
-        // Build the canonical DTO
-        $message = MailboxMessageData::from([
-            'timestamp' => time(),
-            'id' => $id,
-            'seen_at' => null,
-            'version' => $payload['version'] ?? 1,
-            ...$payload,
-        ]);
+        $payload['timestamp'] ??= $timestamp;
+        $payload['saved_at'] ??= now()->toIso8601String();
 
-        // Persist as array (storage stays dumb)
-        $this->storage->store($id, $message->toArray());
-
-        return $id;
-    }
-
-    public function update(string $key, array $values): ?MailboxMessageData
-    {
-        $this->assertKey($key);
-
-        $stored = $this->storage->update($key, $values);
-
-        return $stored ? MailboxMessageData::from($stored) : null;
-    }
-
-    public function retrieve(string $key): ?MailboxMessageData
-    {
-        $this->assertKey($key);
-
-        $stored = $this->storage->retrieve($key);
-
-        return $stored ? MailboxMessageData::from($stored) : null;
-    }
-
-    public function delete(string $key): void
-    {
-        $this->assertKey($key);
-        $this->storage->delete($key);
+        return $this->storage->store($payload);
     }
 
     /**
-     * @return MailboxMessageData[]
+     * Convenience method when you only have a raw message.
+     */
+    public function storeRaw(string $raw): string
+    {
+        return $this->store([
+            'raw' => $raw,
+            'timestamp' => time(),
+        ]);
+    }
+
+    /**
+     * Paginated list of messages as DTOs.
+     *
+     * @return array<int, MailboxMessageData>
+     */
+    public function list(int $page = 1, int $perPage = 10): array
+    {
+        $page = max(1, $page);
+        $perPage = max(1, $perPage);
+
+        $items = $this->storage->paginate($page, $perPage);
+
+        return array_map(
+            static fn (array $data): MailboxMessageData => MailboxMessageData::from($data),
+            $items,
+        );
+    }
+
+    /**
+     * Non-paginated list of all messages (dev-only, fine for small volumes).
+     *
+     * @return array<int, MailboxMessageData>
      */
     public function all(): array
     {
-        $messages = [];
+        $items = $this->storage->paginate(1, PHP_INT_MAX);
 
-        foreach ($this->storage->keys() as $key) {
-            $raw = $this->storage->retrieve($key);
-
-            if (! $raw) {
-                continue;
-            }
-
-            $messages[$key] = MailboxMessageData::from($raw);
-        }
-
-        // Sort by timestamp (newest first)
-        uasort($messages, fn (MailboxMessageData $a, MailboxMessageData $b) => $b->timestamp <=> $a->timestamp);
-
-        return $messages;
+        return array_map(
+            static fn (array $data): MailboxMessageData => MailboxMessageData::from($data),
+            $items,
+        );
     }
 
-    public function get(string $key): ?MailboxMessageData
+    public function find(string $id): ?MailboxMessageData
     {
-        $this->assertKey($key);
+        $data = $this->storage->find($id);
 
-        $raw = $this->storage->retrieve($key);
-
-        return $raw ? MailboxMessageData::from($raw) : null;
+        return $data ? MailboxMessageData::from($data) : null;
     }
 
     /**
-     * Paginated list that still returns DTOs.
+     * Apply partial updates (e.g. mark as seen).
      *
-     * @return array{data: MailboxMessageData[], total:int, page:int, per_page:int}
+     * @param  array<string, mixed>  $changes
      */
-    public function list(int $page = 1, int $perPage = PHP_INT_MAX): array
+    public function update(string $id, array $changes): ?MailboxMessageData
     {
-        $all = $this->all();
+        $data = $this->storage->update($id, $changes);
 
-        if ($perPage === PHP_INT_MAX) {
-            return [
-                'data' => array_values($all),
-                'total' => count($all),
-                'page' => 1,
-                'per_page' => count($all),
-            ];
+        return $data ? MailboxMessageData::from($data) : null;
+    }
+
+    /**
+     * Shortcut specifically for "seen" flag.
+     */
+    public function markSeen(string $id): ?MailboxMessageData
+    {
+        return $this->update($id, ['seen_at' => now()->toIso8601String()]);
+    }
+
+    public function delete(string $id): void
+    {
+        $this->storage->delete($id);
+    }
+
+    public function purgeOlderThan(int $seconds): void
+    {
+        if ($seconds <= 0) {
+            throw new InvalidArgumentException('Seconds must be greater than zero.');
         }
 
-        $offset = max(0, ($page - 1) * $perPage);
-        $slice = array_slice($all, $offset, $perPage);
-
-        return [
-            'data' => array_values($slice),
-            'total' => count($all),
-            'page' => $page,
-            'per_page' => $perPage,
-        ];
+        $this->storage->purgeOlderThan($seconds);
     }
 
-    public function clearAll(): bool
+    public function clearAll(): void
     {
-        return $this->storage->clear();
-    }
-
-    public function storeRaw(string $raw): string
-    {
-        return $this->store(['raw' => $raw]);
-    }
-
-    protected function assertKey(string $key): void
-    {
-        if (! preg_match('/^[A-Za-z0-9_.\-]+$/', $key)) {
-            throw new InvalidArgumentException('Invalid id');
-        }
+        $this->storage->clear();
     }
 }

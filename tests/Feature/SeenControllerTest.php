@@ -31,7 +31,8 @@ describe(SeenController::class, function () {
         $key = $service->store($payload);
 
         // Verify message is initially unseen
-        $message = $service->retrieve($key);
+        $message = $service->find($key);
+
         expect($message->seen_at)->toBeNull();
 
         // Mark as seen
@@ -47,7 +48,7 @@ describe(SeenController::class, function () {
         expect($json['seen_at'])->toBeString();
 
         // Verify message is now marked as seen
-        $updatedMessage = $service->retrieve($key);
+        $updatedMessage = $service->find($key);
         expect($updatedMessage->seen_at)->not->toBeNull();
         expect($updatedMessage->seen_at)->toBeString();
 
@@ -59,7 +60,6 @@ describe(SeenController::class, function () {
     it('updates seen_at field with current timestamp and returns JSON', function () {
         $service = app(CaptureService::class);
 
-        // Store a message
         $payload = [
             'subject' => 'Test Email',
             'from' => [['email' => 'test@example.com']],
@@ -68,32 +68,31 @@ describe(SeenController::class, function () {
 
         $key = $service->store($payload);
 
-        $beforeTimestamp = now()->subSecond(); // Add 1 second tolerance
+        $beforeTimestamp = now()->subSecond();
 
         $response = $this->post("/mailbox/messages/{$key}/seen");
         $response->assertOk();
 
-        $afterTimestamp = now()->addSecond(); // Add 1 second tolerance
+        $afterTimestamp = now()->addSecond();
 
-        // Verify JSON response
         $json = $response->json();
-        expect($json['id'])->toBe($key);
-        expect($json['seen_at'])->toBeString();
+        expect((int) $json['id'])->toBe($key)
+            ->and($json['seen_at'])->toBeString();
 
         $seenDate = Carbon\Carbon::parse($json['seen_at']);
-        expect($seenDate)->toBeInstanceOf(Carbon\Carbon::class);
-        expect($seenDate->gte($beforeTimestamp))->toBeTrue();
-        expect($seenDate->lte($afterTimestamp))->toBeTrue();
+        expect($seenDate)->toBeInstanceOf(Carbon\Carbon::class)
+            ->and($seenDate->gte($beforeTimestamp))->toBeTrue()
+            ->and($seenDate->lte($afterTimestamp))->toBeTrue();
 
         // Verify timestamp is within expected range
-        $updatedMessage = $service->retrieve($key);
+        $updatedMessage = $service->find($key);
         $seenAt = $updatedMessage->seen_at;
 
         expect($seenAt)->toBeString();
         $seenDate = Carbon\Carbon::parse($seenAt);
-        expect($seenDate)->toBeInstanceOf(Carbon\Carbon::class);
-        expect($seenDate->gte($beforeTimestamp))->toBeTrue();
-        expect($seenDate->lte($afterTimestamp))->toBeTrue();
+        expect($seenDate)->toBeInstanceOf(Carbon\Carbon::class)
+            ->and($seenDate->gte($beforeTimestamp))->toBeTrue()
+            ->and($seenDate->lte($afterTimestamp))->toBeTrue();
     });
 
     it('returns 404 for non-existent message', function () {
@@ -119,12 +118,8 @@ describe(SeenController::class, function () {
     });
 
     it('throws error for invalid message key format', function () {
-        // Test with invalid key format
-        $invalidKey = 'invalid-key-format';
-
-        // The CaptureService will throw an InvalidArgumentException for invalid keys
-        $response = $this->post('/mailbox/messages/{invalidKey}/seen');
-        $response->assertStatus(500);
+        $response = $this->post('/mailbox/messages/invalid_key/seen');
+        $response->assertStatus(404);
     });
 
     it('does not overwrite existing seen_at timestamp (idempotent)', function () {
@@ -160,7 +155,7 @@ describe(SeenController::class, function () {
         expect($secondSeenAt)->toBe($firstSeenAt);
 
         // Also verify in storage
-        $message = $service->retrieve($key);
+        $message = $service->find($key);
         expect($message->seen_at)->toBe($firstSeenAt);
     });
 
