@@ -40,7 +40,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::connection(config('mailbox.connection', 'mailbox'))
-            ->dropIfExists('mailbox_messages');
+        Schema::connection(config('mailbox.store.database.connection', 'mailbox'))
+            ->dropIfExists(config('mailbox.store.database.table'));
     }
 };
