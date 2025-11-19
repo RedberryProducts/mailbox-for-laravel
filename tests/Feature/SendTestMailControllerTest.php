@@ -32,7 +32,6 @@ describe(SendTestMailController::class, function () {
             ->and($key)->toMatch('/^email_\d+_[a-f0-9]+$/');
     });
 
-
     it('sends sample mail through mailbox transport and returns stored key when using "database" driver', function () {
         config()->set('mailbox.store.driver', 'database');
         $response = $this->post('/mailbox/test-email');
