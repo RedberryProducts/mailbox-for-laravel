@@ -38,7 +38,7 @@ export function useInfiniteScroll(
 
         // Use Inertia to load the next page
         router.get(
-            route('mailbox.index', { page: nextPage }),
+            `/mailbox?page=${nextPage}`,
             {},
             {
                 preserveState: true,
