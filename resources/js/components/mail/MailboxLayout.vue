@@ -2,38 +2,12 @@
 import { ref, computed, watch } from 'vue'
 import axios from 'axios'
 import { usePage, router } from '@inertiajs/vue3'
+import { Message, TabType, PaginationMeta, PollingConfig } from '@/types/mailbox'
 import MailboxFilterBar from '@/components/mail/MailboxFilterBar.vue'
 import MailboxList from '@/components/mail/MailboxList.vue'
 import MailboxPreview from '@/components/mail/MailboxPreview.vue'
 import { useMailboxPolling } from '@/composables/useMailboxPolling'
 import { Button } from '@/components/ui/button'
-
-type TabType = 'html' | 'text' | 'raw'
-
-interface Message {
-    id: string
-    subject: string
-    from: string
-    to: string[]
-    created_at: string
-    html_body: string
-    text_body: string
-    raw_body: string
-    seen_at: string | null
-}
-
-interface PaginationMeta {
-    total: number
-    per_page: number
-    current_page: number
-    has_more: boolean
-    latest_timestamp: number | null
-}
-
-interface PollingConfig {
-    enabled: boolean
-    interval: number
-}
 
 const props = defineProps<{
     messages: Message[]

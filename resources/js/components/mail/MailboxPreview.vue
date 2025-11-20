@@ -1,20 +1,9 @@
 <script setup lang="ts">
+import { Message, TabType } from '@/types/mailbox'
 import MailboxPreviewHeader from '@/components/mail/MailboxPreviewHeader.vue'
 import MailboxPreviewTabs from '@/components/mail/MailboxPreviewTabs.vue'
 import MailboxPreviewBody from '@/components/mail/MailboxPreviewBody.vue'
-
-type TabType = 'html' | 'text' | 'raw'
-
-interface Message {
-    id: string
-    subject: string
-    from: string
-    to: string[]
-    created_at: string
-    html_body: string
-    text_body: string
-    raw_body: string
-}
+import AttachmentList from '@/components/mail/AttachmentList.vue'
 
 const props = defineProps<{
     message: Message | null
@@ -55,5 +44,8 @@ const handleChange = (view: TabType) => {
             :view="props.activeView"
             :message="props.message"
         />
+        <div class="px-4 pb-4 overflow-y-auto">
+            <AttachmentList :attachments="props.message.attachments || []" />
+        </div>
     </div>
 </template>

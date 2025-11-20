@@ -9,6 +9,7 @@ use Redberry\MailboxForLaravel\Commands\DevLinkCommand;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
 use Redberry\MailboxForLaravel\Storage\AttachmentStore;
+use Redberry\MailboxForLaravel\Support\CidRewriter;
 use Redberry\MailboxForLaravel\Transport\MailboxTransport;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -69,6 +70,10 @@ class MailboxServiceProvider extends PackageServiceProvider
     {
         $this->app->singleton(AttachmentStore::class, function ($app) {
             return new AttachmentStore;
+        });
+
+        $this->app->singleton(CidRewriter::class, function ($app) {
+            return new CidRewriter($app->make(AttachmentStore::class));
         });
     }
 
