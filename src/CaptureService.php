@@ -65,7 +65,6 @@ class CaptureService
             $items,
         );
 
-        // Get the latest timestamp from the first message (sorted newest first)
         $latestTimestamp = isset($messages[0]) ? $messages[0]->timestamp : null;
 
         return [

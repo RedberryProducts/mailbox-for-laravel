@@ -75,17 +75,14 @@ useMailboxPolling(props.polling, props.pagination.latest_timestamp)
 function mergeMessages(newMessages: Message[]) {
     const map = new Map<string, Message>()
 
-    // Existing first
     localMessages.value.forEach((msg) => {
         map.set(msg.id, msg)
     })
 
-    // Override / add new ones
     newMessages.forEach((msg) => {
         map.set(msg.id, msg)
     })
 
-    // Sort newest first
     localMessages.value = Array.from(map.values()).sort((a, b) => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
@@ -107,8 +104,6 @@ watch(
     },
 )
 
-// Load next page via Inertia (not axios).
-// URL stays `/mailbox` and pagination is tracked locally.
 function loadMoreMessages() {
     if (isLoadingMore.value || !hasMore.value) {
         return
@@ -119,16 +114,15 @@ function loadMoreMessages() {
     const nextPage = currentPage.value + 1
 
     router.get(
-        '/mailbox', // or route('mailbox.inbox') if you have a named route
+        '/mailbox',
         { page: nextPage },
         {
             only: ['messages', 'pagination'],
             preserveScroll: true,
             preserveState: true,
-            preserveUrl: true, // keep /mailbox instead of /mailbox?page=N
-            replace: true,     // don't spam history
+            preserveUrl: true,
+            replace: true,
             onSuccess: () => {
-                // Update local pagination from latest server meta
                 const pagination = page.props.pagination as PaginationMeta
                 currentPage.value = pagination.current_page
                 hasMore.value = pagination.has_more
@@ -140,7 +134,6 @@ function loadMoreMessages() {
     )
 }
 
-// unique recipients from local messages
 const recipients = computed(() => {
     const set = new Set<string>()
 
@@ -151,7 +144,6 @@ const recipients = computed(() => {
     return Array.from(set).sort()
 })
 
-// filtered messages (by recipient)
 const filteredMessages = computed(() => {
     if (selectedRecipient.value === 'all') {
         return localMessages.value
@@ -162,7 +154,6 @@ const filteredMessages = computed(() => {
     )
 })
 
-// selected message
 const selectedMessage = computed<Message | null>(() => {
     return (
         localMessages.value.find(

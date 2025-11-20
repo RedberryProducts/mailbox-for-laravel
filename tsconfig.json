@@ -1,10 +1,24 @@
 {
     "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "lib": ["ESNext", "DOM"],
+        "moduleResolution": "bundler",
+
+        "strict": true,
+        "skipLibCheck": true,
+
         "baseUrl": ".",
         "paths": {
-            "@/*": [
-                "./resources/js/*"
-            ]
-        }
-    }
+            "@/*": ["./resources/js/*"]
+        },
+
+        "types": ["vite/client"]
+    },
+    "include": [
+        "resources/js/**/*.ts",
+        "resources/js/**/*.tsx",
+        "resources/js/**/*.vue"
+    ],
+    "exclude": ["node_modules", "public"]
 }
