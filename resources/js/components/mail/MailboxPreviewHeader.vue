@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { router } from '@inertiajs/vue3'
-import { format } from 'date-fns'
-import { Button } from '@/components/ui/button'
+import {ref, computed} from 'vue'
+import {router} from '@inertiajs/vue3'
+import {format} from 'date-fns'
+import {Button} from '@/components/ui/button'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -12,7 +12,9 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Trash2 } from 'lucide-vue-next'
+import {Paperclip, Trash2} from 'lucide-vue-next'
+import AttachmentList from "@/components/mail/AttachmentList.vue";
+import {Attachment} from "@/types/mailbox";
 
 const props = defineProps<{
     subject: string
@@ -20,6 +22,7 @@ const props = defineProps<{
     to: string[]
     sentAt: string
     messageId: string
+    attachments: Attachment[]
 }>()
 
 const isDeleting = ref(false)
@@ -54,25 +57,28 @@ const handleDeleteMessage = () => {
                 <div class="space-y-2 text-sm">
                     <div class="flex items-center gap-2">
                         <span class="text-muted-foreground font-medium"
-                            >From:</span
+                        >From:</span
                         >
                         <span class="text-foreground">{{ props.from }}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="text-muted-foreground font-medium"
-                            >To:</span
+                        >To:</span
                         >
                         <span class="text-foreground">{{
-                            props.to.join(', ')
-                        }}</span>
+                                props.to.join(', ')
+                            }}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="text-muted-foreground font-medium"
-                            >Date:</span
+                        >Date:</span
                         >
                         <span class="text-foreground">{{
-                            formattedDate
-                        }}</span>
+                                formattedDate
+                            }}</span>
+                    </div>
+                    <div v-if="props.attachments.length" class="flex items-center gap-2">
+                        <AttachmentList :attachments="props.attachments || []"/>
                     </div>
                 </div>
             </div>
@@ -85,7 +91,7 @@ const handleDeleteMessage = () => {
                         class="flex-shrink-0"
                         title="Delete message"
                     >
-                        <Trash2 class="h-4 w-4 " />
+                        <Trash2 class="h-4 w-4 "/>
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>

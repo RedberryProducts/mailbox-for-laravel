@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Attachment } from '@/types/mailbox'
 import { Button } from '@/components/ui/button'
-import { Download, Eye, Paperclip } from 'lucide-vue-next'
+import { Download, Paperclip } from 'lucide-vue-next'
+import { computed } from 'vue'
 
 const props = defineProps<{
     attachments: Attachment[]
@@ -12,18 +13,7 @@ const formatFileSize = (bytes: number): string => {
     const k = 1024
     const sizes = ['B', 'KB', 'MB', 'GB']
     const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
-}
-
-const getFileIcon = (mimeType: string): string => {
-    if (mimeType.startsWith('image/')) return '🖼️'
-    if (mimeType.startsWith('video/')) return '🎥'
-    if (mimeType.startsWith('audio/')) return '🎵'
-    if (mimeType === 'application/pdf') return '📄'
-    if (mimeType.includes('word')) return '📝'
-    if (mimeType.includes('sheet') || mimeType.includes('excel')) return '📊'
-    if (mimeType.includes('zip') || mimeType.includes('rar')) return '🗜️'
-    return '📎'
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
 }
 
 const handleDownload = (attachment: Attachment) => {
@@ -38,65 +28,53 @@ const canPreview = (mimeType: string): boolean => {
     return mimeType.startsWith('image/') || mimeType === 'application/pdf'
 }
 
-// Filter out inline attachments (CID images) as they're embedded in HTML
-const regularAttachments = props.attachments.filter(a => !a.is_inline)
+// Only show non-inline attachments, like in your original code
+const regularAttachments = computed(() =>
+    props.attachments.filter(a => !a.is_inline),
+)
+
+// When clicking the pill:
+// - if previewable (image/pdf) → open preview
+// - otherwise → download
+const handleClick = (attachment: Attachment) => {
+    if (canPreview(attachment.mime_type)) {
+        handlePreview(attachment)
+    } else {
+        handleDownload(attachment)
+    }
+}
 </script>
 
 <template>
     <div
         v-if="regularAttachments.length > 0"
-        class="border-t border-border pt-4 mt-4"
+        class="flex items-center gap-1 border-l border-border"
     >
-        <div class="flex items-center gap-2 mb-3">
-            <Paperclip class="h-4 w-4 text-muted-foreground" />
-            <h3 class="text-sm font-medium text-foreground">
-                Attachments ({{ regularAttachments.length }})
-            </h3>
-        </div>
+        <!-- “X attachments” text -->
+        <span class="text-xs text-muted-foreground">
+            {{ regularAttachments.length }}
+            attachment<span v-if="regularAttachments.length !== 1">s</span>
+        </span>
 
-        <div class="space-y-2">
-            <div
+        <!-- Pills -->
+        <div class="flex gap-1">
+            <Button
                 v-for="attachment in regularAttachments"
                 :key="attachment.id"
-                class="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors"
+                variant="ghost"
+                size="sm"
+                class="h-6 px-2 gap-1"
+                :title="`${attachment.filename} (${formatFileSize(attachment.size)})`"
+                @click="handleClick(attachment)"
             >
-                <div class="flex items-center gap-3 flex-1 min-w-0">
-                    <span class="text-2xl flex-shrink-0">
-                        {{ getFileIcon(attachment.mime_type) }}
-                    </span>
-                    <div class="flex-1 min-w-0">
-                        <p
-                            class="text-sm font-medium text-foreground truncate"
-                            :title="attachment.filename"
-                        >
-                            {{ attachment.filename }}
-                        </p>
-                        <p class="text-xs text-muted-foreground">
-                            {{ formatFileSize(attachment.size) }}
-                        </p>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-2 flex-shrink-0">
-                    <Button
-                        v-if="canPreview(attachment.mime_type)"
-                        size="sm"
-                        variant="ghost"
-                        @click="handlePreview(attachment)"
-                        title="Preview"
-                    >
-                        <Eye class="h-4 w-4" />
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        @click="handleDownload(attachment)"
-                        title="Download"
-                    >
-                        <Download class="h-4 w-4" />
-                    </Button>
-                </div>
-            </div>
+                <Paperclip class="w-3 h-3" />
+                <span
+                    class="text-xs truncate max-w-[100px]"
+                >
+                    {{ attachment.filename }}
+                </span>
+                <Download class="w-3 h-3" />
+            </Button>
         </div>
     </div>
 </template>

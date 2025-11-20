@@ -3,7 +3,6 @@ import { Message, TabType } from '@/types/mailbox'
 import MailboxPreviewHeader from '@/components/mail/MailboxPreviewHeader.vue'
 import MailboxPreviewTabs from '@/components/mail/MailboxPreviewTabs.vue'
 import MailboxPreviewBody from '@/components/mail/MailboxPreviewBody.vue'
-import AttachmentList from '@/components/mail/AttachmentList.vue'
 
 const props = defineProps<{
     message: Message | null
@@ -35,6 +34,7 @@ const handleChange = (view: TabType) => {
             :to="props.message.to"
             :sent-at="props.message.created_at"
             :message-id="props.message.id"
+            :attachments="props.message.attachments"
         />
         <MailboxPreviewTabs
             :active-view="props.activeView"
@@ -44,8 +44,5 @@ const handleChange = (view: TabType) => {
             :view="props.activeView"
             :message="props.message"
         />
-        <div class="px-4 pb-4 overflow-y-auto">
-            <AttachmentList :attachments="props.message.attachments || []" />
-        </div>
     </div>
 </template>
