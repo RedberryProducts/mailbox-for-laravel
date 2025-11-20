@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Redberry\MailboxForLaravel\Support;
 
 use DateTimeInterface;
+use Redberry\MailboxForLaravel\DTO\AttachmentData;
 use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
@@ -32,6 +33,62 @@ final class MessageNormalizer
         }
 
         return self::normalizeRaw($message, $envelope, $raw);
+    }
+
+    /**
+     * Extract attachment DTOs from an email for separate storage.
+     *
+     * @return array<int, AttachmentData>
+     */
+    public static function extractAttachments(Email $email): array
+    {
+        $attachments = [];
+
+        foreach ($email->getAttachments() as $part) {
+            /** @var DataPart $part */
+            $filename = $part->getFilename() ?? 'unnamed';
+
+            // Extract Content-ID for inline images
+            $contentId = $part->getPreparedHeaders()->has('Content-ID')
+                ? trim($part->getPreparedHeaders()->get('Content-ID')->getBodyAsString(), '<>')
+                : null;
+
+            // Determine if inline based on disposition or Content-ID presence
+            $disposition = $part->getPreparedHeaders()->has('Content-Disposition')
+                ? $part->getPreparedHeaders()->get('Content-Disposition')->getBodyAsString()
+                : null;
+            $isInline = $contentId !== null || str_contains((string) $disposition, 'inline');
+
+            // Get mime type
+            $mimeType = 'application/octet-stream';
+            if ($part->getPreparedHeaders()->has('Content-Type')) {
+                $contentType = $part->getPreparedHeaders()->get('Content-Type')->getBodyAsString();
+                // Extract just the mime type part (before semicolon)
+                $mimeType = explode(';', $contentType)[0];
+            }
+
+            // Extract body content
+            /** @var string|resource $body */
+            $body = $part->getBody();
+
+            if (is_resource($body)) {
+                $body = stream_get_contents($body) ?: '';
+            }
+
+            $size = strlen($body);
+            $content = base64_encode($body);
+
+            $attachments[] = new AttachmentData(
+                filename: $filename,
+                mimeType: $mimeType,
+                size: $size,
+                content: $content,
+                cid: $contentId,
+                isInline: $isInline,
+            );
+        }
+
+        return $attachments;
     }
 
     /** @return array<string,mixed> */

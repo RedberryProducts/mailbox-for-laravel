@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Gate;
 use Redberry\MailboxForLaravel\Commands\DevLinkCommand;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
+use Redberry\MailboxForLaravel\Storage\AttachmentStore;
 use Redberry\MailboxForLaravel\Transport\MailboxTransport;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -29,6 +30,7 @@ class MailboxServiceProvider extends PackageServiceProvider
     public function registeringPackage(): void
     {
         $this->registerStorage();
+        $this->registerAttachmentStore();
         $this->registerCaptureService();
         $this->registerTransport();
         $this->registerDevCommands();
@@ -37,6 +39,7 @@ class MailboxServiceProvider extends PackageServiceProvider
     public function packageBooted(): void
     {
         $this->configureMailboxConnection();
+        $this->configureMailboxDisk();
         $this->registerMiddleware();
         $this->registerGate();
         $this->registerPublishing();
@@ -56,6 +59,16 @@ class MailboxServiceProvider extends PackageServiceProvider
             $manager = $app->make(StoreManager::class);
 
             return $manager->driver();
+        });
+    }
+
+    /**
+     * Bind the AttachmentStore for attachment operations.
+     */
+    protected function registerAttachmentStore(): void
+    {
+        $this->app->singleton(AttachmentStore::class, function ($app) {
+            return new AttachmentStore;
         });
     }
 
@@ -83,7 +96,10 @@ class MailboxServiceProvider extends PackageServiceProvider
         }
 
         $this->app->bind(MailboxTransport::class, function ($app) {
-            return new MailboxTransport($app->make(CaptureService::class));
+            return new MailboxTransport(
+                $app->make(CaptureService::class),
+                $app->make(AttachmentStore::class)
+            );
         });
 
         $this->app->afterResolving(MailManager::class, function (MailManager $manager, $app): void {
@@ -122,6 +138,20 @@ class MailboxServiceProvider extends PackageServiceProvider
                 'database' => storage_path('app/mailbox/mailbox.sqlite'),
                 'prefix' => '',
                 'foreign_key_constraints' => true,
+            ],
+        ]);
+    }
+
+    /**
+     * Configure the mailbox filesystem disk for attachment storage.
+     */
+    protected function configureMailboxDisk(): void
+    {
+        config([
+            'filesystems.disks.mailbox' => [
+                'driver' => 'local',
+                'root' => storage_path('app/mailbox'),
+                'throw' => false,
             ],
         ]);
     }

@@ -4,6 +4,7 @@ namespace Redberry\MailboxForLaravel\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Redberry\MailboxForLaravel\Database\Factories\MailboxMessageFactory;
 
 class MailboxMessage extends Model
@@ -51,6 +52,14 @@ class MailboxMessage extends Model
     public function getTable()
     {
         return config('mailbox.store.database.table', parent::getTable());
+    }
+
+    /**
+     * Relationship to attachments.
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(MailboxAttachment::class, 'message_id');
     }
 
     protected static function newFactory(): MailboxMessageFactory

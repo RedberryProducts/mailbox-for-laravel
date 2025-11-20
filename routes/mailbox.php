@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Redberry\MailboxForLaravel\Http\Controllers\AttachmentController;
 use Redberry\MailboxForLaravel\Http\Controllers\ClearMailboxController;
 use Redberry\MailboxForLaravel\Http\Controllers\DeleteMailboxMessageController;
 use Redberry\MailboxForLaravel\Http\Controllers\MailboxController;
@@ -31,4 +32,14 @@ Route::middleware(array_merge(
             ->name('test-email');
 
         Route::post('/messages/{id}/seen', SeenController::class)->name('messages.seen');
+
+        // Attachment routes
+        Route::get('/messages/{messageId}/attachments', [AttachmentController::class, 'list'])
+            ->name('messages.attachments');
+
+        Route::get('/attachments/{id}/download', [AttachmentController::class, 'download'])
+            ->name('attachments.download');
+
+        Route::get('/attachments/{id}/inline', [AttachmentController::class, 'inline'])
+            ->name('attachments.inline');
     });
