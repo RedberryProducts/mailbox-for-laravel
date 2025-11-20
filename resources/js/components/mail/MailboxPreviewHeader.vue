@@ -85,7 +85,7 @@ const handleDeleteMessage = () => {
                         class="flex-shrink-0"
                         title="Delete message"
                     >
-                        <Trash2 class="h-4 w-4" />
+                        <Trash2 class="h-4 w-4 " />
                     </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>

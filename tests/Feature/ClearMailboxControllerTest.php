@@ -35,17 +35,16 @@ describe(ClearMailboxController::class, function () {
         $service->store($payload1);
         $service->store($payload2);
 
-        // Verify messages exist
         $messagesBefore = $service->all();
         expect($messagesBefore)->toHaveCount(2);
 
-        // Clear the mailbox
         $response = $this->delete('/mailbox/messages');
 
-        $response->assertOk()
-            ->assertJson([]);
+        $response->assertStatus(302)
+            ->assertSessionHas('flash', function ($flash) {
+                return $flash['status'] === 'success';
+            });
 
-        // Verify messages are cleared
         $messagesAfter = $service->all();
         expect($messagesAfter)->toBeEmpty();
     });
@@ -59,8 +58,10 @@ describe(ClearMailboxController::class, function () {
 
         $response = $this->delete('/mailbox/messages');
 
-        $response->assertOk()
-            ->assertJson([]);
+        $response->assertStatus(302)
+            ->assertSessionHas('flash', function ($flash) {
+                return $flash['status'] === 'success';
+            });
     });
 
     it('handles large number of messages efficiently', function () {
@@ -83,7 +84,10 @@ describe(ClearMailboxController::class, function () {
         // Clear all messages
         $response = $this->delete('/mailbox/messages');
 
-        $response->assertOk();
+        $response->assertStatus(302)
+            ->assertSessionHas('flash', function ($flash) {
+                return $flash['status'] === 'success';
+            });
 
         // Verify all messages are cleared
         $messagesAfter = $service->all();
@@ -102,21 +106,15 @@ describe(ClearMailboxController::class, function () {
 
         $key = $service->store($payload);
 
-        // Verify message exists
         expect($service->find($key))->not->toBeNull();
 
         $response = $this->delete('/mailbox/messages');
-        $response->assertOk();
+        $response->assertStatus(302)
+            ->assertSessionHas('flash', function ($flash) {
+                return $flash['status'] === 'success';
+            });
 
-        // Verify clearAll was effective
-        expect($service->find($key))->toBeNull();
-        expect($service->all())->toBeEmpty();
-    });
-
-    it('returns proper content-type header for json response', function () {
-        $response = $this->delete('/mailbox/messages');
-
-        $response->assertOk()
-            ->assertHeader('content-type', 'application/json');
+        expect($service->find($key))->toBeNull()
+            ->and($service->all())->toBeEmpty();
     });
 });

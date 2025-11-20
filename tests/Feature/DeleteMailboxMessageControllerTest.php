@@ -9,7 +9,8 @@ use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
 describe(DeleteMailboxMessageController::class, function () {
     beforeEach(function () {
         Route::middleware(AuthorizeMailboxMiddleware::class)->group(function () {
-            Route::delete('/mailbox/messages/{id}', DeleteMailboxMessageController::class)->name('mailbox.messages.destroy');
+            Route::delete('/mailbox/messages/{id}',
+                DeleteMailboxMessageController::class)->name('mailbox.messages.destroy');
         });
         config()->set('mailbox.public', true);
 
@@ -37,8 +38,10 @@ describe(DeleteMailboxMessageController::class, function () {
         // Delete the message
         $response = $this->delete("/mailbox/messages/{$id}");
 
-        $response->assertOk()
-            ->assertJson(['status' => 'deleted']);
+        $response->assertStatus(302)
+            ->assertSessionHas('flash', function ($flash) {
+                return $flash['status'] === 'success';
+            });
 
         // Verify message is deleted
         expect($service->find($id))->toBeNull();
@@ -47,8 +50,10 @@ describe(DeleteMailboxMessageController::class, function () {
     it('returns 404 for non-existent message', function () {
         $response = $this->delete('/mailbox/messages/non-existent-id');
 
-        $response->assertNotFound()
-            ->assertJson(['error' => 'Message not found']);
+        $response->assertStatus(302)
+            ->assertSessionHas('flash', function ($flash) {
+                return $flash['status'] === 'error';
+            });
     });
 
     it('deletes only the specified message', function () {
@@ -72,28 +77,13 @@ describe(DeleteMailboxMessageController::class, function () {
         // Delete only the first message
         $response = $this->delete("/mailbox/messages/{$id1}");
 
-        $response->assertOk();
+        $response->assertStatus(302)
+            ->assertSessionHas('flash', function ($flash) {
+                return $flash['status'] === 'success';
+            });
 
-        // Verify only first message is deleted
         expect($service->find($id1))->toBeNull();
         expect($service->find($id2))->not->toBeNull();
-    });
-
-    it('returns proper content-type header for json response', function () {
-        $service = app(CaptureService::class);
-
-        $payload = [
-            'subject' => 'Test Email',
-            'from' => [['email' => 'test@example.com']],
-            'raw' => 'Test content',
-        ];
-
-        $id = $service->store($payload);
-
-        $response = $this->delete("/mailbox/messages/{$id}");
-
-        $response->assertOk()
-            ->assertHeader('content-type', 'application/json');
     });
 
     it('handles special characters in message id', function () {
@@ -110,8 +100,10 @@ describe(DeleteMailboxMessageController::class, function () {
         // Attempt to delete with actual ID
         $response = $this->delete("/mailbox/messages/{$id}");
 
-        $response->assertOk()
-            ->assertJson(['status' => 'deleted']);
+        $response->assertStatus(302)
+            ->assertSessionHas('flash', function ($flash) {
+                return $flash['status'] === 'success';
+            });
     });
 
     it('is protected by authorization middleware', function () {
