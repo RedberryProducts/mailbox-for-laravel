@@ -45,6 +45,7 @@
 - **Authorization middleware** — Gate-based access control for production safety
 - **Attachment support** — View and download email attachments
 - **Mark as read/unread** — Track which messages you've reviewed
+- **Delete functionality** — Clear entire inbox or delete individual messages with confirmation dialogs
 - **Responsive UI** — Beautiful TailwindCSS-based interface with dark mode support
 - **Developer-friendly** — Auto-enabled in non-production environments
 - **Test helpers** — Send test emails directly from the dashboard
@@ -316,7 +317,8 @@ The mailbox dashboard provides a modern email client interface with:
 - **Read/Unread tracking** — Mark messages as seen
 - **Attachment viewer** — Download email attachments
 - **Test email sender** — Send sample emails for testing
-- **Clear all** — Remove all captured messages
+- **Clear inbox** — Remove all captured messages with confirmation
+- **Delete messages** — Remove individual messages with confirmation
 
 ### Accessing the Dashboard
 
@@ -335,7 +337,8 @@ The package registers the following HTTP endpoints:
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/mailbox` | Load the dashboard (Inertia page) |
-| `POST` | `/mailbox/clear` | Delete all captured messages |
+| `DELETE` | `/mailbox/messages` | Delete all captured messages |
+| `DELETE` | `/mailbox/messages/{id}` | Delete a specific message |
 | `POST` | `/mailbox/test-email` | Send a test email |
 | `POST` | `/mailbox/messages/{id}/seen` | Mark a message as read/unread |
 
@@ -353,16 +356,26 @@ router.post(`/mailbox/messages/${messageId}/seen`, { seen: true })
 }
 ```
 
-**Example: Clear All Messages**
+**Example: Delete a Specific Message**
 
 ```javascript
-// From frontend
-router.post('/mailbox/clear')
+// From frontend (Inertia)
+router.delete(`/mailbox/messages/${messageId}`)
 
 // Response:
 {
-  "message": "All messages cleared."
+  "status": "deleted"
 }
+```
+
+**Example: Clear All Messages**
+
+```javascript
+// From frontend (Inertia)
+router.delete('/mailbox/messages')
+
+// Response: Empty JSON
+{}
 ```
 
 ### Sending Test Emails
@@ -437,14 +450,25 @@ Email attachments are captured and stored alongside the message. Access them via
 ### Clearing the Inbox
 
 **From Dashboard:**
-- Click "Clear All" button
+- Click the "Clear Inbox" button in the filter bar (with trash icon)
+- Confirm the action in the dialog that appears
+- All messages will be permanently deleted
+
+**From Message Detail:**
+- Click the trash icon button in the top-right corner of the message preview
+- Confirm the deletion in the dialog
+- The specific message will be permanently deleted
 
 **Programmatically:**
 
 ```php
 use Redberry\MailboxForLaravel\Facades\Mailbox;
 
-Mailbox::clear();
+// Clear all messages
+Mailbox::clearAll();
+
+// Delete a specific message
+Mailbox::delete($messageId);
 ```
 
 **Via Artisan (future feature):**
@@ -452,6 +476,8 @@ Mailbox::clear();
 ```bash
 php artisan mailbox:clear
 ```
+
+> **Note:** Both clear and delete operations show confirmation dialogs in the UI to prevent accidental data loss.
 
 ## Frontend Integration
 

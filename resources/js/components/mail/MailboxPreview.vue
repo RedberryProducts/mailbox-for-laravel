@@ -45,6 +45,7 @@ const handleChange = (view: TabType) => {
             :from="props.message.from"
             :to="props.message.to"
             :sent-at="props.message.created_at"
+            :message-id="props.message.id"
         />
         <MailboxPreviewTabs
             :active-view="props.activeView"

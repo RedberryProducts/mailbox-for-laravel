@@ -8,7 +8,7 @@ use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
 describe(ClearMailboxController::class, function () {
     beforeEach(function () {
         Route::middleware(AuthorizeMailboxMiddleware::class)->group(function () {
-            Route::post('/mailbox/clear', ClearMailboxController::class)->name('mailbox.clear');
+            Route::delete('/mailbox/messages', ClearMailboxController::class)->name('mailbox.messages.clear');
         });
         config()->set('mailbox.public', true);
 
@@ -35,17 +35,16 @@ describe(ClearMailboxController::class, function () {
         $service->store($payload1);
         $service->store($payload2);
 
-        // Verify messages exist
         $messagesBefore = $service->all();
         expect($messagesBefore)->toHaveCount(2);
 
-        // Clear the mailbox
-        $response = $this->post('/mailbox/clear');
+        $response = $this->delete('/mailbox/messages');
 
-        $response->assertOk()
-            ->assertJson([]);
+        $response->assertStatus(302)
+            ->assertSessionHas('flash', function ($flash) {
+                return $flash['status'] === 'success';
+            });
 
-        // Verify messages are cleared
         $messagesAfter = $service->all();
         expect($messagesAfter)->toBeEmpty();
     });
@@ -57,10 +56,12 @@ describe(ClearMailboxController::class, function () {
         $messagesBefore = $service->all();
         expect($messagesBefore)->toBeEmpty();
 
-        $response = $this->post('/mailbox/clear');
+        $response = $this->delete('/mailbox/messages');
 
-        $response->assertOk()
-            ->assertJson([]);
+        $response->assertStatus(302)
+            ->assertSessionHas('flash', function ($flash) {
+                return $flash['status'] === 'success';
+            });
     });
 
     it('handles large number of messages efficiently', function () {
@@ -81,9 +82,12 @@ describe(ClearMailboxController::class, function () {
         expect($messagesBefore)->toHaveCount(10);
 
         // Clear all messages
-        $response = $this->post('/mailbox/clear');
+        $response = $this->delete('/mailbox/messages');
 
-        $response->assertOk();
+        $response->assertStatus(302)
+            ->assertSessionHas('flash', function ($flash) {
+                return $flash['status'] === 'success';
+            });
 
         // Verify all messages are cleared
         $messagesAfter = $service->all();
@@ -102,21 +106,15 @@ describe(ClearMailboxController::class, function () {
 
         $key = $service->store($payload);
 
-        // Verify message exists
         expect($service->find($key))->not->toBeNull();
 
-        $response = $this->post('/mailbox/clear');
-        $response->assertOk();
+        $response = $this->delete('/mailbox/messages');
+        $response->assertStatus(302)
+            ->assertSessionHas('flash', function ($flash) {
+                return $flash['status'] === 'success';
+            });
 
-        // Verify clearAll was effective
-        expect($service->find($key))->toBeNull();
-        expect($service->all())->toBeEmpty();
-    });
-
-    it('returns proper content-type header for json response', function () {
-        $response = $this->post('/mailbox/clear');
-
-        $response->assertOk()
-            ->assertHeader('content-type', 'application/json');
+        expect($service->find($key))->toBeNull()
+            ->and($service->all())->toBeEmpty();
     });
 });
