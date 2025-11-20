@@ -73,7 +73,6 @@ const handleClick = (attachment: Attachment) => {
                 >
                     {{ attachment.filename }}
                 </span>
-                <Download class="w-3 h-3" />
             </Button>
         </div>
     </div>
