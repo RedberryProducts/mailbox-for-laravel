@@ -8,7 +8,7 @@ use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
 describe(ClearMailboxController::class, function () {
     beforeEach(function () {
         Route::middleware(AuthorizeMailboxMiddleware::class)->group(function () {
-            Route::post('/mailbox/clear', ClearMailboxController::class)->name('mailbox.clear');
+            Route::delete('/mailbox/messages', ClearMailboxController::class)->name('mailbox.messages.clear');
         });
         config()->set('mailbox.public', true);
 
@@ -40,7 +40,7 @@ describe(ClearMailboxController::class, function () {
         expect($messagesBefore)->toHaveCount(2);
 
         // Clear the mailbox
-        $response = $this->post('/mailbox/clear');
+        $response = $this->delete('/mailbox/messages');
 
         $response->assertOk()
             ->assertJson([]);
@@ -57,7 +57,7 @@ describe(ClearMailboxController::class, function () {
         $messagesBefore = $service->all();
         expect($messagesBefore)->toBeEmpty();
 
-        $response = $this->post('/mailbox/clear');
+        $response = $this->delete('/mailbox/messages');
 
         $response->assertOk()
             ->assertJson([]);
@@ -81,7 +81,7 @@ describe(ClearMailboxController::class, function () {
         expect($messagesBefore)->toHaveCount(10);
 
         // Clear all messages
-        $response = $this->post('/mailbox/clear');
+        $response = $this->delete('/mailbox/messages');
 
         $response->assertOk();
 
@@ -105,7 +105,7 @@ describe(ClearMailboxController::class, function () {
         // Verify message exists
         expect($service->find($key))->not->toBeNull();
 
-        $response = $this->post('/mailbox/clear');
+        $response = $this->delete('/mailbox/messages');
         $response->assertOk();
 
         // Verify clearAll was effective
@@ -114,7 +114,7 @@ describe(ClearMailboxController::class, function () {
     });
 
     it('returns proper content-type header for json response', function () {
-        $response = $this->post('/mailbox/clear');
+        $response = $this->delete('/mailbox/messages');
 
         $response->assertOk()
             ->assertHeader('content-type', 'application/json');

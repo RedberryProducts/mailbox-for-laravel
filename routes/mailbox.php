@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Redberry\MailboxForLaravel\Http\Controllers\ClearMailboxController;
+use Redberry\MailboxForLaravel\Http\Controllers\DeleteMailboxMessageController;
 use Redberry\MailboxForLaravel\Http\Controllers\MailboxController;
 use Redberry\MailboxForLaravel\Http\Controllers\SeenController;
 use Redberry\MailboxForLaravel\Http\Controllers\SendTestMailController;
@@ -20,8 +21,11 @@ Route::middleware(array_merge(
         Route::get('/', MailboxController::class)
             ->name('index');
 
-        Route::post('/clear', ClearMailboxController::class)
-            ->name('clear');
+        Route::delete('/messages', ClearMailboxController::class)
+            ->name('messages.clear');
+
+        Route::delete('/messages/{id}', DeleteMailboxMessageController::class)
+            ->name('messages.destroy');
 
         Route::post('/test-email', SendTestMailController::class)
             ->name('test-email');
