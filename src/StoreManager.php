@@ -94,13 +94,11 @@ class StoreManager extends Manager
             return $store;
         }
 
-        // Only use custom driver if a resolver is configured
         $resolvers = (array) $this->container['config']->get('mailbox.store.resolvers', []);
         if (isset($resolvers[$name])) {
             return $this->createCustomDriver();
         }
 
-        // Let parent throw its standard exception for unsupported drivers
         return parent::driver($name);
     }
 }

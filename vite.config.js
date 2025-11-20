@@ -7,8 +7,8 @@ export default defineConfig({
     plugins: [
         vue(),
         laravel({
-            hotFile: 'public/vendor/mailbox/mailbox.hot', // Most important lines
-            buildDirectory: 'vendor/mailbox', // Most important lines
+            hotFile: 'public/vendor/mailbox/mailbox.hot',
+            buildDirectory: 'vendor/mailbox',
             input: ['resources/js/dashboard.js'],
             refresh: true,
         }),

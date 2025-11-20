@@ -1,5 +1,5 @@
-import { ref, onMounted, onUnmounted } from 'vue'
-import { router } from '@inertiajs/vue3'
+import {ref, onMounted, onUnmounted} from 'vue'
+import {router} from '@inertiajs/vue3'
 
 interface PollingConfig {
     enabled: boolean
@@ -34,8 +34,6 @@ export function useMailboxPolling(config: PollingConfig, latestTimestamp: number
 
             router.reload({
                 only: ['messages'],
-                preserveState: true,
-                preserveScroll: true,
                 onFinish: () => {
                     isPolling.value = false
                 },

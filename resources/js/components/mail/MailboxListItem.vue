@@ -61,7 +61,6 @@ const toClasses = computed(() => [
             <p :class="toClasses">
                 {{ 'to: ' + props.message.to[0] }}
             </p>
-            <!-- Unread dot indicator -->
             <span
                 v-if="!props.message.seen_at"
                 :class="['h-2 w-2 rounded-full bg-primary flex-shrink-0', props.isSelected ? 'bg-primary-foreground' : 'bg-primary']"
