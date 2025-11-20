@@ -1,15 +1,7 @@
 <script setup lang="ts">
-import {computed} from 'vue'
-import {formatDistanceToNow} from 'date-fns'
-
-interface Message {
-    id: string
-    subject: string
-    from: string
-    to: string[]
-    created_at: string
-    seen_at?: string | null
-}
+import { computed } from 'vue'
+import { formatDistanceToNow } from 'date-fns'
+import { Message } from '@/types/mailbox'
 
 const props = defineProps<{
     message: Message

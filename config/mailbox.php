@@ -33,4 +33,22 @@ return [
         'per_page' => (int) env('MAILBOX_PER_PAGE', 20),
     ],
 
+    'attachments' => [
+        'enabled' => (bool) env('MAILBOX_ATTACHMENTS_ENABLED', true),
+        'disk' => env('MAILBOX_ATTACHMENTS_DISK', 'mailbox'),
+        'path' => env('MAILBOX_ATTACHMENTS_PATH', 'attachments'),
+        'max_size' => (int) env('MAILBOX_MAX_ATTACHMENT_SIZE', 5 * 1024 * 1024), // 5MB
+        'max_total_size' => (int) env('MAILBOX_MAX_TOTAL_SIZE_PER_MESSAGE', 20 * 1024 * 1024), // 20MB
+        'allowed_mime_types' => [
+            'image/*',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'text/plain',
+            'text/csv',
+        ],
+    ],
+
 ];

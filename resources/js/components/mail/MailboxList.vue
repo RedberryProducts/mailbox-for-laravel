@@ -1,13 +1,6 @@
 <script setup lang="ts">
+import { Message } from '@/types/mailbox'
 import MailboxListItem from '@/components/mail/MailboxListItem.vue'
-
-interface Message {
-    id: string
-    subject: string
-    from: string
-    to: string[]
-    created_at: string
-}
 
 const props = defineProps<{
     messages: Message[]

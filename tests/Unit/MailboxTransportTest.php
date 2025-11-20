@@ -1,6 +1,7 @@
 <?php
 
 use Redberry\MailboxForLaravel\CaptureService;
+use Redberry\MailboxForLaravel\Storage\AttachmentStore;
 use Redberry\MailboxForLaravel\Storage\FileStorage;
 use Redberry\MailboxForLaravel\Transport\MailboxTransport;
 use Symfony\Component\Mailer\Exception\TransportException;
@@ -9,15 +10,16 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Part\DataPart;
 
 describe(MailboxTransport::class, function () {
-    function transport(?CaptureService $svc = null, ?TransportInterface $decorated = null, bool $enabled = true): MailboxTransport
+    function transport(?CaptureService $svc = null, ?AttachmentStore $attachmentStore = null, ?TransportInterface $decorated = null, bool $enabled = true): MailboxTransport
     {
         $svc ??= new CaptureService(new FileStorage(sys_get_temp_dir().'/mailbox-transport-'.uniqid()));
+        $attachmentStore ??= Mockery::mock(AttachmentStore::class)->shouldIgnoreMissing();
         if (! $decorated) {
             $decorated = Mockery::mock(TransportInterface::class);
             $decorated->shouldReceive('send')->andReturnNull();
         }
 
-        return new MailboxTransport($svc, $decorated, $enabled);
+        return new MailboxTransport($svc, $attachmentStore, $decorated, $enabled);
     }
 
     it('sends messages through Symfony Transport while capturing raw', function () {
@@ -26,7 +28,7 @@ describe(MailboxTransport::class, function () {
         $decorated = Mockery::mock(TransportInterface::class);
         $decorated->shouldReceive('send')->once();
 
-        $t = transport($svc, $decorated);
+        $t = transport($svc, decorated: $decorated);
         $t->send((new Email)->from('a@example.com')->to('b@example.com')->text('hi'));
         expect($t->getStoredKey())->toBe('key1');
     });
@@ -36,7 +38,7 @@ describe(MailboxTransport::class, function () {
         $decorated = Mockery::mock(TransportInterface::class);
         $svc->shouldReceive('store')->once()->ordered()->andReturn('key');
         $decorated->shouldReceive('send')->once()->ordered();
-        $t = transport($svc, $decorated);
+        $t = transport($svc, decorated: $decorated);
         $t->send((new Email)->from('a@example.com')->to('b@example.com')->text('hi'));
     });
 
@@ -52,7 +54,7 @@ describe(MailboxTransport::class, function () {
         $svc->shouldReceive('store')->never();
         $decorated = Mockery::mock(TransportInterface::class);
         $decorated->shouldReceive('send')->once();
-        $t = transport($svc, $decorated, enabled: false);
+        $t = transport($svc, decorated: $decorated, enabled: false);
         $t->send((new Email)->from('a@example.com')->to('b@example.com')->text('hi'));
         expect($t->getStoredKey())->toBeNull();
     });
@@ -104,7 +106,7 @@ describe(MailboxTransport::class, function () {
         $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/mailbox-transport-'.uniqid()));
         $decorated = Mockery::mock(TransportInterface::class);
         $decorated->shouldReceive('send')->andThrow(new TransportException('fail'));
-        $t = transport($svc, $decorated);
+        $t = transport($svc, decorated: $decorated);
         $email = (new Email)->from('a@example.com')->to('b@example.com')->text('body');
         expect(fn () => $t->send($email))->toThrow(TransportException::class);
         // message stored despite failure

@@ -1,19 +1,7 @@
 <script setup lang="ts">
-import {ScrollArea} from '@/components/ui/scroll-area'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Message, TabType } from '@/types/mailbox'
 import HtmlIframeViewer from "@/components/mail/HtmlIframeViewer.vue";
-
-type TabType = 'html' | 'text' | 'raw'
-
-interface Message {
-    id: string
-    subject: string
-    from: string
-    to: string[]
-    created_at: string
-    html_body: string
-    text_body: string
-    raw_body: string
-}
 
 const props = defineProps<{
     view: TabType

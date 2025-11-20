@@ -1,20 +1,8 @@
 <script setup lang="ts">
+import { Message, TabType } from '@/types/mailbox'
 import MailboxPreviewHeader from '@/components/mail/MailboxPreviewHeader.vue'
 import MailboxPreviewTabs from '@/components/mail/MailboxPreviewTabs.vue'
 import MailboxPreviewBody from '@/components/mail/MailboxPreviewBody.vue'
-
-type TabType = 'html' | 'text' | 'raw'
-
-interface Message {
-    id: string
-    subject: string
-    from: string
-    to: string[]
-    created_at: string
-    html_body: string
-    text_body: string
-    raw_body: string
-}
 
 const props = defineProps<{
     message: Message | null
@@ -46,6 +34,7 @@ const handleChange = (view: TabType) => {
             :to="props.message.to"
             :sent-at="props.message.created_at"
             :message-id="props.message.id"
+            :attachments="props.message.attachments"
         />
         <MailboxPreviewTabs
             :active-view="props.activeView"
