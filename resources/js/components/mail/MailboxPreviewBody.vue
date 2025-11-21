@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Message, TabType } from '@/types/mailbox'
+import {ScrollArea} from '@/components/ui/scroll-area'
+import {Message, TabType} from '@/types/mailbox'
 import HtmlIframeViewer from "@/components/mail/HtmlIframeViewer.vue";
 
 const props = defineProps<{
@@ -11,10 +11,10 @@ const props = defineProps<{
 
 <template>
     <ScrollArea class="flex-1">
-        <div class="p-6">
+        <div class="p-2">
             <HtmlIframeViewer
                 v-if="props.view === 'html'"
-                class="prose prose-sm max-w-none bg-muted p-4 rounded-lg overflow-auto"
+                class="prose prose-sm max-w-none bg-muted rounded-lg overflow-auto"
                 :html="props.message.html_body"
             />
             <pre

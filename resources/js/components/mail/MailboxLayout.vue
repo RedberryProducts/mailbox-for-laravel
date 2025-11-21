@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import {ref, computed, watch} from 'vue'
 import axios from 'axios'
-import { usePage, router } from '@inertiajs/vue3'
-import { Message, TabType, PaginationMeta, PollingConfig } from '@/types/mailbox'
+import {usePage, router} from '@inertiajs/vue3'
+import {Message, TabType, PaginationMeta, PollingConfig} from '@/types/mailbox'
 import MailboxFilterBar from '@/components/mail/MailboxFilterBar.vue'
 import MailboxList from '@/components/mail/MailboxList.vue'
 import MailboxPreview from '@/components/mail/MailboxPreview.vue'
-import { useMailboxPolling } from '@/composables/useMailboxPolling'
-import { Button } from '@/components/ui/button'
+import {useMailboxPolling} from '@/composables/useMailboxPolling'
+import {Button} from '@/components/ui/button'
+import Logo from '@mailbox/images/logo.svg'
 
 const props = defineProps<{
     messages: Message[]
@@ -26,10 +27,8 @@ const page = usePage<{
     subtitle: string
 }>()
 
-// Local accumulated messages (pages 1..N)
 const localMessages = ref<Message[]>([...props.messages])
 
-// Pagination state that belongs to *the client*, not the server
 const currentPage = ref<number>(props.pagination.current_page)
 const hasMore = ref<boolean>(props.pagination.has_more)
 
@@ -38,7 +37,6 @@ const selectedRecipient = ref<string>('all')
 const activeTab = ref<TabType>('html')
 const isLoadingMore = ref(false)
 
-// Start polling – this should only reload `messages` (not `pagination`)
 useMailboxPolling(props.polling, props.pagination.latest_timestamp)
 
 /**
@@ -89,7 +87,7 @@ function loadMoreMessages() {
 
     router.get(
         '/mailbox',
-        { page: nextPage },
+        {page: nextPage},
         {
             only: ['messages', 'pagination'],
             preserveScroll: true,
@@ -165,13 +163,16 @@ const handleViewChange = (view: TabType) => {
 <template>
     <div class="h-screen flex flex-col bg-background">
         <!-- Header -->
-        <div class="border-b border-border bg-card p-4">
-            <h1 class="text-2xl font-bold text-foreground">
-                {{ props.title }}
-            </h1>
-            <p class="text-sm text-muted-foreground">
-                {{ props.subtitle }}
-            </p>
+        <div class="border-b border-border bg-card p-4 flex items-center gap-4">
+            <img :src="Logo" alt="Redberry International" class="h-16 w-16" />
+            <div>
+                <h1 class="text-2xl font-bold text-foreground">
+                    {{ props.title }}
+                </h1>
+                <p class="text-sm text-muted-foreground">
+                    {{ props.subtitle }}
+                </p>
+            </div>
         </div>
 
         <!-- Main Content Area -->

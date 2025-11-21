@@ -77,6 +77,10 @@ class InstallCommand extends Command
     {
         $path = public_path('vendor/mailbox');
 
+        if (file_exists($path) && is_link($path)) {
+            @unlink($path);
+        }
+
         if (File::exists($path)) {
             File::deleteDirectory($path);
         }
