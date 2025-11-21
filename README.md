@@ -285,21 +285,49 @@ MAILBOX_DASHBOARD_ROUTE=mailbox
 
 ### Database Configuration
 
-The package uses a **separate SQLite database** by default to avoid cluttering your main database. This is configured in `config/database.php`:
+The package uses a **separate SQLite database** by default to avoid cluttering your main database. This is configured in `config/mailbox.php`:
 
 ```php
+'store' => [
+    'driver' => env('MAILBOX_STORE_DRIVER', 'database'),
+    // ... 
+    'database' => [
+        'connection' => env('MAILBOX_DB_CONNECTION', 'mailbox'),
+        'table' => env('MAILBOX_DB_TABLE', 'mailbox_messages'),
+    ],
+    // ... 
+],
+```
+And then we inject 'mailbox' database connection into the config array, like so:
+```php
+config([
+    'database.connections.mailbox' => [
+        'driver' => 'sqlite',
+        'database' => storage_path('app/mailbox/mailbox.sqlite'),
+        'prefix' => '',
+        'foreign_key_constraints' => true,
+    ],
+]);
+```
+If you want to override default connection you can add new connection or use existing one. All you need to do is add new connection into your `config/database.php`:
+```php
 'connections' => [
-    'mailbox' => [
+    'custom_connection' => [
         'driver' => 'sqlite',
         'url' => env('MAILBOX_DB_URL'),
         'database' => env('MAILBOX_DB_DATABASE', database_path('mailbox.sqlite')),
         'prefix' => '',
         'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
     ],
-],
+]
+```
+And then set new custom connection in `.env`
+
+```env
+MAILBOX_DB_CONNECTION=custom_connection
 ```
 
-**To use your main database connection:**
+**Or use your main database connection:**
 
 ```env
 MAILBOX_DB_CONNECTION=mysql  # or pgsql, sqlsrv, etc.
