@@ -38,7 +38,7 @@ class InstallCommand extends Command
         $connectionName = config('mailbox.store.database.connection', 'mailbox');
         $connection = config("database.connections.{$connectionName}");
 
-        if (! $connection) {
+        if (!$connection) {
             $this->error("Database connection [{$connectionName}] is not configured.");
 
             return;
@@ -50,7 +50,7 @@ class InstallCommand extends Command
         if ($driver === 'sqlite' && $dbPath && $dbPath !== ':memory:') {
             $directory = dirname($dbPath);
 
-            if (! File::exists($directory)) {
+            if (!File::exists($directory)) {
                 File::makeDirectory($directory, 0755, true);
             }
 
@@ -58,7 +58,7 @@ class InstallCommand extends Command
                 File::delete($dbPath);
             }
 
-            if (! File::exists($dbPath)) {
+            if (!File::exists($dbPath)) {
                 File::put($dbPath, '');
             }
         }
@@ -76,6 +76,10 @@ class InstallCommand extends Command
     public function publishAssets(): void
     {
         $path = public_path('vendor/mailbox');
+
+        if (file_exists($path) && is_link($path)) {
+            @unlink($path);
+        }
 
         if (File::exists($path)) {
             File::deleteDirectory($path);
