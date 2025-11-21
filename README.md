@@ -309,7 +309,7 @@ config([
     ],
 ]);
 ```
-If you want to override default connection you can add new connection or use existing one. All you need to do is add new connection into your `config/database.php`:
+If you want to override the default connection, you can add a new connection or use an existing one. All you need to do is add a new connection into your `config/database.php`:
 ```php
 'connections' => [
     'custom_connection' => [
