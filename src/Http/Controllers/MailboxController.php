@@ -41,9 +41,7 @@ class MailboxController
             'polling' => [
                 'enabled' => config('mailbox.polling.enabled', true),
                 'interval' => config('mailbox.polling.interval', 5000),
-            ],
-            'title' => 'Mailbox for Laravel',
-            'subtitle' => 'Local email capture and testing',
+            ]
         ]);
     }
 

@@ -73,6 +73,7 @@ function resize() {
     if (!docEl || !body) return
 
     const setHeight = () => {
+        frame.value?.contentWindow?.innerHeight
         el.style.height = Math.max(body.scrollHeight, docEl.scrollHeight) + 'px'
     }
 
