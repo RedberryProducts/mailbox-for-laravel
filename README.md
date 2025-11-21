@@ -298,7 +298,7 @@ The package uses a **separate SQLite database** by default to avoid cluttering y
     // ... 
 ],
 ```
-And then we inject 'mailbox' database connection into the config array, like so:
+and then we inject 'mailbox' database connection into the config array, like so:
 ```php
 config([
     'database.connections.mailbox' => [
