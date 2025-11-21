@@ -321,7 +321,7 @@ If you want to override the default connection, you can add a new connection or 
     ],
 ]
 ```
-And then set new custom connection in `.env`
+Then set the new custom connection in `.env`
 
 ```env
 MAILBOX_DB_CONNECTION=custom_connection
