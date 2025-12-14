@@ -66,7 +66,7 @@ For development environments (recommended):
 composer require redberry/mailbox-for-laravel --dev
 ```
 
-For production (if you need to capture emails in production):
+For production (if you need to capture emails in production, NOT RECOMMENDED):
 
 ```bash
 composer require redberry/mailbox-for-laravel
