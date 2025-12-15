@@ -96,7 +96,7 @@ class MailboxServiceProvider extends PackageServiceProvider
      */
     protected function registerTransport(): void
     {
-        if (config('app.env') === 'production' && ! config('mailbox.enabled', false)) {
+        if (config('app.env') === 'production' && !config('mailbox.enabled', false)) {
             return;
         }
 
@@ -119,7 +119,7 @@ class MailboxServiceProvider extends PackageServiceProvider
      */
     protected function registerDevCommands(): void
     {
-        if (! $this->app->runningInConsole()) {
+        if (!$this->app->runningInConsole()) {
             return;
         }
 
@@ -137,6 +137,11 @@ class MailboxServiceProvider extends PackageServiceProvider
      */
     protected function configureMailboxConnection(): void
     {
+        config([
+            'mail.mailers.mailbox' => [
+                'transport' => 'mailbox',
+            ]
+        ]);
         config([
             'database.connections.mailbox' => [
                 'driver' => 'sqlite',
@@ -181,7 +186,7 @@ class MailboxServiceProvider extends PackageServiceProvider
     protected function registerGate(): void
     {
         Gate::define('viewMailbox', static function ($user = null): bool {
-            return ! app()->environment('production');
+            return !app()->environment('production');
         });
     }
 
@@ -190,7 +195,7 @@ class MailboxServiceProvider extends PackageServiceProvider
      */
     protected function registerPublishing(): void
     {
-        if (! $this->app->runningInConsole()) {
+        if (!$this->app->runningInConsole()) {
             return;
         }
 

@@ -5,7 +5,8 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/RedberryProducts/mailbox-for-laravel/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/RedberryProducts/mailbox-for-laravel/actions?query=workflow%3A%22Fix+PHP+code+style+issues%22+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/redberry/mailbox-for-laravel.svg?style=flat-square)](https://packagist.org/packages/redberry/mailbox-for-laravel)
 
-**A zero-configuration local email inbox for Laravel.** Capture, inspect, and test emails without external services—like Mailtrap, but self-contained within your application.
+**A zero-configuration local email inbox for Laravel.** Capture, inspect, and test emails without external services—like
+Mailtrap, but self-contained within your application.
 
 ## Table of Contents
 
@@ -14,13 +15,13 @@
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
-  - [Dashboard Overview](#dashboard-overview)
-  - [Accessing the Dashboard](#accessing-the-dashboard)
-  - [API Endpoints](#api-endpoints)
-  - [Sending Test Emails](#sending-test-emails)
-  - [Message Capture Flow](#message-capture-flow)
-  - [Attachments](#attachments)
-  - [Clearing the Inbox](#clearing-the-inbox)
+    - [Dashboard Overview](#dashboard-overview)
+    - [Accessing the Dashboard](#accessing-the-dashboard)
+    - [API Endpoints](#api-endpoints)
+    - [Sending Test Emails](#sending-test-emails)
+    - [Message Capture Flow](#message-capture-flow)
+    - [Attachments](#attachments)
+    - [Clearing the Inbox](#clearing-the-inbox)
 - [Frontend Integration](#frontend-integration)
 - [Storage Drivers](#storage-drivers)
 - [Authorization & Security](#authorization--security)
@@ -79,6 +80,7 @@ php artisan mailbox:install
 ```
 
 This command will:
+
 - Publish frontend assets to `public/vendor/mailbox/`
 - Run database migrations (creates `mailbox_messages` table by default)
 - Set up the necessary configuration
@@ -114,18 +116,6 @@ Add to your `.env`:
 ```env
 MAIL_MAILER=mailbox
 ```
-
-Configure you new mailer, that will use `mailbox` transport `config/mail.php`:
-
-```php
-'mailers' => [
-    'mailbox' => [
-        'transport' => 'mailbox',
-    ],
-],
-```
-
-> **Note:** Without this configuration, emails will be sent normally but won't be captured by the mailbox.
 
 ### 4. Access the Dashboard
 
@@ -285,7 +275,8 @@ MAILBOX_DASHBOARD_ROUTE=mailbox
 
 ### Database Configuration
 
-The package uses a **separate SQLite database** by default to avoid cluttering your main database. This is configured in `config/mailbox.php`:
+The package uses a **separate SQLite database** by default to avoid cluttering your main database. This is configured in
+`config/mailbox.php`:
 
 ```php
 'store' => [
@@ -298,7 +289,9 @@ The package uses a **separate SQLite database** by default to avoid cluttering y
     // ... 
 ],
 ```
+
 and then we inject 'mailbox' database connection into the config array, like so:
+
 ```php
 config([
     'database.connections.mailbox' => [
@@ -309,7 +302,10 @@ config([
     ],
 ]);
 ```
-If you want to override the default connection, you can add a new connection or use an existing one. All you need to do is add a new connection into your `config/database.php`:
+
+If you want to override the default connection, you can add a new connection or use an existing one. All you need to do
+is add a new connection into your `config/database.php`:
+
 ```php
 'connections' => [
     'custom_connection' => [
@@ -321,6 +317,7 @@ If you want to override the default connection, you can add a new connection or 
     ],
 ]
 ```
+
 Then set the new custom connection in `.env`
 
 ```env
@@ -362,25 +359,29 @@ https://staging.yourapp.com/mailbox
 
 The package registers the following HTTP endpoints:
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/mailbox` | Load the dashboard (Inertia page) |
-| `DELETE` | `/mailbox/messages` | Delete all captured messages |
-| `DELETE` | `/mailbox/messages/{id}` | Delete a specific message |
-| `POST` | `/mailbox/test-email` | Send a test email |
-| `POST` | `/mailbox/messages/{id}/seen` | Mark a message as read/unread |
+| Method   | Endpoint                      | Description                       |
+|----------|-------------------------------|-----------------------------------|
+| `GET`    | `/mailbox`                    | Load the dashboard (Inertia page) |
+| `DELETE` | `/mailbox/messages`           | Delete all captured messages      |
+| `DELETE` | `/mailbox/messages/{id}`      | Delete a specific message         |
+| `POST`   | `/mailbox/test-email`         | Send a test email                 |
+| `POST`   | `/mailbox/messages/{id}/seen` | Mark a message as read/unread     |
 
 **Example: Mark Message as Read**
 
 ```javascript
 // From frontend (Inertia)
-router.post(`/mailbox/messages/${messageId}/seen`, { seen: true })
+router.post(`/mailbox/messages/${messageId}/seen`, {seen: true})
 
 // Response: Updated message object
 {
-  "id": "msg_123",
-  "seen_at": "2025-11-19T10:30:00.000000Z",
-  ...
+    "id"
+:
+    "msg_123",
+        "seen_at"
+:
+    "2025-11-19T10:30:00.000000Z",
+...
 }
 ```
 
@@ -392,7 +393,9 @@ router.delete(`/mailbox/messages/${messageId}`)
 
 // Response:
 {
-  "status": "deleted"
+    "status"
+:
+    "deleted"
 }
 ```
 
@@ -403,7 +406,8 @@ router.delete(`/mailbox/messages/${messageId}`)
 router.delete('/mailbox/messages')
 
 // Response: Empty JSON
-{}
+{
+}
 ```
 
 ### Sending Test Emails
@@ -441,19 +445,21 @@ $key = $this->mailbox->store($payload);
 
 ```json
 {
-  "from": "sender@example.com",
-  "to": ["recipient@example.com"],
-  "cc": [],
-  "bcc": [],
-  "subject": "Test Email",
-  "date": "2025-11-19T10:30:00+00:00",
-  "text": "Plain text body",
-  "html": "<html>HTML body</html>",
-  "attachments": [],
-  "raw": "Full RFC 822 message",
-  "timestamp": 1732017000,
-  "saved_at": "2025-11-19T10:30:00.000000Z",
-  "seen_at": null
+    "from": "sender@example.com",
+    "to": [
+        "recipient@example.com"
+    ],
+    "cc": [],
+    "bcc": [],
+    "subject": "Test Email",
+    "date": "2025-11-19T10:30:00+00:00",
+    "text": "Plain text body",
+    "html": "<html>HTML body</html>",
+    "attachments": [],
+    "raw": "Full RFC 822 message",
+    "timestamp": 1732017000,
+    "saved_at": "2025-11-19T10:30:00.000000Z",
+    "seen_at": null
 }
 ```
 
@@ -468,21 +474,23 @@ Email attachments are captured and stored alongside the message. Access them via
 
 ```json
 {
-  "filename": "document.pdf",
-  "content_type": "application/pdf",
-  "size": 102400,
-  "content": "base64-encoded-data"
+    "filename": "document.pdf",
+    "content_type": "application/pdf",
+    "size": 102400,
+    "content": "base64-encoded-data"
 }
 ```
 
 ### Clearing the Inbox
 
 **From Dashboard:**
+
 - Click the "Clear Inbox" button in the filter bar (with trash icon)
 - Confirm the action in the dialog that appears
 - All messages will be permanently deleted
 
 **From Message Detail:**
+
 - Click the trash icon button in the top-right corner of the message preview
 - Confirm the deletion in the dialog
 - The specific message will be permanently deleted
@@ -511,7 +519,8 @@ php artisan mailbox:clear
 
 ### Architecture Overview
 
-The mailbox uses **Inertia.js + Vue 3** for its dashboard, but operates in **complete isolation** from your host application's frontend stack.
+The mailbox uses **Inertia.js + Vue 3** for its dashboard, but operates in **complete isolation** from your host
+application's frontend stack.
 
 **Key isolation mechanisms:**
 
@@ -537,16 +546,16 @@ return Inertia::render('mailbox::Dashboard', [
 
 ```javascript
 // resources/js/dashboard.js
-import { createInertiaApp } from '@inertiajs/vue3'
+import {createInertiaApp} from '@inertiajs/vue3'
 
 createInertiaApp({
     resolve: (name) => {
         const pageName = name.replace(/^mailbox::/, '')
-        const pages = import.meta.glob('./Pages/**/*.vue', { eager: true })
+        const pages = import.meta.glob('./Pages/**/*.vue', {eager: true})
         return pages[`./Pages/${pageName}.vue`]
     },
-    setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
+    setup({el, App, props, plugin}) {
+        createApp({render: () => h(App, props)})
             .use(plugin)
             .mount(el)
     },
@@ -579,6 +588,7 @@ npm run dev
 ```
 
 Built assets output to:
+
 - `public/vendor/mailbox/manifest.json`
 - `public/vendor/mailbox/assets/dashboard-[hash].js`
 - `public/vendor/mailbox/assets/dashboard-[hash].css`
@@ -590,6 +600,7 @@ Built assets output to:
 Stores messages in a dedicated SQLite database (`database/mailbox.sqlite`).
 
 **Pros:**
+
 - Fast queries and filtering
 - ACID compliance
 - Supports complex queries
@@ -608,6 +619,7 @@ MAILBOX_DB_TABLE=mailbox_messages
 Stores each message as a JSON file in `storage/app/mailbox/`.
 
 **Pros:**
+
 - No database required
 - Easy to inspect/debug
 - Portable (copy files between environments)
@@ -901,6 +913,7 @@ This creates symlinks instead of copying files, allowing hot module replacement.
 We welcome contributions! Please follow these guidelines:
 
 **Code Standards:**
+
 - Follow **Laravel coding style** (PSR-12)
 - Run `composer format` before committing
 - Ensure PHPStan passes: `composer analyse`
@@ -937,7 +950,8 @@ All notable changes to this project are documented in [CHANGELOG.md](CHANGELOG.m
 
 ## Security Vulnerabilities
 
-If you discover a security vulnerability within this package, please email **security@redberry.ge** instead of using the issue tracker. All security vulnerabilities will be promptly addressed.
+If you discover a security vulnerability within this package, please email **security@redberry.ge** instead of using the
+issue tracker. All security vulnerabilities will be promptly addressed.
 
 ## Credits
 
