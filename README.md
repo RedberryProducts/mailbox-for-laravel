@@ -73,7 +73,7 @@ For production (if you need to capture emails in production, NOT RECOMMENDED):
 composer require redberry/mailbox-for-laravel
 ```
 
-### 2. Run the Install Command
+### 2. Run the Installation Command
 
 ```bash
 php artisan mailbox:install
@@ -355,61 +355,6 @@ http://yourapp.test/mailbox
 https://staging.yourapp.com/mailbox
 ```
 
-### API Endpoints
-
-The package registers the following HTTP endpoints:
-
-| Method   | Endpoint                      | Description                       |
-|----------|-------------------------------|-----------------------------------|
-| `GET`    | `/mailbox`                    | Load the dashboard (Inertia page) |
-| `DELETE` | `/mailbox/messages`           | Delete all captured messages      |
-| `DELETE` | `/mailbox/messages/{id}`      | Delete a specific message         |
-| `POST`   | `/mailbox/test-email`         | Send a test email                 |
-| `POST`   | `/mailbox/messages/{id}/seen` | Mark a message as read/unread     |
-
-**Example: Mark Message as Read**
-
-```javascript
-// From frontend (Inertia)
-router.post(`/mailbox/messages/${messageId}/seen`, {seen: true})
-
-// Response: Updated message object
-{
-    "id"
-:
-    "msg_123",
-        "seen_at"
-:
-    "2025-11-19T10:30:00.000000Z",
-...
-}
-```
-
-**Example: Delete a Specific Message**
-
-```javascript
-// From frontend (Inertia)
-router.delete(`/mailbox/messages/${messageId}`)
-
-// Response:
-{
-    "status"
-:
-    "deleted"
-}
-```
-
-**Example: Clear All Messages**
-
-```javascript
-// From frontend (Inertia)
-router.delete('/mailbox/messages')
-
-// Response: Empty JSON
-{
-}
-```
-
 ### Sending Test Emails
 
 Use the "Send Test Email" button in the dashboard, or programmatically:
@@ -529,39 +474,6 @@ application's frontend stack.
 3. **Scoped assets** — Built to `public/vendor/mailbox/` with independent manifest
 4. **Separate Vue instance** — Creates its own app, doesn't mount to your app's root
 
-### How It Works
-
-**Backend (Controller):**
-
-```php
-use Inertia\Inertia;
-
-return Inertia::render('mailbox::Dashboard', [
-    'messages' => $messages,
-    'title' => 'Mailbox for Laravel',
-]);
-```
-
-**Frontend (Entry Point):**
-
-```javascript
-// resources/js/dashboard.js
-import {createInertiaApp} from '@inertiajs/vue3'
-
-createInertiaApp({
-    resolve: (name) => {
-        const pageName = name.replace(/^mailbox::/, '')
-        const pages = import.meta.glob('./Pages/**/*.vue', {eager: true})
-        return pages[`./Pages/${pageName}.vue`]
-    },
-    setup({el, App, props, plugin}) {
-        createApp({render: () => h(App, props)})
-            .use(plugin)
-            .mount(el)
-    },
-})
-```
-
 ### Compatibility
 
 ✅ **Works alongside your existing frontend:**
@@ -571,27 +483,6 @@ createInertiaApp({
 - **React** — No conflicts with React or other frameworks
 - **Existing Inertia apps** — Uses different middleware and namespaces
 - **Livewire** — Fully compatible
-
-### Asset Building
-
-Pre-built assets are included, but you can rebuild if needed:
-
-```bash
-# Install dependencies
-npm install
-
-# Build for production
-npm run build
-
-# Watch for changes (development)
-npm run dev
-```
-
-Built assets output to:
-
-- `public/vendor/mailbox/manifest.json`
-- `public/vendor/mailbox/assets/dashboard-[hash].js`
-- `public/vendor/mailbox/assets/dashboard-[hash].css`
 
 ## Storage Drivers
 
