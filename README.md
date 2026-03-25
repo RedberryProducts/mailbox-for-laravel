@@ -24,6 +24,7 @@ Mailtrap, but self-contained within your application.
     - [Clearing the Inbox](#clearing-the-inbox)
 - [Frontend Integration](#frontend-integration)
 - [Storage Drivers](#storage-drivers)
+- [Deploying on Staging / VPS / Docker](#deploying-on-staging--vps--docker)
 - [Authorization & Security](#authorization--security)
 - [Testing](#testing)
 - [Development](#development)
@@ -275,59 +276,62 @@ MAILBOX_DASHBOARD_ROUTE=mailbox
 
 ### Database Configuration
 
-The package uses a **separate SQLite database** by default to avoid cluttering your main database. This is configured in
-`config/mailbox.php`:
+By default, the package creates a **separate SQLite database** at `storage/app/mailbox/mailbox.sqlite` to avoid
+cluttering your main database. This default connection is only created when no connection with the configured name
+already exists in your `config/database.php`.
+
+**To use your own database connection**, define a connection named `mailbox` (or any name) in `config/database.php` and
+the package will use it instead of creating its own:
 
 ```php
-'store' => [
-    'driver' => env('MAILBOX_STORE_DRIVER', 'database'),
-    // ... 
-    'database' => [
-        'connection' => env('MAILBOX_DB_CONNECTION', 'mailbox'),
-        'table' => env('MAILBOX_DB_TABLE', 'mailbox_messages'),
-    ],
-    // ... 
-],
-```
-
-and then we inject 'mailbox' database connection into the config array, like so:
-
-```php
-config([
-    'database.connections.mailbox' => [
-        'driver' => 'sqlite',
-        'database' => storage_path('app/mailbox/mailbox.sqlite'),
-        'prefix' => '',
-        'foreign_key_constraints' => true,
-    ],
-]);
-```
-
-If you want to override the default connection, you can add a new connection or use an existing one. All you need to do
-is add a new connection into your `config/database.php`:
-
-```php
+// config/database.php
 'connections' => [
-    'custom_connection' => [
-        'driver' => 'sqlite',
-        'url' => env('MAILBOX_DB_URL'),
-        'database' => env('MAILBOX_DB_DATABASE', database_path('mailbox.sqlite')),
-        'prefix' => '',
-        'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
+    'mailbox' => [
+        'driver' => 'mysql',
+        'host' => env('MAILBOX_DB_HOST', '127.0.0.1'),
+        'database' => env('MAILBOX_DB_DATABASE', 'mailbox'),
+        'username' => env('MAILBOX_DB_USERNAME', 'root'),
+        'password' => env('MAILBOX_DB_PASSWORD', ''),
     ],
 ]
 ```
 
-Then set the new custom connection in `.env`
-
-```env
-MAILBOX_DB_CONNECTION=custom_connection
-```
-
-**Or use your main database connection:**
+**Or point to an existing connection** (e.g., your app's main database):
 
 ```env
 MAILBOX_DB_CONNECTION=mysql  # or pgsql, sqlsrv, etc.
+```
+
+This is particularly useful in **containerized or VPS environments** where SQLite may not be ideal (e.g., shared
+volumes, multi-container setups, or read-only filesystems).
+
+> **Note:** When using a non-SQLite connection, make sure to run `php artisan mailbox:install` to create the
+> `mailbox_messages` and `mailbox_attachments` tables in that database.
+
+### Attachment Storage
+
+Attachments are stored on a dedicated `mailbox` filesystem disk (defaults to `storage/app/mailbox/`). Like the database
+connection, the default local disk is only created when no disk with the configured name already exists in your
+`config/filesystems.php`.
+
+**To use remote storage** (e.g., S3), define the disk in `config/filesystems.php`:
+
+```php
+// config/filesystems.php
+'disks' => [
+    'mailbox' => [
+        'driver' => 's3',
+        'bucket' => env('MAILBOX_S3_BUCKET'),
+        'region' => env('MAILBOX_S3_REGION', 'us-east-1'),
+        // ...
+    ],
+]
+```
+
+Or point to a different disk name:
+
+```env
+MAILBOX_ATTACHMENTS_DISK=s3
 ```
 
 ## Usage
@@ -563,13 +567,78 @@ Use via `.env`:
 MAILBOX_STORE_DRIVER=redis
 ```
 
+## Deploying on Staging / VPS / Docker
+
+The package works out of the box on local development, but containerized or VPS environments may need additional
+configuration depending on your infrastructure.
+
+### Minimal Staging Setup
+
+For a typical staging server, just set the mail driver and you're done:
+
+```env
+MAIL_MAILER=mailbox
+MAILBOX_ENABLED=true   # Already true by default when APP_ENV != production
+```
+
+### Using MySQL/PostgreSQL Instead of SQLite
+
+SQLite doesn't work well with shared volumes or multi-container setups. Point the mailbox at your existing database:
+
+```env
+MAILBOX_DB_CONNECTION=mysql
+```
+
+Or define a dedicated connection in `config/database.php` (see [Database Configuration](#database-configuration)).
+
+### Docker Setup
+
+**Dockerfile example:**
+
+```dockerfile
+# Build stage (or entrypoint script)
+RUN php artisan mailbox:install --force
+```
+
+**docker-compose.yml example:**
+
+```yaml
+services:
+  app:
+    environment:
+      - APP_ENV=staging
+      - MAIL_MAILER=mailbox
+      - MAILBOX_DB_CONNECTION=mysql  # Use the app's MySQL instead of SQLite
+```
+
+If your container has a **read-only filesystem** for `public/`, publish assets during the Docker image build rather than
+at runtime.
+
+### Environment Variables Reference
+
+| Variable | Default | Description |
+|---|---|---|
+| `MAILBOX_ENABLED` | `true` (non-production) | Master on/off switch |
+| `MAILBOX_DB_CONNECTION` | `mailbox` (auto-created SQLite) | Database connection name |
+| `MAILBOX_STORE_DRIVER` | `database` | Storage driver (`database` or `file`) |
+| `MAILBOX_ATTACHMENTS_DISK` | `mailbox` (auto-created local) | Filesystem disk for attachments |
+| `MAILBOX_DASHBOARD_ROUTE` | `mailbox` | URL prefix for the dashboard |
+| `MAILBOX_GATE` | `viewMailbox` | Gate ability for authorization |
+| `MAILBOX_RETENTION` | `86400` | Message retention in seconds (24h) |
+| `MAILBOX_REDIRECT` | `null` | Redirect URL on unauthorized access |
+
+> **Key point:** When you define your own `mailbox` database connection or filesystem disk in your Laravel config, the
+> package respects it and will not overwrite it with defaults.
+
 ## Authorization & Security
 
 ### Gate-Based Authorization
 
-By default, access is controlled via Laravel's Gate system using the `viewMailbox` ability.
+Access is controlled via Laravel's Gate system using the `viewMailbox` ability.
 
-**Define in `AuthServiceProvider`:**
+**Default behavior:** The package registers a default gate that allows access in local environments or when `mailbox.enabled` is `true`. If you define your own `viewMailbox` gate in your `AuthServiceProvider`, the package will **not overwrite it**.
+
+**Define a custom gate in `AuthServiceProvider`:**
 
 ```php
 use Illuminate\Support\Facades\Gate;
@@ -588,23 +657,17 @@ public function boot()
 Gate::define('viewMailbox', [MailboxPolicy::class, 'view']);
 ```
 
-### Public Access (Development Only)
+### Staging / Non-Production Access
 
-To disable authorization (e.g., for local development):
+On staging or development servers, the default gate allows access automatically because `MAILBOX_ENABLED` defaults to
+`true` in non-production environments. No additional configuration is needed.
 
-```php
-// In AuthServiceProvider::boot()
-Gate::define('viewMailbox', fn () => true);
-```
-
-Or create a custom gate in config:
-
-```env
-MAILBOX_GATE=alwaysAllow
-```
+For **authenticated-only access on staging**, define your own gate:
 
 ```php
-Gate::define('alwaysAllow', fn () => true);
+Gate::define('viewMailbox', function ($user) {
+    return $user->hasRole('developer');
+});
 ```
 
 ### Production Considerations

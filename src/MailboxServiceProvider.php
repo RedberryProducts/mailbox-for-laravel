@@ -143,14 +143,19 @@ class MailboxServiceProvider extends PackageServiceProvider
                 'transport' => 'mailbox',
             ],
         ]);
-        config([
-            'database.connections.mailbox' => [
-                'driver' => 'sqlite',
-                'database' => storage_path('app/mailbox/mailbox.sqlite'),
-                'prefix' => '',
-                'foreign_key_constraints' => true,
-            ],
-        ]);
+
+        $connectionName = config('mailbox.store.database.connection', 'mailbox');
+
+        if (config("database.connections.{$connectionName}") === null) {
+            config([
+                "database.connections.{$connectionName}" => [
+                    'driver' => 'sqlite',
+                    'database' => storage_path('app/mailbox/mailbox.sqlite'),
+                    'prefix' => '',
+                    'foreign_key_constraints' => true,
+                ],
+            ]);
+        }
     }
 
     /**
@@ -158,13 +163,17 @@ class MailboxServiceProvider extends PackageServiceProvider
      */
     protected function configureMailboxDisk(): void
     {
-        config([
-            'filesystems.disks.mailbox' => [
-                'driver' => 'local',
-                'root' => storage_path('app/mailbox'),
-                'throw' => false,
-            ],
-        ]);
+        $diskName = config('mailbox.attachments.disk', 'mailbox');
+
+        if (config("filesystems.disks.{$diskName}") === null) {
+            config([
+                "filesystems.disks.{$diskName}" => [
+                    'driver' => 'local',
+                    'root' => storage_path('app/mailbox'),
+                    'throw' => false,
+                ],
+            ]);
+        }
     }
 
     /**
@@ -186,8 +195,14 @@ class MailboxServiceProvider extends PackageServiceProvider
      */
     protected function registerGate(): void
     {
-        Gate::define('viewMailbox', static function ($user = null): bool {
-            return ! app()->environment('production');
+        $ability = config('mailbox.gate', 'viewMailbox');
+
+        if (Gate::has($ability)) {
+            return;
+        }
+
+        Gate::define($ability, static function ($user = null): bool {
+            return app()->isLocal() || config('mailbox.enabled', false);
         });
     }
 
