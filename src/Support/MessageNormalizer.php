@@ -99,7 +99,7 @@ final class MessageNormalizer
     ): array {
         return [
             'version' => 1,
-            'saved_at' => (new \DateTimeImmutable)->format(\DateTimeInterface::ATOM),
+            'saved_at' => (new \DateTimeImmutable)->format(DateTimeInterface::ATOM),
             'subject' => null,
             'from' => [],
             'to' => [],

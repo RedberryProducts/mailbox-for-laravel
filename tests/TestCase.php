@@ -4,6 +4,7 @@ namespace Redberry\MailboxForLaravel\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Testing\TestResponse;
+use Inertia\ServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Redberry\MailboxForLaravel\MailboxServiceProvider;
 
@@ -46,7 +47,7 @@ class TestCase extends Orchestra
     {
         return [
             MailboxServiceProvider::class,
-            \Inertia\ServiceProvider::class,
+            ServiceProvider::class,
         ];
     }
 

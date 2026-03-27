@@ -3,6 +3,7 @@
 use Redberry\MailboxForLaravel\Support\MessageNormalizer;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Part\DataPart;
+use Symfony\Component\Mime\RawMessage;
 
 describe(MessageNormalizer::class, function () {
     it('normalizes a simple text-only email', function () {
@@ -164,7 +165,7 @@ describe(MessageNormalizer::class, function () {
     });
 
     it('handles RawMessage fallback with minimal structure', function () {
-        $rawMessage = new Symfony\Component\Mime\RawMessage('From: test@example.com\r\nSubject: Test\r\n\r\nBody');
+        $rawMessage = new RawMessage('From: test@example.com\r\nSubject: Test\r\n\r\nBody');
 
         $payload = MessageNormalizer::normalize($rawMessage);
 
@@ -179,6 +180,6 @@ describe(MessageNormalizer::class, function () {
             ->and($payload['html'])->toBeNull()
             ->and($payload['headers'])->toBe([])
             ->and($payload['attachments'])->toBe([])
-            ->and($payload['raw'])->toBeInstanceOf(Symfony\Component\Mime\RawMessage::class);
+            ->and($payload['raw'])->toBeInstanceOf(RawMessage::class);
     });
 });

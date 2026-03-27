@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\File;
 use Redberry\MailboxForLaravel\Http\Controllers\PublicAssetController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 describe(PublicAssetController::class, function () {
     beforeEach(function () {
@@ -30,7 +32,7 @@ describe(PublicAssetController::class, function () {
         $controller = new PublicAssetController;
         $response = $controller->__invoke('test-assets/test-file.js');
 
-        expect($response)->toBeInstanceOf(Symfony\Component\HttpFoundation\BinaryFileResponse::class);
+        expect($response)->toBeInstanceOf(BinaryFileResponse::class);
         expect($response->headers->get('Content-Type'))->toContain('application/javascript');
     });
 
@@ -38,7 +40,7 @@ describe(PublicAssetController::class, function () {
         $controller = new PublicAssetController;
         $response = $controller->__invoke('test-assets/test-file.css');
 
-        expect($response)->toBeInstanceOf(Symfony\Component\HttpFoundation\BinaryFileResponse::class);
+        expect($response)->toBeInstanceOf(BinaryFileResponse::class);
         expect($response->headers->get('Content-Type'))->toContain('text/css');
     });
 
@@ -46,7 +48,7 @@ describe(PublicAssetController::class, function () {
         $controller = new PublicAssetController;
         $response = $controller->__invoke('test-assets/test-file.js.map');
 
-        expect($response)->toBeInstanceOf(Symfony\Component\HttpFoundation\BinaryFileResponse::class);
+        expect($response)->toBeInstanceOf(BinaryFileResponse::class);
         expect($response->headers->get('Content-Type'))->toContain('application/json');
     });
 
@@ -55,14 +57,14 @@ describe(PublicAssetController::class, function () {
 
         // This should trigger an abort(404)
         expect(fn () => $controller->__invoke('non-existent-file.js'))
-            ->toThrow(Symfony\Component\HttpKernel\Exception\HttpException::class);
+            ->toThrow(HttpException::class);
     });
 
     it('uses fallback mime type for unknown file extensions', function () {
         $controller = new PublicAssetController;
         $response = $controller->__invoke('test-assets/unknown-file.xyz');
 
-        expect($response)->toBeInstanceOf(Symfony\Component\HttpFoundation\BinaryFileResponse::class);
+        expect($response)->toBeInstanceOf(BinaryFileResponse::class);
         // Should fall back to File::mimeType() detection
     });
 

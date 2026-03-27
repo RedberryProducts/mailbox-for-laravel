@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use Inertia\Middleware;
 use Redberry\MailboxForLaravel\Http\Middleware\HandleInertiaRequests;
 
 describe(HandleInertiaRequests::class, function () {
@@ -40,7 +41,7 @@ describe(HandleInertiaRequests::class, function () {
     it('extends base Inertia middleware', function () {
         $middleware = new HandleInertiaRequests;
 
-        expect($middleware)->toBeInstanceOf(\Inertia\Middleware::class);
+        expect($middleware)->toBeInstanceOf(Middleware::class);
     });
 
     it('uses default mailbox route when not configured', function () {
