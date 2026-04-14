@@ -1,0 +1,5 @@
+parameters:
+    ignoreErrors:
+        -
+            message: '#Trait Redberry\\MailboxForLaravel\\Testing\\InteractsWithMailbox is used zero times and is not analysed#'
+            path: src/Testing/InteractsWithMailbox.php
