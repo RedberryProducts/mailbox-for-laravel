@@ -1,6 +1,8 @@
 # Copilot Instructions — Mailbox for Laravel (Repository‑wide)
 
 > Place this file at **`.github/copilot-instructions.md`** in the repository root so Copilot (Chat, PR review, code suggestions, and Coding Agent) loads it automatically.
+>
+> See also: `CLAUDE.md` for Claude Code-specific guidance and `ARCHITECTURE.md` for Inertia isolation details.
 
 ## Project overview
 
@@ -9,10 +11,10 @@
 
 ## Tech stack & versions (default)
 
-* **PHP**: ^8.2 (strict types, typed properties, readonly where applicable)
-* **Laravel**: ^10 | ^11
+* **PHP**: ^8.3 (strict types, typed properties, readonly where applicable)
+* **Laravel**: ^10 | ^11 | ^12
 * **Testing**: Pest 3/4, Laravel test helpers; Coverage target: **90%+ lines**, **80%+ branches**
-* **Static analysis**: PHPStan (Larastan) level ≥ 6; Psalm optional
+* **Static analysis**: PHPStan (Larastan) level 5
 * **Code style**: Laravel Pint (PSR‑12), EditorConfig
 * **Front end**: Vue 3 + Vite, TypeScript (for any new scripts), TailwindCSS with **scoped/prefixed classes** to avoid collisions with host apps
 * **Tooling**: ESLint + Prettier (for JS/TS/Vue), Stylelint (optional)
@@ -33,7 +35,7 @@
 * **Capture & Storage**:
 
     * `CaptureService` generates deterministic keys, persists payloads with metadata, lists/paginates, update, clear.
-    * `MessageStore` (contract) with a default `FileStorage` driver.
+    * `MessageStore` (contract) with a default `DatabaseMessageStore` driver.
     * `StoreManager` resolves drivers via config & custom resolvers.
 * **HTTP**: `MailboxController`, `SendTestMailController`, `ClearMailboxController`, `SeenController`, `AssetController` (static assets), `AuthorizeMailboxMiddleware` (route gating).
 * **Support**: `MessageNormalizer` (creates canonical payload), `MailboxServiceProvider`, `InstallCommand` (publishes assets/config/routes), `config/mailbox.php`.
