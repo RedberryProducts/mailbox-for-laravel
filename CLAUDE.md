@@ -44,12 +44,16 @@ src/
   Support/
     MessageNormalizer.php           # Email → canonical array + attachment extraction
     CidRewriter.php                 # Rewrites inline cid: refs to downloadable routes
+  Testing/
+    MailboxAssertions.php           # Collection-level assertions (assertSent, assertSentTo, etc.)
+    PendingMailboxMessageAssertion.php  # Per-message fluent assertions (assertHasSubject, assertSeeInHtml, etc.)
+    InteractsWithMailbox.php        # Trait for test classes — auto-clear, provides $this->mailbox()
   Http/Controllers/                 # 7 thin controllers, return Inertia or JSON responses
   Http/Middleware/                  # HandleInertiaRequests, AuthorizeMailboxMiddleware
   DTO/                              # MailboxMessageData, AttachmentData (Spatie Laravel Data)
   Models/                           # MailboxMessage, MailboxAttachment (Eloquent)
   Commands/                         # mailbox:install, mailbox:clear, mailbox:dev-link
-  Facades/Mailbox.php               # Facade for CaptureService
+  Facades/Mailbox.php               # Facade for CaptureService + assertion method proxying
 
 resources/js/
   dashboard.js                      # Isolated Inertia app entry point
@@ -95,9 +99,33 @@ Uses **Pest** with Orchestra Testbench. Base `TestCase` sets up in-memory SQLite
 tests/
 ├── Architecture/    # Arch rules (26 rules enforcing boundaries)
 ├── Commands/        # Artisan command tests
-├── Feature/         # HTTP/integration tests (9 controller/middleware tests)
-└── Unit/            # Unit tests (12 files covering all core services)
+├── Feature/         # HTTP/integration + InteractsWithMailbox tests
+└── Unit/            # Unit tests (services, storage, testing assertions)
 ```
+
+### Testing Assertions API (`src/Testing/`)
+
+The package provides Laravel-idiomatic assertion helpers for verifying captured emails in test suites. Works with both **Pest** and **PHPUnit**.
+
+**Trait:** `InteractsWithMailbox` — auto-clears mailbox between tests, provides `$this->mailbox()`.
+
+**Collection-level** (via `$this->mailbox()` or `Mailbox` facade):
+- `assertSent(Closure $callback, ?int $expectedCount = null)`
+- `assertNotSent(Closure $callback)`
+- `assertNothingSent()`
+- `assertSentCount(int $count)`
+- `assertSentTo(string $email, ?Closure $callback = null)`
+- `assertNotSentTo(string $email, ?Closure $callback = null)`
+- `sent(?Closure $callback = null): Collection` — raw query
+- `firstSent(?Closure $callback = null): PendingMailboxMessageAssertion`
+
+**Per-message fluent** (via `firstSent()`):
+- `assertFrom()`, `assertHasTo()`, `assertHasCc()`, `assertHasBcc()`, `assertHasReplyTo()`
+- `assertHasSubject()`, `assertSubjectContains()`
+- `assertSeeInHtml()`, `assertDontSeeInHtml()`, `assertSeeInText()`, `assertDontSeeInText()`
+- `assertSeeInOrderInHtml()`, `assertSeeInOrderInText()`
+- `assertHasAttachment()`, `assertHasNoAttachments()`, `assertAttachmentCount()`
+- `assertHasHeader()`
 
 ### Test Policy
 
@@ -109,6 +137,7 @@ tests/
 - Use Pest `describe()` blocks and dataset-driven test cases
 - Use named routes in HTTP tests: `route('mailbox.index')`
 - Inertia assertions: `$response->assertInertia(fn (Assert $page) => ...)`
+- Email assertions: use `InteractsWithMailbox` trait + `Mailbox::assertSent()` facade
 
 ## Coding Conventions
 

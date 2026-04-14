@@ -88,6 +88,16 @@
 * Add **arch tests** to enforce boundaries (forbidden dependencies, env usage, etc.).
 * Target: **90%+** statement coverage; PRs below fail.
 
+### Testing Assertions API (`src/Testing/`)
+
+The package provides built-in testing helpers for verifying captured emails:
+
+* **`InteractsWithMailbox` trait** — Add via `uses()` in Pest or `use` in PHPUnit. Auto-clears mailbox before each test.
+* **`Mailbox` facade** — Supports `assertSent()`, `assertSentTo()`, `assertNothingSent()`, `assertSentCount()`, `sent()`, `firstSent()`
+* **`PendingMailboxMessageAssertion`** — Fluent per-message assertions via `firstSent()`: `assertHasSubject()`, `assertSeeInHtml()`, `assertHasTo()`, `assertHasAttachment()`, etc.
+
+When writing tests that verify email sending, prefer these helpers over manual `CaptureService::all()` boilerplate.
+
 ### Required test suites & example scenarios
 
 * **CaptureService (Unit)**

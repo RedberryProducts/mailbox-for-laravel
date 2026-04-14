@@ -19,3 +19,23 @@ globs: tests/**/*.php
 - Run a single test: `vendor/bin/pest --filter="test name"`
 - Run a directory: `vendor/bin/pest tests/Unit/`
 - Coverage target: **90%+ lines, 80%+ branches**
+
+## Testing Assertions API
+
+For tests that verify captured emails, use the package's built-in testing utilities in `src/Testing/`:
+
+- **`InteractsWithMailbox` trait** — Add to test class (via `uses()` in Pest). Auto-clears mailbox before each test. Provides `$this->mailbox()` for assertions.
+- **`Mailbox` facade** — Supports `Mailbox::assertSent()`, `Mailbox::assertSentTo()`, `Mailbox::assertNothingSent()`, etc.
+- **`PendingMailboxMessageAssertion`** — Returned by `firstSent()`. Fluent chainable: `->assertHasSubject()->assertSeeInHtml()->assertHasAttachment()`
+- **`MailboxAssertions`** — Returned by `$this->mailbox()`. Collection-level: `assertSent()`, `assertSentCount()`, `sent()`, `firstSent()`
+
+Example pattern:
+```php
+uses(InteractsWithMailbox::class);
+
+it('sends email', function () {
+    Mail::to('user@test.com')->send(new SomeMailable);
+    Mailbox::assertSentTo('user@test.com');
+    Mailbox::firstSent()->assertHasSubject('Expected Subject')->assertSeeInHtml('expected content');
+});
+```
