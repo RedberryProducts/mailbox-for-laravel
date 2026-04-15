@@ -18,8 +18,6 @@ const timestamp = computed(() => {
     const ageInMs = Date.now() - date.getTime()
     const oneWeek = 7 * 24 * 60 * 60 * 1000
 
-    // Anything older than a week reads better as an absolute short date
-    // ("Apr 14") — matches the mockup's handling of older messages.
     if (ageInMs > oneWeek) {
         return date.toLocaleDateString('en-US', {
             month: 'short',
@@ -33,9 +31,6 @@ const timestamp = computed(() => {
         + ' ago'
 })
 
-// Unread = red dot to the left of the subject (see template). Dot is
-// absolutely positioned so adding/removing it doesn't shift the subject
-// horizontally when a row transitions from unread → read.
 const isUnread = computed(() => !props.message.seen_at)
 
 const rootClasses = computed(() => [
@@ -44,15 +39,10 @@ const rootClasses = computed(() => [
 ])
 
 const subjectClasses = computed(() => [
-    'headline-sm text-on-surface truncate pr-3',
-    isUnread.value ? 'font-semibold' : 'font-medium',
+    'text-md text-on-surface truncate pr-3',
+    isUnread.value ? 'font-semibold' : 'font-normal',
 ])
 
-// Prefer the plain-text body. When the sender only shipped HTML, strip
-// <style> / <script> / <head> blocks *including their contents* before
-// removing the remaining tags — otherwise CSS rules from inlined
-// stylesheets leak into the snippet ("body { color:#333 } Hi there…").
-// This mirrors how Mailtrap / Gmail build list previews.
 const snippet = computed(() => {
     if (props.message.text_body) {
         return truncate(collapseWhitespace(props.message.text_body))
@@ -84,7 +74,6 @@ function truncate(s: string): string {
 
 <template>
     <button :class="rootClasses" @click="emit('click')">
-        <!-- 4px primary accent stripe on the selected card's left edge. -->
         <span
             v-if="props.isSelected"
             class="absolute top-0 bottom-0 left-0 w-1 rounded-r-full bg-primary"
