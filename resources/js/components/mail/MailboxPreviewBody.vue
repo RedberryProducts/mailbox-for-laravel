@@ -14,16 +14,16 @@ const props = defineProps<{
         <div class="p-2">
             <HtmlIframeViewer
                 v-if="props.view === 'html'"
-                class="prose prose-sm max-w-none bg-muted rounded-lg overflow-auto"
+                class="prose prose-sm max-w-none bg-surface-container-lowest rounded-lg overflow-auto"
                 :html="props.message.html_body"
             />
             <pre
                 v-else-if="props.view === 'text'"
-                class="bg-muted p-4 rounded-lg text-sm text-foreground overflow-auto font-mono whitespace-pre-wrap break-words"
+                class="bg-surface-container-low p-4 rounded-lg body-sm text-on-surface overflow-auto font-mono whitespace-pre-wrap wrap-break-word"
             >{{ props.message.text_body }}</pre>
             <pre
                 v-else
-                class="bg-muted p-4 rounded-lg text-sm text-foreground overflow-auto font-mono whitespace-pre-wrap break-words"
+                class="bg-surface-container-low p-4 rounded-lg body-sm text-on-surface overflow-auto font-mono whitespace-pre-wrap wrap-break-word"
             >{{ props.message.raw_body }}</pre>
         </div>
     </ScrollArea>

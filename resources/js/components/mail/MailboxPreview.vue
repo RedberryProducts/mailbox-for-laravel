@@ -23,8 +23,8 @@ const handleChange = (view: TabType) => {
         v-if="!props.message"
         class="flex-1 flex items-center justify-center p-4"
     >
-        <div class="text-center text-muted-foreground">
-            <p>Select a message to preview</p>
+        <div class="text-center">
+            <p class="body-md text-on-surface-variant">Select a message to preview</p>
         </div>
     </div>
     <div v-else class="flex-1 flex flex-col overflow-hidden">

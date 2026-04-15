@@ -12,51 +12,79 @@ const emit = defineEmits<{
     (e: 'click'): void
 }>()
 
-const timestamp = computed(() =>
-    formatDistanceToNow(new Date(props.message.created_at), {
-        addSuffix: true,
-    }),
-)
+const timestamp = computed(() => {
+    const date = new Date(props.message.created_at)
+    const ageInMs = Date.now() - date.getTime()
+    const oneWeek = 7 * 24 * 60 * 60 * 1000
 
+    // Anything older than a week reads better as an absolute short date
+    // ("Apr 14") — matches the mockup's handling of older messages.
+    if (ageInMs > oneWeek) {
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+        })
+    }
+
+    return formatDistanceToNow(date, { addSuffix: false })
+        .replace('about ', '')
+        .replace('less than a minute', '1 minute')
+        + ' ago'
+})
+
+// Every row is a card floating on the list column (surface-container-low):
+// default — white card (surface-container-lowest) + ambient shadow
+// selected — same card + 4px primary left stripe as per the mockup
+// Hover lifts slightly brighter via subtle overlay.
 const rootClasses = computed(() => [
-    'w-full px-4 py-3 text-left border-b border-border transition-colors cursor-pointer',
-    props.isSelected ? 'bg-primary text-primary-foreground hover:bg-primary/90' : props.message.seen_at ? 'hover:bg-muted' : 'bg-accent/40 hover:bg-muted',
+    'relative block w-full text-left cursor-pointer overflow-hidden rounded-xl bg-surface-container-lowest shadow-ambient transition-[transform,box-shadow] hover:-translate-y-px',
+    'px-5 py-4',
+    props.isSelected ? 'ring-0' : '',
 ])
 
+// Subject weight doubles as the read/unread signal — bold for unread,
+// regular for read — so we don't need a separate dot indicator.
 const subjectClasses = computed(() => [
-    'truncate text-sm',
-    props.isSelected ? 'text-primary-foreground font-semibold' : props.message.seen_at ? 'font-normal text-foreground' : 'font-semibold text-foreground',
+    'headline-sm text-on-surface truncate pr-3',
+    props.message.seen_at ? 'font-medium' : 'font-semibold',
 ])
 
-const timestampClasses = computed(() => [
-    'text-xs whitespace-nowrap',
-    props.isSelected ? 'text-primary-foreground/70' : 'text-muted-foreground',
-])
-
-const toClasses = computed(() => [
-    'text-xs truncate',
-    props.isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground',
-])
+// Strip HTML + collapse whitespace for the snippet. Prefer text body,
+// fall back to a cleaned html body if the sender only shipped HTML.
+const snippet = computed(() => {
+    const source = props.message.text_body || props.message.html_body || ''
+    const stripped = source.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+    return stripped.length > 160 ? stripped.slice(0, 160) + '…' : stripped
+})
 </script>
 
 <template>
     <button :class="rootClasses" @click="emit('click')">
-        <div class="flex items-start justify-between gap-2 mb-1">
+        <!-- 4px primary accent stripe on the selected card's left edge. -->
+        <span
+            v-if="props.isSelected"
+            class="absolute top-0 bottom-0 left-0 w-1 rounded-r-full bg-primary"
+            aria-hidden="true"
+        />
+
+        <div class="flex items-start justify-between gap-3 mb-1.5">
             <h3 :class="subjectClasses">
                 {{ props.message.subject }}
             </h3>
-            <span :class="timestampClasses">
-        {{ timestamp }}
-      </span>
+            <span class="body-sm whitespace-nowrap text-on-surface-variant shrink-0">
+                {{ timestamp }}
+            </span>
         </div>
-        <div class="flex items-center justify-between gap-2">
-            <p :class="toClasses">
-                {{ 'to: ' + props.message.to[0] }}
-            </p>
-            <span
-                v-if="!props.message.seen_at"
-                :class="['h-2 w-2 rounded-full bg-primary flex-shrink-0', props.isSelected ? 'bg-primary-foreground' : 'bg-primary']"
-            />
-        </div>
+
+        <p class="mb-2 truncate body-sm text-on-surface-variant">
+            {{ props.message.from }}
+        </p>
+
+        <p
+            v-if="snippet"
+            class="body-sm text-on-surface-variant line-clamp-2"
+        >
+            {{ snippet }}
+        </p>
     </button>
 </template>

@@ -18,13 +18,17 @@ const handleSelect = (id: string) => emit('select', id)
     <div class="flex-1 flex flex-col">
         <div
             v-if="props.messages.length === 0"
-            class="flex-1 flex items-center justify-center p-4 text-center"
+            class="flex-1 flex items-center justify-center p-8 text-center"
         >
-            <div class="text-muted-foreground">
-                <p class="text-sm">No messages for this filter.</p>
-            </div>
+            <p class="body-md text-on-surface-variant">
+                No messages for this filter.
+            </p>
         </div>
-        <div v-else class="space-y-0">
+        <!--
+            Cards, not rows: each message floats as its own elevated card on
+            the list column. Separation is whitespace + shadow, never a line.
+        -->
+        <div v-else class="flex flex-col gap-3 px-4 py-4">
             <MailboxListItem
                 v-for="message in props.messages"
                 :key="message.id"

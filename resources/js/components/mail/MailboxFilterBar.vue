@@ -46,7 +46,7 @@ const handleClearInbox = () => {
 </script>
 
 <template>
-    <div class="border-b border-border p-4 bg-card">
+    <div class="bg-surface-container-low px-4 py-3">
         <div class="flex items-center gap-2 justify-between">
             <MailboxRecipientFilterDropdown
                 :recipients="props.recipients"
@@ -76,7 +76,6 @@ const handleClearInbox = () => {
                         <AlertDialogAction
                             @click="handleClearInbox"
                             :disabled="isClearing"
-                            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                             {{ isClearing ? 'Clearing...' : 'Clear Inbox' }}
                         </AlertDialogAction>

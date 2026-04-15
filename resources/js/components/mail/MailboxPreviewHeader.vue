@@ -48,36 +48,31 @@ const handleDeleteMessage = () => {
 </script>
 
 <template>
-    <div class="border-b border-border p-6 bg-card">
+    <div class="bg-surface px-8 pt-8 pb-6">
         <div class="flex items-start justify-between gap-4">
             <div class="flex-1">
-                <h2 class="text-2xl font-bold text-foreground mb-4">
+                <h2 class="headline-md text-on-surface mb-4">
                     {{ props.subject }}
                 </h2>
-                <div class="space-y-2 text-sm">
-                    <div class="flex items-center gap-2">
-                        <span class="text-muted-foreground font-medium"
-                        >From:</span
-                        >
-                        <span class="text-foreground">{{ props.from }}</span>
+                <!--
+                    Field labels use the uppercase label-sm scale so the
+                    metadata reads as a typographic system, not as form labels.
+                -->
+                <div class="space-y-2">
+                    <div class="flex items-baseline gap-3">
+                        <span class="label-sm text-on-surface-variant w-12 shrink-0">From</span>
+                        <span class="body-md text-on-surface">{{ props.from }}</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-muted-foreground font-medium"
-                        >To:</span
-                        >
-                        <span class="text-foreground">{{
-                                props.to.join(', ')
-                            }}</span>
+                    <div class="flex items-baseline gap-3">
+                        <span class="label-sm text-on-surface-variant w-12 shrink-0">To</span>
+                        <span class="body-md text-on-surface">{{ props.to.join(', ') }}</span>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-muted-foreground font-medium"
-                        >Date:</span
-                        >
-                        <span class="text-foreground">{{
-                                formattedDate
-                            }}</span>
+                    <div class="flex items-baseline gap-3">
+                        <span class="label-sm text-on-surface-variant w-12 shrink-0">Date</span>
+                        <span class="body-md text-on-surface">{{ formattedDate }}</span>
                     </div>
-                    <div v-if="props.attachments.length" class="flex items-center gap-2">
+                    <div v-if="props.attachments.length" class="flex items-baseline gap-3">
+                        <span class="label-sm text-on-surface-variant w-12 shrink-0">Files</span>
                         <AttachmentList :attachments="props.attachments || []"/>
                     </div>
                 </div>
@@ -105,7 +100,6 @@ const handleDeleteMessage = () => {
                         <AlertDialogAction
                             @click="handleDeleteMessage"
                             :disabled="isDeleting"
-                            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                             {{ isDeleting ? 'Deleting...' : 'Delete' }}
                         </AlertDialogAction>

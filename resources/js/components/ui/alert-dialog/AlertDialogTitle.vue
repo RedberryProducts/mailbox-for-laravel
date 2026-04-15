@@ -8,7 +8,7 @@ defineProps<{
 </script>
 
 <template>
-  <AlertDialogTitle :class="cn('text-lg font-semibold', $props.class)">
+  <AlertDialogTitle :class="cn('headline-sm text-on-surface', $props.class)">
     <slot />
   </AlertDialogTitle>
 </template>

@@ -48,29 +48,26 @@ const handleClick = (attachment: Attachment) => {
 <template>
     <div
         v-if="regularAttachments.length > 0"
-        class="flex items-center gap-1 border-l border-border"
+        class="flex items-center gap-3"
     >
-        <!-- “X attachments” text -->
-        <span class="text-xs text-muted-foreground">
+        <span class="label-sm text-on-surface-variant">
             {{ regularAttachments.length }}
             attachment<span v-if="regularAttachments.length !== 1">s</span>
         </span>
 
         <!-- Pills -->
-        <div class="flex gap-1">
+        <div class="flex gap-1 flex-wrap">
             <Button
                 v-for="attachment in regularAttachments"
                 :key="attachment.id"
                 variant="ghost"
                 size="sm"
-                class="h-6 px-2 gap-1"
+                class="h-7 px-2 gap-1.5 bg-surface-container-lowest hover:bg-surface-container text-on-surface"
                 :title="`${attachment.filename} (${formatFileSize(attachment.size)})`"
                 @click="handleClick(attachment)"
             >
                 <Paperclip class="w-3 h-3" />
-                <span
-                    class="text-xs truncate max-w-[100px]"
-                >
+                <span class="body-sm truncate max-w-40">
                     {{ attachment.filename }}
                 </span>
             </Button>

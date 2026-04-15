@@ -31,23 +31,23 @@ watch(current, (val) => {
 </script>
 
 <template>
-    <Tabs v-model="current" class="border-b border-border">
-        <TabsList class="w-full justify-start rounded-none bg-card p-0">
+    <Tabs v-model="current" class="bg-surface px-6">
+        <TabsList class="w-full justify-start rounded-none bg-transparent p-0 gap-1">
             <TabsTrigger
                 value="html"
-                class="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+                class="label-md rounded-none border-b-2 border-transparent bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-on-surface text-on-surface-variant"
             >
                 HTML
             </TabsTrigger>
             <TabsTrigger
                 value="text"
-                class="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+                class="label-md rounded-none border-b-2 border-transparent bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-on-surface text-on-surface-variant"
             >
                 Text
             </TabsTrigger>
             <TabsTrigger
                 value="raw"
-                class="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+                class="label-md rounded-none border-b-2 border-transparent bg-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-on-surface text-on-surface-variant"
             >
                 Raw
             </TabsTrigger>
