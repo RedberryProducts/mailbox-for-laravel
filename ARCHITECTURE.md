@@ -273,6 +273,40 @@ In both cases the attachment **content bytes** live on the configured `mailbox.a
 
 Custom drivers can plug in either half (or both) by binding the relevant contracts in their own service provider; nothing in the package depends on the concrete classes.
 
+## Mail capture pipeline
+
+Outbound mail flows through the custom `mailbox` transport before any network driver sees it:
+
+```
+Mail::send(...)
+  → MailboxTransport::doSend($message, $envelope)
+  → MessageNormalizer::normalize($original, $envelope, $raw, true)
+  → CaptureService::store($payload)
+  → MessageStore + AttachmentStore (paired driver)
+```
+
+The normalized payload is a flat associative array keyed by the fields the dashboard and testing assertions read back:
+
+```json
+{
+    "from": "sender@example.com",
+    "to": ["recipient@example.com"],
+    "cc": [],
+    "bcc": [],
+    "subject": "Test Email",
+    "date": "2025-11-19T10:30:00+00:00",
+    "text": "Plain text body",
+    "html": "<html>HTML body</html>",
+    "attachments": [],
+    "raw": "Full RFC 822 message",
+    "timestamp": 1732017000,
+    "saved_at": "2025-11-19T10:30:00.000000Z",
+    "seen_at": null
+}
+```
+
+The transport is stateless — if a previous transport is chained (via `mail.mailers.mailbox.transport`), it is invoked after capture, so capture is always best-effort and never blocks real delivery.
+
 ## Summary
 
 This architecture ensures:

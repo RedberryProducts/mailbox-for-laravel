@@ -5,716 +5,52 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/RedberryProducts/mailbox-for-laravel/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/RedberryProducts/mailbox-for-laravel/actions?query=workflow%3A%22Fix+PHP+code+style+issues%22+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/redberry/mailbox-for-laravel.svg?style=flat-square)](https://packagist.org/packages/redberry/mailbox-for-laravel)
 
-**A zero-configuration local email inbox for Laravel.** Capture, inspect, and test emails without external services—like
-Mailtrap, but self-contained within your application.
+Mailbox for Laravel captures your application's outgoing mail and serves it through a local, self-hosted dashboard — like Mailtrap or Mailhog, but without an external service or a second process to run. It ships with a fluent testing API that, unlike `Mail::fake()`, asserts against the fully rendered message: real HTML, real recipients, real attachments.
 
-## Table of Contents
-
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Usage](#usage)
-    - [Dashboard Overview](#dashboard-overview)
-    - [Accessing the Dashboard](#accessing-the-dashboard)
-    - [API Endpoints](#api-endpoints)
-    - [Sending Test Emails](#sending-test-emails)
-    - [Message Capture Flow](#message-capture-flow)
-    - [Attachments](#attachments)
-    - [Clearing the Inbox](#clearing-the-inbox)
-- [Frontend Integration](#frontend-integration)
-- [Storage Drivers](#storage-drivers)
-- [Deploying on Staging / VPS / Docker](#deploying-on-staging--vps--docker)
-- [Authorization & Security](#authorization--security)
-- [Testing](#testing)
-    - [Testing Assertions API](#testing-assertions-api)
-- [Development](#development)
-- [Changelog](#changelog)
-- [Security Vulnerabilities](#security-vulnerabilities)
-- [Credits](#credits)
-- [License](#license)
-
-## Features
-
-✨ **Core Features:**
-
-- **Local Mailtrap-style inbox** — Capture all outgoing emails in a beautiful web interface
-- **Zero external dependencies** — No Mailtrap, Mailhog, or third-party services required
-- **Self-contained Inertia.js dashboard** — Vue 3-powered UI that's completely isolated from your host application
-- **Works with any frontend stack** — Compatible with Blade-only, Vue, React, Livewire, or existing Inertia apps
-- **Multiple storage drivers** — Database (SQLite, MySQL, PostgreSQL) or file-based storage
-- **Message normalization** — Structured capture of headers, recipients, attachments, HTML/text bodies
-- **Automatic retention policies** — Configure message pruning to prevent disk bloat
-- **Authorization middleware** — Gate-based access control for production safety
-- **Attachment support** — View and download email attachments
-- **Mark as read/unread** — Track which messages you've reviewed
-- **Delete functionality** — Clear entire inbox or delete individual messages with confirmation dialogs
-- **Responsive UI** — Beautiful TailwindCSS-based interface with dark mode support
-- **Developer-friendly** — Auto-enabled in non-production environments
-- **Test helpers** — Send test emails directly from the dashboard
-- **Testing assertions API** — Laravel-idiomatic helpers for verifying captured emails in your test suite (`assertSentTo`, `assertSeeInHtml`, etc.)
-
-## Requirements
-
-- **PHP:** `^8.3`
-- **Laravel:** `^10.0` | `^11.0` | `^12.0`
-- **Node.js & NPM:** Required only if rebuilding frontend assets (pre-built assets included)
+<!-- TODO: dashboard screenshot -->
 
 ## Installation
 
-### 1. Install via Composer
-
-For development environments (recommended):
+Require the package via Composer. In most cases you only want this in development:
 
 ```bash
 composer require redberry/mailbox-for-laravel --dev
 ```
 
-For production (if you need to capture emails in production, NOT RECOMMENDED):
-
-```bash
-composer require redberry/mailbox-for-laravel
-```
-
-### 2. Run the Installation Command
+Run the install command to publish assets, publish the config file, and run migrations:
 
 ```bash
 php artisan mailbox:install
 ```
 
-This command will:
-
-- Publish frontend assets to `public/vendor/mailbox/`
-- Run database migrations (creates `mailbox_messages` table by default)
-- Set up the necessary configuration
-
-**Available Flags:**
-
-- `--dev` — Link assets for development (watches for file changes)
-- `--force` — Force overwrite existing published assets
-- `--refresh` — Run `migrate:refresh` instead of `migrate` (⚠️ drops tables)
-
-**Examples:**
-
-```bash
-# Standard installation
-php artisan mailbox:install
-
-# Force reinstall (overwrites existing assets)
-php artisan mailbox:install --force
-
-# Development mode with linked assets
-php artisan mailbox:install --dev
-
-# Fresh install with database reset
-php artisan mailbox:install --refresh
-```
-
-### 3. Configure Your Mail Driver **Required:**
-
-Set your mail driver to `mailbox` to capture outgoing emails.
-
-Add to your `.env`:
+Point your mailer at the `mailbox` transport in `.env`:
 
 ```env
 MAIL_MAILER=mailbox
 ```
 
-### 4. Access the Dashboard
+The dashboard is then available at `/mailbox` (or whatever path you configure). The package is auto-discovered — no manual provider registration needed.
 
-Visit the dashboard at:
+**Requirements:** PHP 8.3+, Laravel 10 / 11 / 12.
 
-```
-http://localhost/mailbox
-```
+## Capturing Mail
 
-Or your configured route (see [Configuration](#configuration)).
+Everything your app sends through Laravel's `Mail` facade is intercepted by the `mailbox` transport and stored before delivery. Visit the dashboard to see captured messages:
 
-> **Note:** The package is auto-discovered by Laravel. No manual service provider registration needed.
+- Sorted newest-first with a live-updating list
+- HTML, plain-text, and raw RFC 822 views per message
+- Attachment preview and download
+- Read/unread tracking, single-message delete, and clear-all
+- Recipient filtering and search
+- A "Send test email" button for smoke tests
 
-## Configuration
+Internally, the pipeline is: transport → normalizer → `CaptureService` → paired message/attachment store. The architectural details are in [ARCHITECTURE.md](ARCHITECTURE.md).
 
-After installation, the configuration file is available at `config/mailbox.php`.
+## Testing your emails
 
-If you want to publish (or re-publish) **only** the config file — without touching views, assets, or migrations — use the dedicated publish tag:
+`Mail::fake()` only tells you a Mailable was queued; it can't tell you whether the rendered email would actually contain what you expect. This package's assertions run against the captured message after Laravel renders it, so you can assert on subject lines, recipients, HTML content, and attachments as the recipient would see them.
 
-```bash
-php artisan vendor:publish --tag=mailbox-config
-```
-
-Add `--force` to overwrite an existing `config/mailbox.php` after a package upgrade.
-
-### Configuration Reference
-
-```php
-<?php
-
-return [
-    /*
-    |--------------------------------------------------------------------------
-    | Enable Mailbox
-    |--------------------------------------------------------------------------
-    |
-    | By default, the mailbox is enabled in all environments except production.
-    | Set MAILBOX_ENABLED=true in production to capture emails.
-    |
-    */
-    'enabled' => env('MAILBOX_ENABLED', env('APP_ENV') !== 'production'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Storage Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Configure where captured emails are stored. Available drivers:
-    | - database: Store in a dedicated database connection (SQLite by default)
-    | - file: Store as JSON files on disk
-    |
-    */
-    'store' => [
-        'driver' => env('MAILBOX_STORE_DRIVER', 'database'),
-
-        // Custom storage driver resolvers
-        'resolvers' => [
-            // 'custom' => fn() => new \App\CustomMessageStore,
-        ],
-
-        // File storage options
-        'file' => [
-            'path' => env('MAILBOX_STORE_FILE_PATH', storage_path('app/mailbox')),
-        ],
-
-        // Database storage options
-        'database' => [
-            'connection' => env('MAILBOX_STORE_DATABASE_CONNECTION', 'mailbox'),
-            'table' => env('MAILBOX_STORE_DATABASE_TABLE', 'mailbox_messages'),
-        ],
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Message Retention
-    |--------------------------------------------------------------------------
-    |
-    | Automatically purge messages older than the specified number of seconds.
-    | Default: 24 hours (86400 seconds).
-    |
-    */
-    'retention' => (int) env('MAILBOX_RETENTION', 60 * 60 * 24),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Authorization Gate
-    |--------------------------------------------------------------------------
-    |
-    | Define which Laravel Gate ability is checked before allowing access
-    | to the mailbox dashboard. Default: 'viewMailbox'
-    |
-    | Define in AuthServiceProvider:
-    | Gate::define('viewMailbox', fn ($user) => $user->isAdmin());
-    |
-    */
-    'gate' => env('MAILBOX_GATE', 'viewMailbox'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Unauthorized Redirect
-    |--------------------------------------------------------------------------
-    |
-    | Where to redirect users who fail authorization.
-    | Default: null (shows Laravel's 403 page)
-    |
-    */
-    'unauthorized_redirect' => env('MAILBOX_UNAUTHORIZED_REDIRECT'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Dashboard Path
-    |--------------------------------------------------------------------------
-    |
-    | The URI prefix where the mailbox dashboard is accessible.
-    | Default: 'mailbox'
-    |
-    */
-    'path' => env('MAILBOX_PATH', 'mailbox'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Middleware Stack
-    |--------------------------------------------------------------------------
-    |
-    | Middleware applied to all mailbox routes.
-    | Default: ['web']
-    |
-    */
-    'middleware' => ['web'],
-];
-```
-
-### Environment Variables
-
-Add these to your `.env` file to customize behavior:
-
-```env
-# Enable in production (default: auto-enabled in non-production)
-MAILBOX_ENABLED=true
-
-# Storage driver (database or file)
-MAILBOX_STORE_DRIVER=database
-
-# Database connection (for database driver)
-MAILBOX_STORE_DATABASE_CONNECTION=mailbox
-MAILBOX_STORE_DATABASE_TABLE=mailbox_messages
-
-# File storage path (for file driver)
-MAILBOX_STORE_FILE_PATH=/path/to/storage/mailbox
-
-# Message retention (in seconds, default: 24 hours)
-MAILBOX_RETENTION=86400
-
-# Authorization gate
-MAILBOX_GATE=viewMailbox
-
-# Redirect on unauthorized access
-MAILBOX_UNAUTHORIZED_REDIRECT=/login
-
-# Dashboard route prefix
-MAILBOX_PATH=mailbox
-```
-
-### Database Configuration
-
-By default, the package creates a **separate SQLite database** at `storage/app/mailbox/mailbox.sqlite` to avoid
-cluttering your main database. This default connection is only created when no connection with the configured name
-already exists in your `config/database.php`.
-
-**To use your own database connection**, define a connection named `mailbox` (or any name) in `config/database.php` and
-the package will use it instead of creating its own:
-
-```php
-// config/database.php
-'connections' => [
-    'mailbox' => [
-        'driver' => 'mysql',
-        'host' => env('MAILBOX_DB_HOST', '127.0.0.1'),
-        'database' => env('MAILBOX_DB_DATABASE', 'mailbox'),
-        'username' => env('MAILBOX_DB_USERNAME', 'root'),
-        'password' => env('MAILBOX_DB_PASSWORD', ''),
-    ],
-]
-```
-
-**Or point to an existing connection** (e.g., your app's main database):
-
-```env
-MAILBOX_STORE_DATABASE_CONNECTION=mysql  # or pgsql, sqlsrv, etc.
-```
-
-This is particularly useful in **containerized or VPS environments** where SQLite may not be ideal (e.g., shared
-volumes, multi-container setups, or read-only filesystems).
-
-> **Note:** When using a non-SQLite connection, make sure to run `php artisan mailbox:install` to create the
-> `mailbox_messages` and `mailbox_attachments` tables in that database.
-
-### Attachment Storage
-
-Attachments are stored on a dedicated `mailbox` filesystem disk (defaults to `storage/app/mailbox/`). Like the database
-connection, the default local disk is only created when no disk with the configured name already exists in your
-`config/filesystems.php`.
-
-**To use remote storage** (e.g., S3), define the disk in `config/filesystems.php`:
-
-```php
-// config/filesystems.php
-'disks' => [
-    'mailbox' => [
-        'driver' => 's3',
-        'bucket' => env('MAILBOX_S3_BUCKET'),
-        'region' => env('MAILBOX_S3_REGION', 'us-east-1'),
-        // ...
-    ],
-]
-```
-
-Or point to a different disk name:
-
-```env
-MAILBOX_ATTACHMENTS_DISK=s3
-```
-
-## Usage
-
-### Dashboard Overview
-
-The mailbox dashboard provides a modern email client interface with:
-
-- **Message list** — All captured emails sorted newest-first
-- **Preview pane** — View email content (HTML, plain text, raw source)
-- **Recipient filtering** — Filter by To, Cc, Bcc recipients
-- **Read/Unread tracking** — Mark messages as seen
-- **Attachment viewer** — Download email attachments
-- **Test email sender** — Send sample emails for testing
-- **Clear inbox** — Remove all captured messages with confirmation
-- **Delete messages** — Remove individual messages with confirmation
-
-### Accessing the Dashboard
-
-Navigate to your configured route (default: `/mailbox`):
-
-```
-http://localhost/mailbox
-http://yourapp.test/mailbox
-https://staging.yourapp.com/mailbox
-```
-
-### Sending Test Emails
-
-Use the "Send Test Email" button in the dashboard, or programmatically:
-
-```php
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Mail\Message;
-
-Mail::raw('This is a test email', function (Message $message) {
-    $message->to('recipient@example.com')
-        ->subject('Test Email')
-        ->from('sender@example.com');
-});
-```
-
-### Message Capture Flow
-
-1. **Your application sends an email** using Laravel's `Mail` facade
-2. **Mailbox Transport intercepts** the outgoing message
-3. **Message is normalized** into a structured format (headers, body, attachments)
-4. **Stored in configured driver** (database or file system)
-5. **Displayed in dashboard** with full content and metadata
-
-**Behind the scenes:**
-
-```php
-// MailboxTransport::doSend()
-$payload = MessageNormalizer::normalize($original, $envelope, $raw, true);
-$key = $this->mailbox->store($payload);
-```
-
-**Stored payload structure:**
-
-```json
-{
-    "from": "sender@example.com",
-    "to": [
-        "recipient@example.com"
-    ],
-    "cc": [],
-    "bcc": [],
-    "subject": "Test Email",
-    "date": "2025-11-19T10:30:00+00:00",
-    "text": "Plain text body",
-    "html": "<html>HTML body</html>",
-    "attachments": [],
-    "raw": "Full RFC 822 message",
-    "timestamp": 1732017000,
-    "saved_at": "2025-11-19T10:30:00.000000Z",
-    "seen_at": null
-}
-```
-
-### Attachments
-
-Attachment storage is **paired with the message store driver**: when you pick `database`, attachment metadata lives in `mailbox_attachments` (with a cascade FK on the message row); when you pick `file`, metadata lives in a per-message JSON sidecar at `storage/app/mail-inbox/attachments-index/{message_id}.json`. In both cases the file *content* lives on the configured `mailbox.attachments.disk` (default: `mailbox` local disk under `attachments/`), so download/inline URLs work identically.
-
-Access them via:
-
-- **Dashboard UI:** Click "View" on the attachment
-- **Direct download:** `route('mailbox.attachments.download', ['id' => $attachmentId])`
-- **Inline preview (used by the CID rewriter for inline images):** `route('mailbox.attachments.inline', ['id' => $attachmentId])`
-
-**Custom attachment drivers:** implement `Redberry\MailboxForLaravel\Contracts\AttachmentStore` (8 methods: `store`, `find`, `findByMessage`, `findByCid`, `delete`, `deleteByMessage`, `getContent`, `clear`) and bind it as a singleton in your service provider — the rest of the package only depends on the contract.
-
-### Clearing the Inbox
-
-**From Dashboard:**
-
-- Click the "Clear Inbox" button in the filter bar (with trash icon)
-- Confirm the action in the dialog that appears
-- All messages will be permanently deleted
-
-**From Message Detail:**
-
-- Click the trash icon button in the top-right corner of the message preview
-- Confirm the deletion in the dialog
-- The specific message will be permanently deleted
-
-**Programmatically:**
-
-```php
-use Redberry\MailboxForLaravel\Facades\Mailbox;
-
-// Clear all messages
-Mailbox::clearAll();
-
-// Delete a specific message
-Mailbox::delete($messageId);
-```
-
-**Via Artisan:**
-
-```bash
-# Clear all captured messages
-php artisan mailbox:clear
-
-# Clear only messages older than the configured retention period
-php artisan mailbox:clear --outdated
-```
-
-> **Note:** Both clear and delete operations show confirmation dialogs in the UI to prevent accidental data loss.
-
-## Frontend Integration
-
-### Architecture Overview
-
-The mailbox uses **Inertia.js + Vue 3** for its dashboard, but operates in **complete isolation** from your host
-application's frontend stack.
-
-**Key isolation mechanisms:**
-
-1. **Namespaced components** — All Inertia renders use the `mailbox::` prefix
-2. **Dedicated middleware** — `mailbox.inertia` middleware handles Inertia responses separately
-3. **Scoped assets** — Built to `public/vendor/mailbox/` with independent manifest
-4. **Separate Vue instance** — Creates its own app, doesn't mount to your app's root
-
-### Compatibility
-
-✅ **Works alongside your existing frontend:**
-
-- **Blade-only apps** — No conflicts, package bundles its own JS
-- **Vue without Inertia** — Separate Vue instances, no shared state
-- **React** — No conflicts with React or other frameworks
-- **Existing Inertia apps** — Uses different middleware and namespaces
-- **Livewire** — Fully compatible
-
-## Storage Drivers
-
-### Database Driver (Default)
-
-Stores messages in a dedicated SQLite database (`database/mailbox.sqlite`).
-
-**Pros:**
-
-- Fast queries and filtering
-- ACID compliance
-- Supports complex queries
-- Easy to inspect with database tools
-
-**Configuration:**
-
-```env
-MAILBOX_STORE_DRIVER=database
-MAILBOX_STORE_DATABASE_CONNECTION=mailbox
-MAILBOX_STORE_DATABASE_TABLE=mailbox_messages
-```
-
-### File Driver
-
-Stores each message as a JSON file in `storage/app/mailbox/`.
-
-**Pros:**
-
-- No database required
-- Easy to inspect/debug
-- Portable (copy files between environments)
-
-**Configuration:**
-
-```env
-MAILBOX_STORE_DRIVER=file
-MAILBOX_STORE_FILE_PATH=/path/to/storage/mailbox
-```
-
-### Custom Drivers
-
-Implement the `MessageStore` contract:
-
-```php
-namespace App\Storage;
-
-use Redberry\MailboxForLaravel\Contracts\MessageStore;
-
-class RedisMessageStore implements MessageStore
-{
-    public function store(array $payload): string|int
-    {
-        // Implementation
-    }
-
-    public function find(string $id): ?array
-    {
-        // Implementation
-    }
-
-    public function idsOlderThan(int $seconds): array
-    {
-        // Implementation — return ids whose timestamp is older than $seconds.
-        // Used by CaptureService to cascade attachment cleanup before purge.
-    }
-
-    // ... other methods (paginate, count, update, delete, purgeOlderThan, clear)
-}
-```
-
-Register in `config/mailbox.php`:
-
-```php
-'store' => [
-    'resolvers' => [
-        'redis' => fn() => new \App\Storage\RedisMessageStore,
-    ],
-],
-```
-
-Use via `.env`:
-
-```env
-MAILBOX_STORE_DRIVER=redis
-```
-
-## Deploying on Staging / VPS / Docker
-
-The package works out of the box on local development, but containerized or VPS environments may need additional
-configuration depending on your infrastructure.
-
-### Minimal Staging Setup
-
-For a typical staging server, just set the mail driver and you're done:
-
-```env
-MAIL_MAILER=mailbox
-MAILBOX_ENABLED=true   # Already true by default when APP_ENV != production
-```
-
-### Using MySQL/PostgreSQL Instead of SQLite
-
-SQLite doesn't work well with shared volumes or multi-container setups. Point the mailbox at your existing database:
-
-```env
-MAILBOX_STORE_DATABASE_CONNECTION=mysql
-```
-
-Or define a dedicated connection in `config/database.php` (see [Database Configuration](#database-configuration)).
-
-### Docker Setup
-
-**Dockerfile example:**
-
-```dockerfile
-# Build stage (or entrypoint script)
-RUN php artisan mailbox:install --force
-```
-
-**docker-compose.yml example:**
-
-```yaml
-services:
-  app:
-    environment:
-      - APP_ENV=staging
-      - MAIL_MAILER=mailbox
-      - MAILBOX_STORE_DATABASE_CONNECTION=mysql  # Use the app's MySQL instead of SQLite
-```
-
-If your container has a **read-only filesystem** for `public/`, publish assets during the Docker image build rather than
-at runtime.
-
-### Environment Variables Reference
-
-| Variable | Default | Description |
-|---|---|---|
-| `MAILBOX_ENABLED` | `true` (non-production) | Master on/off switch |
-| `MAILBOX_STORE_DATABASE_CONNECTION` | `mailbox` (auto-created SQLite) | Database connection name |
-| `MAILBOX_STORE_DRIVER` | `database` | Storage driver (`database` or `file`) |
-| `MAILBOX_ATTACHMENTS_DISK` | `mailbox` (auto-created local) | Filesystem disk for attachments |
-| `MAILBOX_PATH` | `mailbox` | URL prefix for the dashboard |
-| `MAILBOX_GATE` | `viewMailbox` | Gate ability for authorization |
-| `MAILBOX_RETENTION` | `86400` | Message retention in seconds (24h) |
-| `MAILBOX_UNAUTHORIZED_REDIRECT` | `null` | Redirect URL on unauthorized access |
-
-> **Key point:** When you define your own `mailbox` database connection or filesystem disk in your Laravel config, the
-> package respects it and will not overwrite it with defaults.
-
-## Authorization & Security
-
-### Gate-Based Authorization
-
-Access is controlled via Laravel's Gate system using the `viewMailbox` ability.
-
-**Default behavior:** The package registers a default gate that allows access in local environments or when `mailbox.enabled` is `true`. If you define your own `viewMailbox` gate in your `AuthServiceProvider`, the package will **not overwrite it**.
-
-**Define a custom gate in `AuthServiceProvider`:**
-
-```php
-use Illuminate\Support\Facades\Gate;
-
-public function boot()
-{
-    Gate::define('viewMailbox', function ($user) {
-        return $user->isAdmin();
-    });
-}
-```
-
-**Or use a Policy:**
-
-```php
-Gate::define('viewMailbox', [MailboxPolicy::class, 'view']);
-```
-
-### Staging / Non-Production Access
-
-On staging or development servers, the default gate allows access automatically because `MAILBOX_ENABLED` defaults to
-`true` in non-production environments. No additional configuration is needed.
-
-For **authenticated-only access on staging**, define your own gate:
-
-```php
-Gate::define('viewMailbox', function ($user) {
-    return $user->hasRole('developer');
-});
-```
-
-### Production Considerations
-
-⚠️ **Security warnings:**
-
-- Captured emails may contain sensitive data (passwords, tokens, etc.)
-- Always require authentication in production
-- Consider IP whitelisting for staging environments
-- Use `MAILBOX_ENABLED=false` in production unless necessary
-
-**Recommended production config:**
-
-```env
-# Disable by default
-MAILBOX_ENABLED=false
-
-# Enable only for admins
-MAILBOX_GATE=viewMailbox
-
-# Redirect unauthorized users
-MAILBOX_UNAUTHORIZED_REDIRECT=/login
-```
-
-## Testing
-
-### Testing Assertions API
-
-The package provides expressive, Laravel-idiomatic assertion helpers for verifying captured emails in your test suite. Unlike `Mail::fake()` which only checks if a Mailable was dispatched, these assertions verify the **actual rendered email** — real HTML, real recipients, real attachments.
-
-Works with both **Pest** and **PHPUnit**.
-
-#### Setup
-
-Add the `InteractsWithMailbox` trait to your test class. It automatically clears the mailbox before each test.
+Add the `InteractsWithMailbox` trait to your test. It clears the mailbox before every test, and exposes `$this->mailbox()` for assertions.
 
 **Pest:**
 
@@ -727,80 +63,55 @@ uses(InteractsWithMailbox::class);
 **PHPUnit:**
 
 ```php
-use Redberry\MailboxForLaravel\Testing\InteractsWithMailbox;
-
 class OrderEmailTest extends TestCase
 {
     use InteractsWithMailbox;
 }
 ```
 
-#### Collection-Level Assertions
-
-Assert against all captured emails using the trait's `$this->mailbox()` method or the `Mailbox` facade:
+### Collection-level assertions
 
 ```php
 use Redberry\MailboxForLaravel\Facades\Mailbox;
 use Redberry\MailboxForLaravel\DTO\MailboxMessageData;
 
-// Assert a specific number of emails were captured
 Mailbox::assertSentCount(2);
-
-// Assert no emails were captured
 Mailbox::assertNothingSent();
-
-// Assert an email was sent to a specific address
 Mailbox::assertSentTo('user@example.com');
-
-// Assert no email was sent to an address
 Mailbox::assertNotSentTo('admin@example.com');
 
-// Assert with a custom callback
 Mailbox::assertSent(fn (MailboxMessageData $m) => $m->subject === 'Welcome');
 
-// Assert exact count with callback
 Mailbox::assertSent(
     fn (MailboxMessageData $m) => str_contains($m->subject, 'Newsletter'),
-    expectedCount: 3
+    expectedCount: 3,
 );
-
-// Assert with recipient + callback
-Mailbox::assertSentTo('user@example.com', fn (MailboxMessageData $m) => $m->subject === 'Welcome');
-
-// Query captured messages for custom assertions
-$messages = Mailbox::sent(fn (MailboxMessageData $m) => $m->subject === 'Reset');
-expect($messages)->toHaveCount(1);
 ```
 
-#### Per-Message Fluent Assertions
+### Per-message fluent assertions
 
-Use `firstSent()` to get a fluent assertion object for a captured email:
+Call `firstSent()` to chain assertions against a single captured message:
 
 ```php
 Mailbox::firstSent()
     ->assertHasSubject('Order Confirmation')
     ->assertFrom('noreply@shop.com')
     ->assertHasTo('buyer@example.com')
-    ->assertHasCc('accounting@shop.com')
     ->assertSeeInHtml('Order #12345')
-    ->assertSeeInHtml('$49.99')
     ->assertDontSeeInHtml('error')
-    ->assertSeeInText('Thank you for your purchase')
     ->assertHasAttachment('invoice.pdf', 'application/pdf')
-    ->assertAttachmentCount(1)
-    ->assertHasHeader('X-Mailer');
+    ->assertAttachmentCount(1);
 ```
 
-Filter before asserting:
+`firstSent()` also accepts a filter callback:
 
 ```php
-// Get the first email matching a callback
 Mailbox::firstSent(fn (MailboxMessageData $m) => $m->subject === 'Password Reset')
     ->assertHasTo('user@example.com')
     ->assertSeeInHtml('Reset your password');
 ```
 
-#### Available Per-Message Assertions
+### Reference — per-message assertions
 
 | Method | Description |
 |---|---|
@@ -822,232 +133,179 @@ Mailbox::firstSent(fn (MailboxMessageData $m) => $m->subject === 'Password Reset
 | `assertAttachmentCount($count)` | Assert number of attachments |
 | `assertHasHeader($name, $value?)` | Assert header exists (optionally with value) |
 
-#### Full Example
+### End-to-end example
 
 ```php
-use Redberry\MailboxForLaravel\Facades\Mailbox;
-use Redberry\MailboxForLaravel\Testing\InteractsWithMailbox;
-
-uses(InteractsWithMailbox::class);
-
 it('sends welcome email with getting started guide', function () {
-    // Trigger the action that sends the email
     $this->post('/register', [
         'name' => 'John Doe',
         'email' => 'john@example.com',
         'password' => 'secret123',
     ]);
 
-    // Verify the email was captured
     Mailbox::assertSentCount(1);
     Mailbox::assertSentTo('john@example.com');
 
-    // Verify email content
     Mailbox::firstSent()
         ->assertHasSubject('Welcome, John!')
         ->assertFrom('noreply@myapp.com')
-        ->assertSeeInHtml('Getting Started')
         ->assertSeeInOrderInHtml(['Welcome', 'Getting Started', 'Support'])
         ->assertHasAttachment('getting-started.pdf');
 });
-
-it('does not send email when registration fails', function () {
-    $this->post('/register', ['email' => 'invalid']);
-
-    Mailbox::assertNothingSent();
-});
 ```
 
-### Running Tests
+## Configuration
 
-The package includes comprehensive test coverage using **Pest**.
+Defaults live in [config/mailbox.php](config/mailbox.php) and work without modification. Publish the config file only — without touching views, assets, or migrations — if you need to customize:
 
 ```bash
-# Run all tests
-composer test
-
-# Run with coverage report
-composer test-coverage
-
-# Run only unit tests
-./vendor/bin/pest --filter=Unit
-
-# Run only feature tests
-./vendor/bin/pest --filter=Feature
+php artisan vendor:publish --tag=mailbox-config
 ```
 
-### Test Coverage
+Add `--force` to overwrite an existing `config/mailbox.php` after a package upgrade.
 
-Target coverage: **90%+ lines**, **80%+ branches**
+The keys you're most likely to touch:
+
+- `path` — the URI prefix the dashboard lives at (default `mailbox`).
+- `middleware` — routes run under the `web` group by default; add your own guards here (e.g. `auth`) for staging access control.
+- `gate` — the Gate ability checked before dashboard access (default `viewMailbox`). See [Authorization](#authorization).
+- `store.driver` — `database` (default) or `file`. See [Storage](#storage).
+- `store.database.connection` — the connection the DB driver uses. Defaults to an auto-created `mailbox` SQLite file isolated from your app's database.
+- `retention` — seconds before `mailbox:clear --outdated` prunes a message (default 24 h).
+- `per_page` — dashboard pagination size (default 20, clamped 1–100).
+- `attachments.disk` — the filesystem disk attachment content is written to (default `mailbox` local disk).
+
+### Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `MAILBOX_ENABLED` | `true` (non-production) | Master on/off switch — routes and transport only register when true |
+| `MAILBOX_PATH` | `mailbox` | URL prefix for the dashboard |
+| `MAILBOX_GATE` | `viewMailbox` | Gate ability checked by the authorize middleware |
+| `MAILBOX_UNAUTHORIZED_REDIRECT` | `null` | Redirect target on gate denial (null = 403 response) |
+| `MAILBOX_STORE_DRIVER` | `database` | `database` or `file` |
+| `MAILBOX_STORE_DATABASE_CONNECTION` | `mailbox` | Connection name for the DB driver |
+| `MAILBOX_STORE_DATABASE_TABLE` | `mailbox_messages` | Messages table name |
+| `MAILBOX_STORE_FILE_PATH` | `storage/app/mailbox` | Path for the file driver |
+| `MAILBOX_RETENTION` | `86400` | Retention period in seconds |
+| `MAILBOX_PER_PAGE` | `20` | Messages per dashboard page |
+| `MAILBOX_ATTACHMENTS_DISK` | `mailbox` | Disk for attachment content |
+
+## Storage
+
+### Database driver (default)
+
+Messages are stored in a dedicated `mailbox` SQLite database at `storage/app/mailbox/mailbox.sqlite`, isolated from your app's main database. The package only creates this connection if one with the configured name doesn't already exist, so you can point it elsewhere.
+
+To use your own connection (e.g. MySQL), define it in `config/database.php`:
+
+```php
+'connections' => [
+    'mailbox' => [
+        'driver' => 'mysql',
+        'host' => env('MAILBOX_DB_HOST', '127.0.0.1'),
+        'database' => env('MAILBOX_DB_DATABASE', 'mailbox'),
+        'username' => env('MAILBOX_DB_USERNAME', 'root'),
+        'password' => env('MAILBOX_DB_PASSWORD', ''),
+    ],
+],
+```
+
+Or point `MAILBOX_STORE_DATABASE_CONNECTION` at an existing connection such as `mysql`. Run `php artisan mailbox:install` again to create the `mailbox_messages` and `mailbox_attachments` tables there.
+
+### File driver
+
+Captures each message to a JSON file under `storage/app/mailbox/`. Use it when you can't write to a database at all. It's slower for listing and paginates in-memory.
+
+```env
+MAILBOX_STORE_DRIVER=file
+```
+
+### Attachment disks
+
+Attachment content lives on the `mailbox` filesystem disk, independent of the message driver. By default the package registers a local disk at `storage/app/mailbox/`, but — like the database connection — it won't overwrite a disk of the same name you've already defined. To store attachments on S3:
+
+```php
+// config/filesystems.php
+'disks' => [
+    'mailbox' => [
+        'driver' => 's3',
+        'bucket' => env('MAILBOX_S3_BUCKET'),
+        'region' => env('MAILBOX_S3_REGION', 'us-east-1'),
+    ],
+],
+```
+
+### Custom drivers
+
+Implement [`Contracts\MessageStore`](src/Contracts/MessageStore.php) for messages, and [`Contracts\AttachmentStore`](src/Contracts/AttachmentStore.php) for their attachments. Register the pair in your service provider and point `mailbox.store.driver` at your resolver key:
+
+```php
+'store' => [
+    'driver' => 'redis',
+    'resolvers' => [
+        'redis' => fn () => new \App\Storage\RedisMessageStore,
+    ],
+],
+```
+
+Drivers are always resolved as a pair — if you ship a custom `MessageStore`, also bind a matching `AttachmentStore` so attachment reads don't fall through to the database driver.
+
+## Authorization
+
+Dashboard access is gated through Laravel's `Gate::allows()` using the `viewMailbox` ability. The package defines a default gate that allows access in local environments or whenever `mailbox.enabled` is true; if you define your own `viewMailbox` gate, the package will not overwrite it.
+
+```php
+use Illuminate\Support\Facades\Gate;
+
+public function boot(): void
+{
+    Gate::define('viewMailbox', fn ($user) => $user?->isAdmin());
+}
+```
+
+For staging servers, this gives you authenticated-only access without any extra middleware. You can also point the config's `unauthorized_redirect` at a login URL if you'd rather redirect than serve a 403.
+
+Captured messages can include passwords, tokens, and personal data, so leave `MAILBOX_ENABLED=false` in production unless you deliberately want the inbox running there. If you do, define a strict gate and make sure the dashboard sits behind authentication.
+
+## Artisan Commands
 
 ```bash
-# Generate HTML coverage report
-./vendor/bin/pest --coverage --coverage-html=coverage
+# Publish assets + config, then run package migrations.
+# Flags: --force (overwrite published files), --refresh (drop and rebuild tables),
+#        --dev (symlink assets for hot reload).
+php artisan mailbox:install
 
-# Fail if coverage drops below threshold
-./vendor/bin/pest --coverage --min=90
+# Clear captured mail. With --outdated, only remove messages older than `retention`.
+php artisan mailbox:clear
+php artisan mailbox:clear --outdated
+
+# Recreate the dev-mode asset symlink (rarely needed directly; --dev on install uses it).
+php artisan mailbox:dev-link
 ```
 
-### Static Analysis
+## Upgrading
 
-Run PHPStan for type safety:
+Breaking changes between major versions are documented in [CHANGELOG.md](CHANGELOG.md). Re-publish the config after any upgrade to pick up new keys:
 
 ```bash
-composer analyse
-
-# Or directly
-./vendor/bin/phpstan analyse
+php artisan vendor:publish --tag=mailbox-config --force
 ```
 
-### Code Style
+## Contributing
 
-Format code with Laravel Pint:
-
-```bash
-composer format
-
-# Or directly
-./vendor/bin/pint
-```
-
-## Development
-
-### Setting Up a Development Environment
-
-The package uses **Orchestra Testbench Workbench** for local development.
-
-**1. Clone the repository:**
-
-```bash
-git clone https://github.com/RedberryProducts/mailbox-for-laravel.git
-cd mailbox-for-laravel
-```
-
-**2. Install dependencies:**
-
-```bash
-composer install
-npm install
-```
-
-**3. Set up the database:**
-
-```bash
-php artisan mailbox:install --dev
-```
-
-**4. Start the development server:**
-
-```bash
-# Terminal 1: Laravel dev server
-php artisan serve
-
-# Terminal 2: Vite dev server (hot reload)
-npm run dev
-```
-
-**5. Visit the dashboard:**
-
-```
-http://localhost:8000/mailbox
-```
-
-### Workbench
-
-The package includes a Workbench app for testing integration:
-
-```bash
-# Run Workbench
-php artisan serve
-
-# Access at http://localhost:8000
-```
-
-**Workbench configuration:**
-
-```
-workbench/
-├── app/          # Test application code
-├── bootstrap/    # Workbench bootstrap
-├── config/       # Test config files
-├── database/     # Test migrations/seeders
-└── routes/       # Test routes
-```
-
-### Building Frontend Assets
-
-**Development mode (with hot reload):**
-
-```bash
-npm run dev
-```
-
-**Production build:**
-
-```bash
-npm run build
-```
-
-**Link assets for development:**
-
-```bash
-php artisan mailbox:install --dev
-```
-
-This creates symlinks instead of copying files, allowing hot module replacement.
-
-### Contribution Guidelines
-
-We welcome contributions! Please follow these guidelines:
-
-**Code Standards:**
-
-- Follow **Laravel coding style** (PSR-12)
-- Run `composer format` before committing
-- Ensure PHPStan passes: `composer analyse`
-- Write tests for new features (90%+ coverage required)
-
-**Pull Request Process:**
-
-1. **Fork** the repository
-2. **Create a feature branch:** `git checkout -b feature/my-feature`
-3. **Make changes** with tests and documentation
-4. **Run tests:** `composer test && composer analyse`
-5. **Format code:** `composer format`
-6. **Commit** with conventional commit messages: `feat: add message filtering`
-7. **Push** and **open a Pull Request**
-
-**Commit Convention:**
-
-- `feat:` — New features
-- `fix:` — Bug fixes
-- `docs:` — Documentation changes
-- `test:` — Test additions/changes
-- `refactor:` — Code refactoring
-- `chore:` — Maintenance tasks
-
-**Branch Naming:**
-
-- `feature/description` — New features
-- `fix/description` — Bug fixes
-- `docs/description` — Documentation updates
-
-## Changelog
-
-All notable changes to this project are documented in [CHANGELOG.md](CHANGELOG.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, tests, and the coding standards we enforce.
 
 ## Security Vulnerabilities
 
-If you discover a security vulnerability within this package, please email **security@redberry.ge** instead of using the
-issue tracker. All security vulnerabilities will be promptly addressed.
+If you discover a security vulnerability within this package, please email **security@redberry.ge** instead of using the issue tracker. All security vulnerabilities will be promptly addressed.
 
 ## Credits
 
-- **[Nika Jorjoliani](https://github.com/nikajorjoliani)** — Creator & Maintainer
-- **[Redberry](https://redberry.international)** — Development Agency
-- **[All Contributors](https://github.com/RedberryProducts/mailbox-for-laravel/graphs/contributors)**
+- [Nika Jorjoliani](https://github.com/nikajorjoliani) — Creator & maintainer
+- [Redberry](https://redberry.international)
+- [All contributors](https://github.com/RedberryProducts/mailbox-for-laravel/graphs/contributors)
 
 ## License
 
-The MIT License (MIT). Please see [LICENSE.md](LICENSE.md) for more information.
-
+The MIT License (MIT). See [LICENSE.md](LICENSE.md).
