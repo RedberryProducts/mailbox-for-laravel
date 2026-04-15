@@ -101,9 +101,18 @@ function resize() {
     const body = doc.body
     if (!docEl || !body) return
 
+    // Resize the iframe to fit its content. The previous version only
+    // ever grew because `documentElement.scrollHeight` reflects the
+    // *current* iframe viewport, not the natural content height — so
+    // once the iframe was inflated to 800px, switching to a smaller
+    // email would still report 800px. Fix: collapse the iframe to 0,
+    // force a reflow, then read `body.scrollHeight` (which is now the
+    // natural unconstrained content height) and size to it.
     const setHeight = () => {
-        frame.value?.contentWindow?.innerHeight
-        el.style.height = Math.max(body.scrollHeight, docEl.scrollHeight) + 'px'
+        el.style.height = '0px'
+        void el.offsetHeight
+
+        el.style.height = body.scrollHeight + 'px'
     }
 
     setHeight()
