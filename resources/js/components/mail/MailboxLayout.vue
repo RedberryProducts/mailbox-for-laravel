@@ -167,22 +167,9 @@ const handleViewChange = (view: TabType) => {
 </script>
 
 <template>
-    <!--
-        Grid shell — two columns, two rows, three named regions:
-            +─────────────+──────────────+
-            |   header    |              |
-            +─────────────+    reading   |
-            |             |              |
-            |   inbox     |              |
-            +─────────────+──────────────+
-
-        On narrow screens the grid collapses to a single column and the
-        reading pane is hidden until a message is selected (handled upstream).
-    -->
     <div
         class="grid h-screen bg-surface grid-rows-[auto_1fr] grid-cols-1 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] [grid-template-areas:'header''inbox'] md:[grid-template-areas:'header_reading''inbox_reading']"
     >
-        <!-- HEADER region — logo + title, sits one tier above the canvas. -->
         <header
             class="[grid-area:header] flex items-center gap-4 px-6 py-5 bg-surface-container-low"
         >
@@ -197,7 +184,6 @@ const handleViewChange = (view: TabType) => {
             </div>
         </header>
 
-        <!-- INBOX region — filter bar + scrollable list column. -->
         <aside
             class="[grid-area:inbox] flex flex-col min-h-0 bg-surface-container-low"
         >
@@ -227,7 +213,6 @@ const handleViewChange = (view: TabType) => {
             </div>
         </aside>
 
-        <!-- READING region — spans both rows on md+, widest reading canvas. -->
         <section
             class="[grid-area:reading] hidden md:flex flex-col min-h-0 overflow-hidden bg-surface"
         >
