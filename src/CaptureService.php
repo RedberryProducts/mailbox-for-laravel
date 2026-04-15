@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Redberry\MailboxForLaravel;
 
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
@@ -25,9 +26,14 @@ class CaptureService
     /**
      * Persist the raw message payload and metadata.
      *
+     * Generates a canonical ULID when the caller hasn't supplied one, so
+     * drivers always receive a stable, driver-agnostic id. Callers that
+     * want to replay fixtures can pre-populate `$payload['id']` and the
+     * service will preserve it verbatim.
+     *
      * @param  array<string, mixed>  $payload
      */
-    public function store(array $payload): string|int
+    public function store(array $payload): string
     {
         $timestamp = isset($payload['timestamp'])
             ? (int) $payload['timestamp']
@@ -35,6 +41,11 @@ class CaptureService
 
         $payload['timestamp'] ??= $timestamp;
         $payload['saved_at'] ??= now()->toIso8601String();
+
+        $existingId = $payload['id'] ?? null;
+        $payload['id'] = is_string($existingId) && $existingId !== ''
+            ? $existingId
+            : (string) Str::ulid();
 
         return $this->storage->store($payload);
     }

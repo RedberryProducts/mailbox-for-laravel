@@ -29,7 +29,7 @@ describe(SendTestMailController::class, function () {
         $key = $response->json('key');
 
         expect($key)->toBeString()
-            ->and($key)->toMatch('/^email_\d+_[a-f0-9]+$/');
+            ->and($key)->toMatch('/^[0-9A-HJKMNP-TV-Z]{26}$/');
     });
 
     it('sends sample mail through mailbox transport and returns stored key when using "database" driver', function () {
@@ -47,7 +47,8 @@ describe(SendTestMailController::class, function () {
 
         $key = $response->json('key');
 
-        expect($key)->toBeInt();
+        expect($key)->toBeString()
+            ->and($key)->toMatch('/^[0-9A-HJKMNP-TV-Z]{26}$/');
     });
 
     it('stores a properly formatted test message with all required fields', function () {

@@ -26,6 +26,24 @@ describe(CaptureService::class, function () {
         expect($msg->raw)->toBe('hello');
     });
 
+    it('generates a canonical ULID when the payload omits an id', function () {
+        $svc = service();
+        $key = $svc->store(['raw' => 'hello']);
+
+        expect($key)->toBeString()
+            ->and($key)->toMatch('/^[0-9A-HJKMNP-TV-Z]{26}$/');
+    });
+
+    it('preserves a caller-supplied id verbatim', function () {
+        $svc = service();
+        $id = '01HZYX9KQJ3N0YCMA4V7XJX4PX';
+
+        $returned = $svc->store(['id' => $id, 'raw' => 'replay']);
+
+        expect($returned)->toBe($id);
+        expect($svc->find($id)?->raw)->toBe('replay');
+    });
+
     it('lists all messages ordered by timestamp desc', function () {
         $svc = service();
         $svc->store(['raw' => 'one', 'timestamp' => 1000]);

@@ -27,8 +27,8 @@ describe(MessageStore::class, function () {
 
         $storeReturnType = $ref->getMethod('store')->getReturnType();
         expect($storeReturnType)->not->toBeNull();
-        // store returns string|int
-        expect($storeReturnType->__toString())->toBe('string|int');
+        // store returns the canonical id (string ULID) supplied by the caller
+        expect($storeReturnType->__toString())->toBe('string');
 
         $findReturnType = $ref->getMethod('find')->getReturnType();
         // find returns ?array

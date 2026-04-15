@@ -8,7 +8,8 @@ namespace Redberry\MailboxForLaravel\Contracts;
  * Storage abstraction for mailbox messages.
  *
  * Implementations are responsible for persisting a canonical payload array.
- * The payload MUST contain an "id" key that is unique per message.
+ * The payload's "id" is always supplied by the caller (CaptureService).
+ * Drivers must persist it verbatim — they never mint their own ids.
  */
 interface MessageStore
 {
@@ -16,11 +17,11 @@ interface MessageStore
      * Persist an email payload and return its id.
      *
      * @param  array<string, mixed>  $payload  MUST include at least:
-     *                                         - id: string
+     *                                         - id: string (ULID, caller-supplied)
      *                                         - raw: string (optional but recommended)
      *                                         - timestamp: int (UNIX timestamp)
      */
-    public function store(array $payload): string|int;
+    public function store(array $payload): string;
 
     /**
      * Retrieve a single payload by id.

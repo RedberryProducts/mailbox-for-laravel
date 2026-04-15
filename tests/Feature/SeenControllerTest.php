@@ -76,7 +76,7 @@ describe(SeenController::class, function () {
         $afterTimestamp = now()->addSecond();
 
         $json = $response->json();
-        expect((int) $json['id'])->toBe($key)
+        expect($json['id'])->toBe($key)
             ->and($json['seen_at'])->toBeString();
 
         $seenDate = Carbon\Carbon::parse($json['seen_at']);

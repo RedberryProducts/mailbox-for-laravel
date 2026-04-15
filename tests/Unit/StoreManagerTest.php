@@ -28,7 +28,7 @@ describe(StoreManager::class, function () {
         {
             public array $stored = [];
 
-            public function store(array $payload): string|int
+            public function store(array $payload): string
             {
                 $id = $payload['id'] ?? 'msg_'.uniqid();
                 $this->stored[$id] = $payload;

@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::connection(config('mailbox.store.database.connection', 'mailbox'))
             ->create(config('mailbox.store.database.table', 'mailbox_messages'), function (Blueprint $table) {
-                $table->bigIncrements('id');
+                $table->ulid('id')->primary();
 
                 $table->unsignedBigInteger('timestamp')->index();
                 $table->timestampTz('seen_at')->nullable();

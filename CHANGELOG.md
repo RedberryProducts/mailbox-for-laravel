@@ -4,6 +4,25 @@ All notable changes to `mailbox-for-laravel` will be documented in this file.
 
 ## [Unreleased]
 
+### v2.0.0-dev — Canonical Message IDs
+
+#### Added
+- `CaptureService::store()` now generates a canonical `Str::ulid()` id (26-char Crockford base32, time-ordered, URL-safe) when the payload doesn't already carry one. Replay-style callers can still pre-populate `$payload['id']` and it will be preserved verbatim.
+- New `CaptureServiceTest` cases covering both id generation and caller-supplied id preservation.
+
+#### Changed
+- `mailbox_messages.id` is now a ULID primary key (was `bigIncrements`). Messages and attachments share the same id shape across drivers.
+- `mailbox_attachments.message_id` is now a `ulid` column (was `unsignedBigInteger`) so the cascade FK matches.
+- `MailboxMessage` Eloquent model sets `$incrementing = false` + `$keyType = 'string'`.
+- `MailboxMessageFactory` mints ids with `Str::ulid()`.
+- `DatabaseMessageStore` and `FileStorage` no longer mint their own ids; they throw `InvalidArgumentException` if `CaptureService` didn't supply one. Their `generateId()` helpers were removed.
+- `SendTestMailControllerTest` now asserts the ULID id shape for both drivers.
+
+#### Breaking Changes
+- `MessageStore::store()` return type narrowed from `string|int` to `string`. Custom drivers must update their signature.
+- Primary key column type changed: any v1 deployment that wants to preserve its inbox must migrate manually. Because the package captures ephemeral dev-mail, the documented upgrade path is `php artisan mailbox:install --refresh` — drops and recreates both tables with the new schema.
+- The previous file-driver id format (`email_{timestamp}_{sha1}`) is gone. Hand-built URLs or fixtures relying on that shape must be regenerated.
+
 ### v2.0.0-dev — Unified Attachment Handling
 
 #### Added

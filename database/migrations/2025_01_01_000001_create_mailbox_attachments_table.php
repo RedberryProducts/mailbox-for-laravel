@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::connection(config('mailbox.store.database.connection', 'mailbox'))
             ->create('mailbox_attachments', function (Blueprint $table) {
-                $table->string('id', 26)->primary(); // ULID
-                $table->unsignedBigInteger('message_id')->index();
+                $table->ulid('id')->primary();
+                $table->ulid('message_id')->index();
                 $table->string('filename');
                 $table->string('mime_type');
                 $table->unsignedBigInteger('size');

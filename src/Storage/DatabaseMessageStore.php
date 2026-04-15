@@ -6,6 +6,7 @@ namespace Redberry\MailboxForLaravel\Storage;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use InvalidArgumentException;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\Models\MailboxMessage;
 
@@ -17,19 +18,23 @@ use Redberry\MailboxForLaravel\Models\MailboxMessage;
  */
 class DatabaseMessageStore implements MessageStore
 {
-    public function store(array $payload): string|int
+    public function store(array $payload): string
     {
         $id = $payload['id'] ?? null;
+
+        if (! is_string($id) || $id === '') {
+            throw new InvalidArgumentException('Payload is missing a canonical "id". CaptureService::store() must be called upstream.');
+        }
 
         $payload['timestamp'] ??= time();
         $payload['saved_at'] ??= now()->toDateTimeString();
 
-        $message = MailboxMessage::query()->updateOrCreate(
+        MailboxMessage::query()->updateOrCreate(
             ['id' => $id],
             $payload,
         );
 
-        return $message->id;
+        return $id;
     }
 
     public function find(string $id): ?array
@@ -135,16 +140,5 @@ class DatabaseMessageStore implements MessageStore
     public function clear(): void
     {
         MailboxMessage::query()->delete();
-    }
-
-    /**
-     * Generate a unique id for messages without one.
-     */
-    protected function generateId(array $payload, int $timestamp): string
-    {
-        $payloadString = json_encode($payload);
-        $hash = substr(sha1($payloadString.$timestamp.microtime(true)), 0, 32);
-
-        return "email_{$timestamp}_{$hash}";
     }
 }

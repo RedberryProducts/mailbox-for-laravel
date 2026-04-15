@@ -7,7 +7,7 @@ namespace Redberry\MailboxForLaravel\Storage;
 use const DIRECTORY_SEPARATOR;
 use const JSON_THROW_ON_ERROR;
 
-use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 
 use function array_slice;
@@ -54,13 +54,13 @@ class FileStorage implements MessageStore
     public function store(array $payload): string
     {
         $id = $payload['id'] ?? null;
-        $payload['timestamp'] ??= time();
-        $payload['saved_at'] ??= now()->toIso8601String();
 
         if (! is_string($id) || $id === '') {
-            $id = $this->generateId($payload, (int) $payload['timestamp']);
-            $payload['id'] = $id;
+            throw new InvalidArgumentException('Payload is missing a canonical "id". CaptureService::store() must be called upstream.');
         }
+
+        $payload['timestamp'] ??= time();
+        $payload['saved_at'] ??= now()->toIso8601String();
 
         $path = $this->pathFor($id);
         file_put_contents($path, json_encode($payload, JSON_THROW_ON_ERROR));
@@ -266,16 +266,5 @@ class FileStorage implements MessageStore
     protected function pathFor(string $id): string
     {
         return rtrim($this->basePath, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$id.'.json';
-    }
-
-    /**
-     * Generate a filesystem-safe, reasonably unique id.
-     */
-    protected function generateId(array $payload, int $timestamp): string
-    {
-        $payloadString = json_encode($payload);
-        $hash = substr(sha1($payloadString.$timestamp.microtime(true).Str::random(8)), 0, 32);
-
-        return "email_{$timestamp}_{$hash}";
     }
 }

@@ -16,7 +16,7 @@ class MailboxMessageFactory extends Factory
         $timestamp = $this->faker->unixTime();
 
         return [
-            'id' => 'email_'.md5($rawText).'_'.microtime(true),
+            'id' => (string) Str::ulid(),
             'timestamp' => $timestamp,
             'seen_at' => null,
             'version' => 1,

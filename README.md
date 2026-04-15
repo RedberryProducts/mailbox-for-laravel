@@ -292,6 +292,8 @@ Breaking changes between major versions are documented in [CHANGELOG.md](CHANGEL
 php artisan vendor:publish --tag=mailbox-config --force
 ```
 
+When a release changes the storage schema — v2.0.0 switched message ids from auto-increment integers to ULIDs — run `php artisan mailbox:install --refresh` to drop and recreate the mailbox tables.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, tests, and the coding standards we enforce.

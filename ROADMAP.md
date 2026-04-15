@@ -6,17 +6,13 @@ This document tracks planned work toward **v2.0.0**. Items are grouped by theme 
 
 Theme: reduce driver divergence, make the non-intrusive posture automatic rather than aspirational, and stabilize the public API surface so downstream integrations (custom drivers, decorated transports, UI extensions) are first-class.
 
-### 1. Unified attachment handling **[breaking]** — *In progress*
+### 1. Unified attachment handling **[breaking]** — *Implemented*
 
-Landed on the `v2.0.0-dev` branch. Driver-agnostic `Contracts\AttachmentStore` plus paired `DatabaseAttachmentStore` and `FileAttachmentStore` implementations. The `MessageStore` driver and the matching `AttachmentStore` are bound together by `MailboxServiceProvider`. `CaptureService` now owns cascade cleanup (`delete`, `clearAll`, `purgeOlderThan`) so neither controllers nor commands need to know about attachments. See the `## v2.0.0-dev — Unified Attachment Handling` section in [`CHANGELOG.md`](CHANGELOG.md) for the full breaking-change list.
+Shipped on the `v2.0.0-dev` branch. Driver-agnostic `Contracts\AttachmentStore` plus paired `DatabaseAttachmentStore` and `FileAttachmentStore` implementations. The `MessageStore` driver and the matching `AttachmentStore` are bound together by `MailboxServiceProvider`. `CaptureService` now owns cascade cleanup (`delete`, `clearAll`, `purgeOlderThan`) so neither controllers nor commands need to know about attachments. See the `## v2.0.0-dev — Unified Attachment Handling` section in [`CHANGELOG.md`](CHANGELOG.md) for the full breaking-change list.
 
-### 2. Canonical message IDs **[breaking]**
+### 2. Canonical message IDs **[breaking]** — *Implemented*
 
-Each driver currently invents its own ID format (`bigIncrements` vs. `email_{timestamp}_{sha1}`). Switching drivers mid-inbox invalidates stable URLs and confuses polling.
-
-- Generate a single canonical ID (ULID or UUIDv7 — time-ordered, URL-safe) inside `CaptureService::store()` before dispatching to the driver.
-- Drivers accept the ID verbatim and never mint their own.
-- Migration path documented for existing databases.
+Shipped on the `v2.0.0-dev` branch. `CaptureService::store()` assigns a `Str::ulid()` to every payload (preserving caller-supplied ids for fixture replay), and both `DatabaseMessageStore` and `FileStorage` now throw when the upstream id is missing. The `mailbox_messages.id` column is a ULID primary key and the `mailbox_attachments.message_id` FK matches, so the same 26-char id flows through URLs, controllers, and the dashboard regardless of driver. `MessageStore::store()` return type is narrowed to `string`. Upgrade path for existing deployments: `php artisan mailbox:install --refresh`. See the `## v2.0.0-dev — Canonical Message IDs` section in [`CHANGELOG.md`](CHANGELOG.md).
 
 ### 3. Automatic retention
 

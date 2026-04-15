@@ -11,7 +11,7 @@ use Redberry\MailboxForLaravel\Testing\MailboxAssertions;
 use Redberry\MailboxForLaravel\Testing\PendingMailboxMessageAssertion;
 
 /**
- * @method static string|int store(array $payload)
+ * @method static string store(array $payload)
  * @method static string storeRaw(string $raw)
  * @method static array list(int $page = 1, int $perPage = 10)
  * @method static array<int, MailboxMessageData> all()

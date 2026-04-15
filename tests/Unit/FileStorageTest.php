@@ -18,12 +18,11 @@ describe(FileStorage::class, function () {
         expect($store->find('test-id')['raw'])->toBe('foo');
     });
 
-    it('generates id when not provided', function () {
+    it('throws when the payload is missing an id', function () {
         $store = storage();
-        $id = $store->store(['raw' => 'bar', 'timestamp' => time()]);
 
-        expect($id)->not->toBeEmpty();
-        expect($store->find($id))->not->toBeNull();
+        expect(fn () => $store->store(['raw' => 'bar', 'timestamp' => time()]))
+            ->toThrow(InvalidArgumentException::class);
     });
 
     it('lists stored messages via paginate', function () {
