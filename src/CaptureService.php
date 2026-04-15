@@ -48,17 +48,18 @@ class CaptureService
     }
 
     /**
-     * Paginated list of messages as DTOs.
+     * Paginated list of messages as DTOs, optionally filtered by a search term.
      *
      * @return array{data: array<int, MailboxMessageData>, total: int, per_page: int, current_page: int, has_more: bool, latest_timestamp: int|null}
      */
-    public function list(int $page = 1, int $perPage = 10): array
+    public function list(int $page = 1, int $perPage = 10, ?string $search = null): array
     {
         $page = max(1, $page);
         $perPage = max(1, $perPage);
+        $search = $search !== null && trim($search) !== '' ? trim($search) : null;
 
-        $items = $this->storage->paginate($page, $perPage);
-        $total = $this->storage->count();
+        $items = $this->storage->paginate($page, $perPage, $search);
+        $total = $this->storage->count($search);
 
         $messages = array_map(
             static fn (array $data): MailboxMessageData => MailboxMessageData::from($data),

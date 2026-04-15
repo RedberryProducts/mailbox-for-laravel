@@ -21,6 +21,7 @@ const props = defineProps<{
     polling: PollingConfig
     title: string
     subtitle: string
+    search: string
 }>()
 </script>
 
@@ -31,5 +32,6 @@ const props = defineProps<{
         :polling="props.polling"
         :title="props.title"
         :subtitle="props.subtitle"
+        :search="props.search"
     />
 </template>

@@ -178,6 +178,66 @@ describe(MailboxController::class, function () {
         );
     });
 
+    it('filters messages by the search query across subject, from, to, and text', function () {
+        $service = app(CaptureService::class);
+
+        $service->store([
+            'subject' => 'Invoice for March',
+            'timestamp' => 1000,
+            'from' => [['email' => 'billing@acme.test']],
+            'to' => [['email' => 'customer@example.com']],
+            'text' => 'Your invoice is attached.',
+            'raw' => 'raw-1',
+        ]);
+        $service->store([
+            'subject' => 'Welcome aboard',
+            'timestamp' => 2000,
+            'from' => [['email' => 'hello@startup.test']],
+            'to' => [['email' => 'user@example.com']],
+            'text' => 'Thanks for signing up.',
+            'raw' => 'raw-2',
+        ]);
+        $service->store([
+            'subject' => 'Password reset',
+            'timestamp' => 3000,
+            'from' => [['email' => 'security@startup.test']],
+            'to' => [['email' => 'user@example.com']],
+            'text' => 'Click to reset your password. Reference: INV-42.',
+            'raw' => 'raw-3',
+        ]);
+
+        // Matches subject (case-insensitive)
+        $this->get(route('mailbox.index', ['search' => 'INVOICE']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('mailbox::Dashboard')
+                ->has('messages', 1)
+                ->where('messages.0.subject', 'Invoice for March')
+                ->where('pagination.total', 1)
+                ->where('search', 'INVOICE')
+            );
+
+        // Matches text body
+        $this->get(route('mailbox.index', ['search' => 'reset your password']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('messages', 1)
+                ->where('messages.0.subject', 'Password reset')
+            );
+
+        // Matches from address
+        $this->get(route('mailbox.index', ['search' => 'billing@acme.test']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('messages', 1)
+                ->where('pagination.total', 1)
+            );
+
+        // Empty search returns everything
+        $this->get(route('mailbox.index', ['search' => '   ']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('messages', 3)
+                ->where('search', '')
+            );
+    });
+
     it('returns polling configuration from config', function () {
         config(['mailbox.polling.enabled' => true]);
         config(['mailbox.polling.interval' => 3000]);

@@ -41,7 +41,7 @@ describe(StoreManager::class, function () {
                 return $this->stored[$id] ?? null;
             }
 
-            public function paginate(int $page, int $perPage): array
+            public function paginate(int $page, int $perPage, ?string $search = null): array
             {
                 return array_values($this->stored);
             }
@@ -71,7 +71,7 @@ describe(StoreManager::class, function () {
                 $this->stored = [];
             }
 
-            public function count(): int
+            public function count(?string $search = null): int
             {
                 return count($this->stored);
             }

@@ -23,8 +23,10 @@ class MailboxController
     {
         $page = (int) $request->input('page', 1);
         $perPage = (int) ($request->input('per_page') ?: config('mailbox.pagination.per_page'));
+        $search = trim((string) $request->input('search', ''));
+        $search = $search !== '' ? $search : null;
 
-        $result = $service->list($page, $perPage);
+        $result = $service->list($page, $perPage, $search);
 
         return Inertia::render('mailbox::Dashboard', [
             'messages' => array_map(
@@ -42,6 +44,7 @@ class MailboxController
                 'enabled' => config('mailbox.polling.enabled', true),
                 'interval' => config('mailbox.polling.interval', 5000),
             ],
+            'search' => $search ?? '',
         ]);
     }
 

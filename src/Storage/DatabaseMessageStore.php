@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Redberry\MailboxForLaravel\Storage;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\Models\MailboxMessage;
 
@@ -38,21 +39,48 @@ class DatabaseMessageStore implements MessageStore
         return $record?->toArray();
     }
 
-    public function paginate(int $page, int $perPage): array
+    public function paginate(int $page, int $perPage, ?string $search = null): array
     {
         $page = max(1, $page);
         $perPage = max(1, $perPage);
 
-        return MailboxMessage::query()
+        return $this->applySearch(MailboxMessage::query(), $search)
             ->orderByDesc('timestamp')
             ->forPage($page, $perPage)
             ->get()
             ->toArray();
     }
 
-    public function count(): int
+    public function count(?string $search = null): int
     {
-        return MailboxMessage::query()->count();
+        return $this->applySearch(MailboxMessage::query(), $search)->count();
+    }
+
+    /**
+     * Apply a case-insensitive LIKE search across subject, from, to, and
+     * text body. JSON address columns are treated as strings — that matches
+     * the serialized payload on all supported databases (SQLite / MySQL /
+     * Postgres) without needing JSON-specific operators.
+     *
+     * @param  Builder<MailboxMessage>  $query
+     * @return Builder<MailboxMessage>
+     */
+    protected function applySearch(Builder $query, ?string $search): Builder
+    {
+        $needle = $search !== null ? trim($search) : '';
+
+        if ($needle === '') {
+            return $query;
+        }
+
+        $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $needle).'%';
+
+        return $query->where(function (Builder $q) use ($like): void {
+            $q->where('subject', 'like', $like)
+                ->orWhere('from', 'like', $like)
+                ->orWhere('to', 'like', $like)
+                ->orWhere('text', 'like', $like);
+        });
     }
 
     public function update(string $id, array $changes): ?array

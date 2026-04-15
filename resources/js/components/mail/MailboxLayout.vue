@@ -21,6 +21,7 @@ const props = defineProps<{
     polling: PollingConfig;
     title: string;
     subtitle: string;
+    search: string;
 }>();
 
 // Typed Inertia page props
@@ -30,6 +31,7 @@ const page = usePage<{
     polling: PollingConfig;
     title: string;
     subtitle: string;
+    search: string;
 }>();
 
 const localMessages = ref<Message[]>([...props.messages]);
@@ -39,6 +41,7 @@ const hasMore = ref<boolean>(props.pagination.has_more);
 
 const selectedMessageId = ref<string | null>(null);
 const selectedRecipient = ref<string>("all");
+const searchQuery = ref<string>(props.search ?? "");
 const activeTab = ref<TabType>("html");
 const isLoadingMore = ref(false);
 
@@ -68,17 +71,36 @@ function mergeMessages(newMessages: Message[]) {
 }
 
 /**
- * Whenever Inertia sends updated `messages` props (polling OR load-more),
- * merge them into local state instead of replacing.
+ * Whenever Inertia sends updated `messages` props:
  *
- * IMPORTANT:
- * - Polling should *not* send `pagination` (we only listen to messages here).
- * - Load-more will send messages + pagination, but we still merge messages here.
+ * - Polling / load-more keep the same `search` value → merge into state.
+ * - Search changes → the server returns a fresh scoped set; replace state
+ *   wholesale (merging would leak stale "no-longer-matching" messages).
  */
+let lastAppliedSearch = props.search ?? "";
+
 watch(
     () => page.props.messages as Message[] | undefined,
     (newMessages) => {
         if (!newMessages) return;
+
+        const incomingSearch = (page.props.search as string | undefined) ?? "";
+
+        if (incomingSearch !== lastAppliedSearch) {
+            localMessages.value = [...newMessages];
+            currentPage.value = (page.props.pagination as PaginationMeta).current_page;
+            hasMore.value = (page.props.pagination as PaginationMeta).has_more;
+            // If the selected message dropped out of the new set, clear it.
+            if (
+                selectedMessageId.value !== null
+                && !newMessages.some((m) => m.id === selectedMessageId.value)
+            ) {
+                selectedMessageId.value = null;
+            }
+            lastAppliedSearch = incomingSearch;
+            return;
+        }
+
         mergeMessages(newMessages);
     },
 );
@@ -92,25 +114,27 @@ function loadMoreMessages() {
 
     const nextPage = currentPage.value + 1;
 
-    router.get(
-        "/mailbox",
-        { page: nextPage },
-        {
-            only: ["messages", "pagination"],
-            preserveScroll: true,
-            preserveState: true,
-            preserveUrl: true,
-            replace: true,
-            onSuccess: () => {
-                const pagination = page.props.pagination as PaginationMeta;
-                currentPage.value = pagination.current_page;
-                hasMore.value = pagination.has_more;
-            },
-            onFinish: () => {
-                isLoadingMore.value = false;
-            },
+    const activeSearch = searchQuery.value.trim();
+    const query: Record<string, string | number> = { page: nextPage };
+    if (activeSearch !== "") {
+        query.search = activeSearch;
+    }
+
+    router.get("/mailbox", query, {
+        only: ["messages", "pagination"],
+        preserveScroll: true,
+        preserveState: true,
+        preserveUrl: true,
+        replace: true,
+        onSuccess: () => {
+            const pagination = page.props.pagination as PaginationMeta;
+            currentPage.value = pagination.current_page;
+            hasMore.value = pagination.has_more;
         },
-    );
+        onFinish: () => {
+            isLoadingMore.value = false;
+        },
+    });
 }
 
 const recipients = computed(() => {
@@ -123,13 +147,18 @@ const recipients = computed(() => {
     return Array.from(set).sort();
 });
 
+// Recipient is still a client-side filter over the already-loaded page.
+// Search is resolved on the server (see handleSearchChange), so we don't
+// re-apply it here — the loaded set is already scoped to the active search.
 const filteredMessages = computed(() => {
-    if (selectedRecipient.value === "all") {
+    const recipient = selectedRecipient.value;
+
+    if (recipient === "all") {
         return localMessages.value;
     }
 
     return localMessages.value.filter((msg) =>
-        msg.to.includes(selectedRecipient.value),
+        msg.to.includes(recipient),
     );
 });
 
@@ -142,6 +171,40 @@ const selectedMessage = computed<Message | null>(() => {
 
 const handleRecipientChange = (recipient: string) => {
     selectedRecipient.value = recipient;
+};
+
+// Debounced server round-trip for search. Every keystroke updates the local
+// ref for controlled-input purposes, but the network request fires once the
+// user pauses typing so we don't hammer the backend.
+let searchDebounce: ReturnType<typeof setTimeout> | null = null;
+
+const handleSearchChange = (query: string) => {
+    searchQuery.value = query;
+
+    if (searchDebounce !== null) {
+        clearTimeout(searchDebounce);
+    }
+
+    searchDebounce = setTimeout(() => {
+        const next = searchQuery.value.trim();
+
+        // Skip the round-trip when the effective query is unchanged.
+        if (next === (lastAppliedSearch ?? "").trim()) {
+            return;
+        }
+
+        router.get(
+            "/mailbox",
+            next === "" ? { page: 1 } : { search: next, page: 1 },
+            {
+                only: ["messages", "pagination", "search"],
+                preserveScroll: true,
+                preserveState: true,
+                preserveUrl: false,
+                replace: true,
+            },
+        );
+    }, 300);
 };
 
 const handleSelectMessage = (id: string) => {
@@ -190,7 +253,9 @@ const handleViewChange = (view: TabType) => {
             <MailboxFilterBar
                 :recipients="recipients"
                 :selected-recipient="selectedRecipient"
+                :search-query="searchQuery"
                 @recipient-change="handleRecipientChange"
+                @search-change="handleSearchChange"
             />
 
             <div class="flex-1 overflow-y-auto">

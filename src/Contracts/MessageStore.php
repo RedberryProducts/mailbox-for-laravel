@@ -30,18 +30,21 @@ interface MessageStore
     public function find(string $id): ?array;
 
     /**
-     * Retrieve a page of payloads.
+     * Retrieve a page of payloads, optionally filtered by a free-text search.
      *
      * @param  int  $page  1-based page index
      * @param  int  $perPage  number of items per page
+     * @param  string|null  $search  Case-insensitive needle matched against
+     *                               subject, from, to, and text body. Null
+     *                               or empty returns all messages.
      * @return array<int, array<string, mixed>>
      */
-    public function paginate(int $page, int $perPage): array;
+    public function paginate(int $page, int $perPage, ?string $search = null): array;
 
     /**
-     * Get the total count of all stored messages.
+     * Get the total count of stored messages, optionally matching a search.
      */
-    public function count(): int;
+    public function count(?string $search = null): int;
 
     /**
      * Apply partial updates to a payload by id.

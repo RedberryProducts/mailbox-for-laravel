@@ -4,12 +4,12 @@
     "src": "resources/images/logo.svg"
   },
   "resources/js/dashboard.js": {
-    "file": "assets/dashboard-BLEQajtA.js",
+    "file": "assets/dashboard-B1St9Q02.js",
     "name": "dashboard",
     "src": "resources/js/dashboard.js",
     "isEntry": true,
     "css": [
-      "assets/dashboard-BNOQRJdl.css"
+      "assets/dashboard-C7daJXLP.css"
     ],
     "assets": [
       "assets/logo-G-lSRT-w.svg"

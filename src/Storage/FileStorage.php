@@ -11,15 +11,20 @@ use Illuminate\Support\Str;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 
 use function array_slice;
+use function count;
 use function file_get_contents;
 use function file_put_contents;
 use function glob;
+use function implode;
 use function is_array;
 use function is_dir;
 use function is_file;
 use function json_decode;
 use function json_encode;
+use function mb_strtolower;
 use function rtrim;
+use function str_contains;
+use function trim;
 use function unlink;
 use function usort;
 
@@ -82,12 +87,45 @@ class FileStorage implements MessageStore
         return is_array($decoded) ? $decoded : null;
     }
 
-    public function paginate(int $page, int $perPage): array
+    public function paginate(int $page, int $perPage, ?string $search = null): array
     {
         $page = max(1, $page);
         $perPage = max(1, $perPage);
 
+        $messages = $this->loadAll($search);
+
+        usort(
+            $messages,
+            static fn (array $a, array $b): int => ((int) ($b['timestamp'] ?? 0)) <=> ((int) ($a['timestamp'] ?? 0)),
+        );
+
+        $offset = ($page - 1) * $perPage;
+
+        return array_slice($messages, $offset, $perPage);
+    }
+
+    public function count(?string $search = null): int
+    {
+        if ($search === null || trim($search) === '') {
+            $files = glob($this->basePath.'/*.json') ?: [];
+
+            return count($files);
+        }
+
+        return count($this->loadAll($search));
+    }
+
+    /**
+     * Load every stored payload from disk, optionally filtered by a search
+     * needle that matches subject, from, to, or text body.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function loadAll(?string $search): array
+    {
         $files = glob($this->basePath.'/*.json') ?: [];
+        $needle = $search !== null ? trim($search) : '';
+        $needleLower = $needle !== '' ? mb_strtolower($needle) : null;
 
         $messages = [];
 
@@ -104,24 +142,29 @@ class FileStorage implements MessageStore
                 continue;
             }
 
+            if ($needleLower !== null && ! $this->matchesSearch($decoded, $needleLower)) {
+                continue;
+            }
+
             $messages[] = $decoded;
         }
 
-        usort(
-            $messages,
-            static fn (array $a, array $b): int => ((int) ($b['timestamp'] ?? 0)) <=> ((int) ($a['timestamp'] ?? 0)),
-        );
-
-        $offset = ($page - 1) * $perPage;
-
-        return array_slice($messages, $offset, $perPage);
+        return $messages;
     }
 
-    public function count(): int
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    protected function matchesSearch(array $payload, string $needleLower): bool
     {
-        $files = glob($this->basePath.'/*.json') ?: [];
+        $haystack = implode(' ', [
+            (string) ($payload['subject'] ?? ''),
+            is_array($payload['from'] ?? null) ? json_encode($payload['from']) : (string) ($payload['from'] ?? ''),
+            is_array($payload['to'] ?? null) ? json_encode($payload['to']) : (string) ($payload['to'] ?? ''),
+            (string) ($payload['text'] ?? ''),
+        ]);
 
-        return count($files);
+        return str_contains(mb_strtolower($haystack), $needleLower);
     }
 
     public function update(string $id, array $changes): ?array
