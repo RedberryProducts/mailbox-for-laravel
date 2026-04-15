@@ -24,6 +24,18 @@ All notable changes to `mailbox-for-laravel` will be documented in this file.
 - Attachment-store methods now return `StoredAttachment` DTOs instead of the `MailboxAttachment` Eloquent model. Read attribute names with camelCase (`->mimeType`, `->isInline`).
 - `AttachmentStore::deleteAll()` renamed to `clear()` (mirrors `MessageStore::clear`).
 - `MessageStore` contract gained `idsOlderThan(int $seconds): array`. Custom drivers must implement it.
+- **Config keys renamed** (published `config/mailbox.php` must be re-published or migrated):
+  - `mailbox.route` → `mailbox.path`
+  - `mailbox.retention.seconds` → `mailbox.retention` (now a flat int)
+  - `mailbox.pagination.per_page` → `mailbox.per_page` (now a flat int)
+- **Environment variables renamed** — update `.env` accordingly:
+  - `MAILBOX_DASHBOARD_ROUTE` → `MAILBOX_PATH`
+  - `MAILBOX_FILE_PATH` → `MAILBOX_STORE_FILE_PATH`
+  - `MAILBOX_DB_CONNECTION` → `MAILBOX_STORE_DATABASE_CONNECTION`
+  - `MAILBOX_DB_TABLE` → `MAILBOX_STORE_DATABASE_TABLE`
+  - `MAILBOX_REDIRECT` → `MAILBOX_UNAUTHORIZED_REDIRECT`
+  - `MAILBOX_MAX_ATTACHMENT_SIZE` → `MAILBOX_ATTACHMENTS_MAX_SIZE`
+  - `MAILBOX_MAX_TOTAL_SIZE_PER_MESSAGE` → `MAILBOX_ATTACHMENTS_MAX_TOTAL_SIZE`
 
 ### Added
 - Added Testing Assertions API (`src/Testing/`) for verifying captured emails in test suites

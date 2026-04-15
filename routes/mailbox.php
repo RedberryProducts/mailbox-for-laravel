@@ -16,7 +16,7 @@ Route::middleware(array_merge(
     config('mailbox.middleware', ['web']),
     ['mailbox.inertia', 'mailbox.authorize']
 ))
-    ->prefix(config('mailbox.route', 'mailbox'))
+    ->prefix(config('mailbox.path', 'mailbox'))
     ->name('mailbox.')
     ->group(function () {
         Route::get('/', MailboxController::class)

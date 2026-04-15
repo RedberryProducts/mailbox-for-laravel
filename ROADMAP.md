@@ -22,8 +22,8 @@ Each driver currently invents its own ID format (`bigIncrements` vs. `email_{tim
 
 `MessageStore::purgeOlderThan()` exists but nothing calls it. True zero-config non-intrusiveness means the package should handle retention itself.
 
-- Register a daily `Schedule::call(...)` in the service provider, guarded by `mailbox.enabled` and `mailbox.retention.seconds > 0`.
-- Config flag to opt out (`mailbox.retention.schedule => false`) for users who prefer to wire the purge manually.
+- Register a daily `Schedule::call(...)` in the service provider, guarded by `mailbox.enabled` and `mailbox.retention > 0`.
+- Config flag to opt out (add a `mailbox.retention_schedule => false` key) for users who prefer to wire the purge manually.
 
 ### 4. Search as a strategy, not per-driver
 

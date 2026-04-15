@@ -36,7 +36,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         return array_merge(parent::share($request), [
-            'mailboxPrefix' => config('mailbox.route', 'mailbox'),
+            'mailboxPrefix' => config('mailbox.path', 'mailbox'),
             'csrfToken' => csrf_token(),
             'title' => 'Mailbox for Laravel',
             'subtitle' => 'Capture and view emails in your Laravel application',

@@ -1,44 +1,168 @@
 <?php
 
 return [
-    'enabled' => env('MAILBOX_ENABLED', env('APP_ENV') !== 'production'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mailbox Master Switch
+    |--------------------------------------------------------------------------
+    |
+    | Controls whether the Mailbox transport captures outgoing mail and
+    | whether the dashboard routes are registered. When false, the package
+    | is completely inert — no capture, no HTTP endpoints. Defaults to
+    | "true" in every environment except "production".
+    |
+    */
+
+    'enabled' => (bool) env('MAILBOX_ENABLED', env('APP_ENV') !== 'production'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard Path
+    |--------------------------------------------------------------------------
+    |
+    | The URI path where the Mailbox dashboard will be accessible from. If
+    | this path collides with an existing route in your application, you
+    | are free to change it here to anything you like.
+    |
+    */
+
+    'path' => env('MAILBOX_PATH', 'mailbox'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard Middleware
+    |--------------------------------------------------------------------------
+    |
+    | The middleware stack applied to the dashboard routes. The default
+    | "web" group is almost always what you want — add your own guards
+    | (e.g. "auth") here to require authentication in staging, etc.
+    |
+    */
+
+    'middleware' => ['web'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Authorization Gate
+    |--------------------------------------------------------------------------
+    |
+    | The ability name checked by the AuthorizeMailbox middleware. Define a
+    | corresponding Gate::define('viewMailbox', ...) in your app if you
+    | want to restrict dashboard access; the default gate in the service
+    | provider allows every request in non-production environments.
+    |
+    */
+
+    'gate' => env('MAILBOX_GATE', 'viewMailbox'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Unauthorized Redirect
+    |--------------------------------------------------------------------------
+    |
+    | When the gate denies access, unauthenticated users are redirected
+    | here. Leave null to render a 403 response instead of redirecting.
+    |
+    */
+
+    'unauthorized_redirect' => env('MAILBOX_UNAUTHORIZED_REDIRECT'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Storage
+    |--------------------------------------------------------------------------
+    |
+    | Choose how captured messages are persisted. The "database" driver
+    | stores metadata in its own SQLite database (isolated from your
+    | app's connection), while "file" keeps everything as JSON on disk.
+    | Custom drivers may be registered via the "resolvers" array —
+    | each entry is a callable returning a MessageStore instance.
+    |
+    */
+
     'store' => [
+
         'driver' => env('MAILBOX_STORE_DRIVER', 'database'),
+
         'resolvers' => [
-            // 'custom' => fn() => new \App\CustomMessageStore,
+            // 'custom' => fn () => new \App\Support\CustomMailboxStore(),
         ],
+
         'file' => [
-            'path' => env('MAILBOX_FILE_PATH', storage_path('app/mailbox')),
+            'path' => env('MAILBOX_STORE_FILE_PATH', storage_path('app/mailbox')),
         ],
+
         'database' => [
-            'connection' => env('MAILBOX_DB_CONNECTION', 'mailbox'),
-            'table' => env('MAILBOX_DB_TABLE', 'mailbox_messages'),
+            'connection' => env('MAILBOX_STORE_DATABASE_CONNECTION', 'mailbox'),
+            'table' => env('MAILBOX_STORE_DATABASE_TABLE', 'mailbox_messages'),
         ],
+
     ],
 
-    'retention' => [
-        'seconds' => (int) env('MAILBOX_RETENTION', 60 * 60 * 24),
-    ],
-    'gate' => env('MAILBOX_GATE', 'viewMailbox'),
-    'unauthorized_redirect' => env('MAILBOX_REDIRECT', null),
-    'route' => env('MAILBOX_DASHBOARD_ROUTE', 'mailbox'),
-    'middleware' => ['web'],
+    /*
+    |--------------------------------------------------------------------------
+    | Retention
+    |--------------------------------------------------------------------------
+    |
+    | Maximum age (in seconds) a captured message should be kept before
+    | the "mailbox:clear --older-than" command prunes it. The default
+    | retains messages for 24 hours.
+    |
+    */
+
+    'retention' => (int) env('MAILBOX_RETENTION', 60 * 60 * 24),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pagination
+    |--------------------------------------------------------------------------
+    |
+    | Number of messages displayed per page on the dashboard list view.
+    |
+    */
+
+    'per_page' => (int) env('MAILBOX_PER_PAGE', 20),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Live Updates (Polling)
+    |--------------------------------------------------------------------------
+    |
+    | The dashboard polls for new mail in the background. Interval is in
+    | milliseconds. Set "enabled" to false to disable polling entirely.
+    |
+    */
 
     'polling' => [
         'enabled' => (bool) env('MAILBOX_POLLING_ENABLED', true),
-        'interval' => (int) env('MAILBOX_POLLING_INTERVAL', 5000), // milliseconds
+        'interval' => (int) env('MAILBOX_POLLING_INTERVAL', 5000),
     ],
 
-    'pagination' => [
-        'per_page' => (int) env('MAILBOX_PER_PAGE', 20),
-    ],
+    /*
+    |--------------------------------------------------------------------------
+    | Attachments
+    |--------------------------------------------------------------------------
+    |
+    | Attachment metadata follows the chosen store driver (database →
+    | rows, file → JSON sidecars), while the content bytes always live
+    | on the configured filesystem disk. Sizes are in bytes. The
+    | "allowed_mime_types" list supports wildcard entries like "image/*".
+    |
+    */
 
     'attachments' => [
+
         'enabled' => (bool) env('MAILBOX_ATTACHMENTS_ENABLED', true),
+
         'disk' => env('MAILBOX_ATTACHMENTS_DISK', 'mailbox'),
+
         'path' => env('MAILBOX_ATTACHMENTS_PATH', 'attachments'),
-        'max_size' => (int) env('MAILBOX_MAX_ATTACHMENT_SIZE', 5 * 1024 * 1024), // 5MB
-        'max_total_size' => (int) env('MAILBOX_MAX_TOTAL_SIZE_PER_MESSAGE', 20 * 1024 * 1024), // 20MB
+
+        'max_size' => (int) env('MAILBOX_ATTACHMENTS_MAX_SIZE', 5 * 1024 * 1024),
+
+        'max_total_size' => (int) env('MAILBOX_ATTACHMENTS_MAX_TOTAL_SIZE', 20 * 1024 * 1024),
+
         'allowed_mime_types' => [
             'image/*',
             'application/pdf',
@@ -49,6 +173,7 @@ return [
             'text/plain',
             'text/csv',
         ],
+
     ],
 
 ];

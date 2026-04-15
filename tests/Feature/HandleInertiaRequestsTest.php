@@ -15,7 +15,7 @@ describe(HandleInertiaRequests::class, function () {
     });
 
     it('shares mailbox prefix in props', function () {
-        config()->set('mailbox.route', 'custom-mailbox');
+        config()->set('mailbox.path', 'custom-mailbox');
 
         $middleware = new HandleInertiaRequests;
         $request = Request::create('/test', 'GET');
@@ -44,9 +44,9 @@ describe(HandleInertiaRequests::class, function () {
         expect($middleware)->toBeInstanceOf(Middleware::class);
     });
 
-    it('uses default mailbox route when not configured', function () {
+    it('uses default mailbox path when not configured', function () {
         // Clear any existing config
-        config()->offsetUnset('mailbox.route');
+        config()->offsetUnset('mailbox.path');
 
         $middleware = new HandleInertiaRequests;
         $request = Request::create('/test', 'GET');

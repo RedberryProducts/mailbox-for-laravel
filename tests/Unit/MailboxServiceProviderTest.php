@@ -12,7 +12,7 @@ use Redberry\MailboxForLaravel\Transport\MailboxTransport;
 
 describe(MailboxServiceProvider::class, function () {
     it('registers config, routes, views, and install command', function () {
-        expect(config('mailbox.route'))->toBe('mailbox');
+        expect(config('mailbox.path'))->toBe('mailbox');
         expect(Route::has('mailbox.index'))->toBeTrue();
         expect(view()->exists('mailbox::app'))->toBeTrue();
         expect(Artisan::all())->toHaveKey('mailbox:install');

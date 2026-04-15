@@ -181,13 +181,13 @@ return [
 
         // File storage options
         'file' => [
-            'path' => env('MAILBOX_FILE_PATH', storage_path('app/mailbox')),
+            'path' => env('MAILBOX_STORE_FILE_PATH', storage_path('app/mailbox')),
         ],
 
         // Database storage options
         'database' => [
-            'connection' => env('MAILBOX_DB_CONNECTION', 'mailbox'),
-            'table' => env('MAILBOX_DB_TABLE', 'mailbox_messages'),
+            'connection' => env('MAILBOX_STORE_DATABASE_CONNECTION', 'mailbox'),
+            'table' => env('MAILBOX_STORE_DATABASE_TABLE', 'mailbox_messages'),
         ],
     ],
 
@@ -200,9 +200,7 @@ return [
     | Default: 24 hours (86400 seconds).
     |
     */
-    'retention' => [
-        'seconds' => (int) env('MAILBOX_RETENTION', 60 * 60 * 24),
-    ],
+    'retention' => (int) env('MAILBOX_RETENTION', 60 * 60 * 24),
 
     /*
     |--------------------------------------------------------------------------
@@ -227,18 +225,18 @@ return [
     | Default: null (shows Laravel's 403 page)
     |
     */
-    'unauthorized_redirect' => env('MAILBOX_REDIRECT', null),
+    'unauthorized_redirect' => env('MAILBOX_UNAUTHORIZED_REDIRECT', null),
 
     /*
     |--------------------------------------------------------------------------
-    | Dashboard Route
+    | Dashboard Path
     |--------------------------------------------------------------------------
     |
     | The URI prefix where the mailbox dashboard is accessible.
     | Default: 'mailbox'
     |
     */
-    'route' => env('MAILBOX_DASHBOARD_ROUTE', 'mailbox'),
+    'path' => env('MAILBOX_PATH', 'mailbox'),
 
     /*
     |--------------------------------------------------------------------------
@@ -265,11 +263,11 @@ MAILBOX_ENABLED=true
 MAILBOX_STORE_DRIVER=database
 
 # Database connection (for database driver)
-MAILBOX_DB_CONNECTION=mailbox
-MAILBOX_DB_TABLE=mailbox_messages
+MAILBOX_STORE_DATABASE_CONNECTION=mailbox
+MAILBOX_STORE_DATABASE_TABLE=mailbox_messages
 
 # File storage path (for file driver)
-MAILBOX_FILE_PATH=/path/to/storage/mailbox
+MAILBOX_STORE_FILE_PATH=/path/to/storage/mailbox
 
 # Message retention (in seconds, default: 24 hours)
 MAILBOX_RETENTION=86400
@@ -278,10 +276,10 @@ MAILBOX_RETENTION=86400
 MAILBOX_GATE=viewMailbox
 
 # Redirect on unauthorized access
-MAILBOX_REDIRECT=/login
+MAILBOX_UNAUTHORIZED_REDIRECT=/login
 
 # Dashboard route prefix
-MAILBOX_DASHBOARD_ROUTE=mailbox
+MAILBOX_PATH=mailbox
 ```
 
 ### Database Configuration
@@ -309,7 +307,7 @@ the package will use it instead of creating its own:
 **Or point to an existing connection** (e.g., your app's main database):
 
 ```env
-MAILBOX_DB_CONNECTION=mysql  # or pgsql, sqlsrv, etc.
+MAILBOX_STORE_DATABASE_CONNECTION=mysql  # or pgsql, sqlsrv, etc.
 ```
 
 This is particularly useful in **containerized or VPS environments** where SQLite may not be ideal (e.g., shared
@@ -509,8 +507,8 @@ Stores messages in a dedicated SQLite database (`database/mailbox.sqlite`).
 
 ```env
 MAILBOX_STORE_DRIVER=database
-MAILBOX_DB_CONNECTION=mailbox
-MAILBOX_DB_TABLE=mailbox_messages
+MAILBOX_STORE_DATABASE_CONNECTION=mailbox
+MAILBOX_STORE_DATABASE_TABLE=mailbox_messages
 ```
 
 ### File Driver
@@ -527,7 +525,7 @@ Stores each message as a JSON file in `storage/app/mailbox/`.
 
 ```env
 MAILBOX_STORE_DRIVER=file
-MAILBOX_FILE_PATH=/path/to/storage/mailbox
+MAILBOX_STORE_FILE_PATH=/path/to/storage/mailbox
 ```
 
 ### Custom Drivers
@@ -596,7 +594,7 @@ MAILBOX_ENABLED=true   # Already true by default when APP_ENV != production
 SQLite doesn't work well with shared volumes or multi-container setups. Point the mailbox at your existing database:
 
 ```env
-MAILBOX_DB_CONNECTION=mysql
+MAILBOX_STORE_DATABASE_CONNECTION=mysql
 ```
 
 Or define a dedicated connection in `config/database.php` (see [Database Configuration](#database-configuration)).
@@ -618,7 +616,7 @@ services:
     environment:
       - APP_ENV=staging
       - MAIL_MAILER=mailbox
-      - MAILBOX_DB_CONNECTION=mysql  # Use the app's MySQL instead of SQLite
+      - MAILBOX_STORE_DATABASE_CONNECTION=mysql  # Use the app's MySQL instead of SQLite
 ```
 
 If your container has a **read-only filesystem** for `public/`, publish assets during the Docker image build rather than
@@ -629,13 +627,13 @@ at runtime.
 | Variable | Default | Description |
 |---|---|---|
 | `MAILBOX_ENABLED` | `true` (non-production) | Master on/off switch |
-| `MAILBOX_DB_CONNECTION` | `mailbox` (auto-created SQLite) | Database connection name |
+| `MAILBOX_STORE_DATABASE_CONNECTION` | `mailbox` (auto-created SQLite) | Database connection name |
 | `MAILBOX_STORE_DRIVER` | `database` | Storage driver (`database` or `file`) |
 | `MAILBOX_ATTACHMENTS_DISK` | `mailbox` (auto-created local) | Filesystem disk for attachments |
-| `MAILBOX_DASHBOARD_ROUTE` | `mailbox` | URL prefix for the dashboard |
+| `MAILBOX_PATH` | `mailbox` | URL prefix for the dashboard |
 | `MAILBOX_GATE` | `viewMailbox` | Gate ability for authorization |
 | `MAILBOX_RETENTION` | `86400` | Message retention in seconds (24h) |
-| `MAILBOX_REDIRECT` | `null` | Redirect URL on unauthorized access |
+| `MAILBOX_UNAUTHORIZED_REDIRECT` | `null` | Redirect URL on unauthorized access |
 
 > **Key point:** When you define your own `mailbox` database connection or filesystem disk in your Laravel config, the
 > package respects it and will not overwrite it with defaults.
@@ -699,7 +697,7 @@ MAILBOX_ENABLED=false
 MAILBOX_GATE=viewMailbox
 
 # Redirect unauthorized users
-MAILBOX_REDIRECT=/login
+MAILBOX_UNAUTHORIZED_REDIRECT=/login
 ```
 
 ## Testing

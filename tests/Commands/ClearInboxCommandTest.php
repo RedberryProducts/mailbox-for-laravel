@@ -8,7 +8,7 @@ use Mockery as M;
 use Redberry\MailboxForLaravel\CaptureService;
 
 beforeEach(function () {
-    config()->set('mailbox.retention.seconds', 3600);
+    config()->set('mailbox.retention', 3600);
 
     Carbon::setTestNow(Carbon::create(2025, 1, 1, 12, 0, 0));
 });

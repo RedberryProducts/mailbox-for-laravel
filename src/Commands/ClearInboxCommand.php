@@ -36,7 +36,7 @@ final class ClearInboxCommand extends Command
 
     private function clearOutdated(CaptureService $service): int
     {
-        $seconds = (int) config('mailbox.retention.seconds', 60 * 60 * 24);
+        $seconds = (int) config('mailbox.retention', 60 * 60 * 24);
         $threshold = Carbon::now()->subSeconds($seconds);
 
         $this->info('Clearing outdated mailbox messages…');

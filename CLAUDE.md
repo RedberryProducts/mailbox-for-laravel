@@ -94,7 +94,7 @@ The package runs a **completely isolated** Inertia.js app that does not interfer
 
 ### HTTP Layer
 
-Routes under `config('mailbox.route', 'mailbox')` prefix with middleware: `web`, `mailbox.inertia`, `mailbox.authorize`. Authorization via `viewMailbox` gate (allows all in non-production by default).
+Routes under `config('mailbox.path', 'mailbox')` prefix with middleware: `web`, `mailbox.inertia`, `mailbox.authorize`. Authorization via `viewMailbox` gate (allows all in non-production by default).
 
 ## Testing
 
