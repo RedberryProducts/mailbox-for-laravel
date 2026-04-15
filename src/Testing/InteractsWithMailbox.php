@@ -19,17 +19,25 @@ trait InteractsWithMailbox
     protected ?MailboxAssertions $mailboxAssertions = null;
 
     /**
-     * @before
+     * Invoked automatically by Laravel's setUpTraits() via the
+     * setUp{TraitName} convention. Registers an application-boot hook that
+     * clears the mailbox once the test application is ready.
      */
     protected function setUpInteractsWithMailbox(): void
     {
         $this->afterApplicationCreated(function (): void {
             $this->clearMailbox();
         });
+    }
 
-        $this->beforeApplicationDestroyed(function (): void {
-            $this->mailboxAssertions = null;
-        });
+    /**
+     * Invoked automatically by Laravel's setUpTraits() via the
+     * tearDown{TraitName} convention. Clears the cached assertions instance
+     * between tests so state from one test cannot leak into another.
+     */
+    protected function tearDownInteractsWithMailbox(): void
+    {
+        $this->mailboxAssertions = null;
     }
 
     /**
