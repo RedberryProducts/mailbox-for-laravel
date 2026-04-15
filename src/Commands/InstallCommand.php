@@ -23,10 +23,25 @@ class InstallCommand extends Command
             $this->info('Mailbox assets published.');
         }
 
+        $this->publishConfig();
+        $this->info('Mailbox config published.');
+
         $this->runMigrations();
         $this->info('Mailbox migrations run.');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Publish the package config file. Never forces by default so a user's
+     * customized config survives a re-install; pass --force to overwrite.
+     */
+    public function publishConfig(): void
+    {
+        $this->call('vendor:publish', [
+            '--tag' => 'mailbox-config',
+            '--force' => (bool) $this->option('force'),
+        ]);
     }
 
     /**

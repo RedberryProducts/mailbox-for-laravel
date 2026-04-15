@@ -136,6 +136,14 @@ Or your configured route (see [Configuration](#configuration)).
 
 After installation, the configuration file is available at `config/mailbox.php`.
 
+If you want to publish (or re-publish) **only** the config file — without touching views, assets, or migrations — use the dedicated publish tag:
+
+```bash
+php artisan vendor:publish --tag=mailbox-config
+```
+
+Add `--force` to overwrite an existing `config/mailbox.php` after a package upgrade.
+
 ### Configuration Reference
 
 ```php

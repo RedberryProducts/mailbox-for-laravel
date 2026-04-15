@@ -242,6 +242,10 @@ class MailboxServiceProvider extends PackageServiceProvider
 
         $this->publishes([
             __DIR__.'/../config/mailbox.php' => config_path('mailbox.php'),
+        ], 'mailbox-config');
+
+        $this->publishes([
+            __DIR__.'/../config/mailbox.php' => config_path('mailbox.php'),
             __DIR__.'/../resources/views' => resource_path('views/vendor/mailbox'),
             __DIR__.'/../public/vendor/mailbox' => public_path('vendor/mailbox'),
         ], 'mailbox-install');
