@@ -14,12 +14,9 @@ Shipped on the `v2.0.0-dev` branch. Driver-agnostic `Contracts\AttachmentStore` 
 
 Shipped on the `v2.0.0-dev` branch. `CaptureService::store()` assigns a `Str::ulid()` to every payload (preserving caller-supplied ids for fixture replay), and both `DatabaseMessageStore` and `FileStorage` now throw when the upstream id is missing. The `mailbox_messages.id` column is a ULID primary key and the `mailbox_attachments.message_id` FK matches, so the same 26-char id flows through URLs, controllers, and the dashboard regardless of driver. `MessageStore::store()` return type is narrowed to `string`. Upgrade path for existing deployments: `php artisan mailbox:install --refresh`. See the `## v2.0.0-dev — Canonical Message IDs` section in [`CHANGELOG.md`](CHANGELOG.md).
 
-### 3. Automatic retention
+### 3. Automatic retention — *Implemented*
 
-`MessageStore::purgeOlderThan()` exists but nothing calls it. True zero-config non-intrusiveness means the package should handle retention itself.
-
-- Register a daily `Schedule::call(...)` in the service provider, guarded by `mailbox.enabled` and `mailbox.retention > 0`.
-- Config flag to opt out (add a `mailbox.retention_schedule => false` key) for users who prefer to wire the purge manually.
+Shipped on the `v2.0.0-dev` branch. `MailboxServiceProvider` registers a daily `Schedule::command('mailbox:clear --outdated')` via `callAfterResolving(Schedule::class, …)`, triple-guarded by `mailbox.enabled`, `mailbox.retention > 0`, and a new `mailbox.retention_schedule` flag (env: `MAILBOX_RETENTION_SCHEDULE`, default `true`). Hosts that prefer to wire the purge by hand can flip the flag off; multi-server deployments are covered by `->onOneServer()`. See the `## v2.0.0-dev — Automatic Retention` section in [`CHANGELOG.md`](CHANGELOG.md).
 
 ### 4. Search as a strategy, not per-driver
 

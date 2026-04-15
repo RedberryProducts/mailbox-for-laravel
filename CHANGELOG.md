@@ -4,6 +4,17 @@ All notable changes to `mailbox-for-laravel` will be documented in this file.
 
 ## [Unreleased]
 
+### v2.0.0-dev — Automatic Retention
+
+#### Added
+- `MailboxServiceProvider` now registers a daily `Schedule::command('mailbox:clear --outdated')` automatically — captures no longer pile up forever when the host app runs Laravel's scheduler. Guarded by `mailbox.enabled`, `mailbox.retention > 0`, and `mailbox.retention_schedule`.
+- New `mailbox.retention_schedule` config key (env: `MAILBOX_RETENTION_SCHEDULE`, default `true`). Set to `false` to opt out and wire the purge manually.
+- Unit tests covering each guard (enabled / retention positive / schedule flag) plus end-to-end resolution through `callAfterResolving`.
+
+#### Notes
+- Hosts already scheduling `mailbox:clear --outdated` manually should set `MAILBOX_RETENTION_SCHEDULE=false` to avoid a duplicate daily run.
+- The schedule uses `->onOneServer()` and a named constraint so multi-server deploys don't run the purge concurrently.
+
 ### v2.0.0-dev — Canonical Message IDs
 
 #### Added

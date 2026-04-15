@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Mail\MailManager;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Gate;
@@ -158,5 +159,86 @@ describe(MailboxServiceProvider::class, function () {
         (new ReflectionMethod($provider, 'registerGate'))->invoke($provider);
 
         expect(Gate::allows('viewMailbox'))->toBeFalse();
+    });
+
+    describe('retention schedule', function () {
+        $freshSchedule = function (): Schedule {
+            return new Schedule;
+        };
+
+        $mailboxEvents = function (Schedule $schedule): array {
+            return collect($schedule->events())
+                ->filter(fn ($event) => str_contains((string) $event->command, 'mailbox:clear --outdated'))
+                ->values()
+                ->all();
+        };
+
+        it('registers a daily purge when enabled, retention positive, and schedule flag on', function () use ($freshSchedule, $mailboxEvents) {
+            config([
+                'mailbox.enabled' => true,
+                'mailbox.retention' => 3600,
+                'mailbox.retention_schedule' => true,
+            ]);
+
+            $schedule = $freshSchedule();
+            app()->getProvider(MailboxServiceProvider::class)->scheduleRetentionPurge($schedule);
+
+            $events = $mailboxEvents($schedule);
+            expect($events)->toHaveCount(1);
+            expect($events[0]->expression)->toBe('0 0 * * *');
+            expect($events[0]->description)->toBe('mailbox:retention-purge');
+        });
+
+        it('does not register when mailbox is disabled', function () use ($freshSchedule, $mailboxEvents) {
+            config([
+                'mailbox.enabled' => false,
+                'mailbox.retention' => 3600,
+                'mailbox.retention_schedule' => true,
+            ]);
+
+            $schedule = $freshSchedule();
+            app()->getProvider(MailboxServiceProvider::class)->scheduleRetentionPurge($schedule);
+
+            expect($mailboxEvents($schedule))->toBeEmpty();
+        });
+
+        it('does not register when retention is zero or negative', function () use ($freshSchedule, $mailboxEvents) {
+            config([
+                'mailbox.enabled' => true,
+                'mailbox.retention' => 0,
+                'mailbox.retention_schedule' => true,
+            ]);
+
+            $schedule = $freshSchedule();
+            app()->getProvider(MailboxServiceProvider::class)->scheduleRetentionPurge($schedule);
+
+            expect($mailboxEvents($schedule))->toBeEmpty();
+        });
+
+        it('does not register when the retention_schedule flag is off', function () use ($freshSchedule, $mailboxEvents) {
+            config([
+                'mailbox.enabled' => true,
+                'mailbox.retention' => 3600,
+                'mailbox.retention_schedule' => false,
+            ]);
+
+            $schedule = $freshSchedule();
+            app()->getProvider(MailboxServiceProvider::class)->scheduleRetentionPurge($schedule);
+
+            expect($mailboxEvents($schedule))->toBeEmpty();
+        });
+
+        it('wires the callback via callAfterResolving so the Schedule singleton gets the purge', function () use ($mailboxEvents) {
+            config([
+                'mailbox.enabled' => true,
+                'mailbox.retention' => 3600,
+                'mailbox.retention_schedule' => true,
+            ]);
+
+            app()->forgetInstance(Schedule::class);
+            $schedule = app()->make(Schedule::class);
+
+            expect($mailboxEvents($schedule))->not->toBeEmpty();
+        });
     });
 });

@@ -2,6 +2,7 @@
 
 namespace Redberry\MailboxForLaravel;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Mail\MailManager;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Gate;
@@ -47,6 +48,46 @@ class MailboxServiceProvider extends PackageServiceProvider
         $this->registerMiddleware();
         $this->registerGate();
         $this->registerPublishing();
+        $this->registerRetentionSchedule();
+    }
+
+    /**
+     * Register the daily retention purge on Laravel's scheduler.
+     *
+     * Delegates to scheduleRetentionPurge() so the guards are re-evaluated
+     * at schedule-resolution time (rather than at boot), which keeps the
+     * behavior testable with a fresh Schedule instance.
+     */
+    protected function registerRetentionSchedule(): void
+    {
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
+            $this->scheduleRetentionPurge($schedule);
+        });
+    }
+
+    /**
+     * Register the daily "mailbox:clear --outdated" command on the given schedule,
+     * guarded by `mailbox.enabled`, `mailbox.retention > 0`, and
+     * `mailbox.retention_schedule`.
+     */
+    public function scheduleRetentionPurge(Schedule $schedule): void
+    {
+        if (! config('mailbox.enabled')) {
+            return;
+        }
+
+        if ((int) config('mailbox.retention', 0) <= 0) {
+            return;
+        }
+
+        if (! config('mailbox.retention_schedule', true)) {
+            return;
+        }
+
+        $schedule->command('mailbox:clear --outdated')
+            ->daily()
+            ->name('mailbox:retention-purge')
+            ->onOneServer();
     }
 
     /**
