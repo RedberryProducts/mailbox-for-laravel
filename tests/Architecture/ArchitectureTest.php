@@ -21,6 +21,7 @@ $rules = [
     'Facades (if any) only reference container bindings (no new-ing concretes)',
     'package code must not depend on external network clients',
     'storage must not depend on Illuminate\\Http or Symfony\\HttpFoundation',
+    'consumers depend on Contracts\\AttachmentStore, never on the Database/File concrete classes',
     'domain and contracts must not depend on Illuminate\\View, Illuminate\\Routing',
     'controller must not depend on Illuminate\\Mail or Transport internals',
     'all middleware names end with Middleware',

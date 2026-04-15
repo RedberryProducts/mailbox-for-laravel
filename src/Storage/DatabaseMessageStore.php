@@ -117,6 +117,21 @@ class DatabaseMessageStore implements MessageStore
             ->delete();
     }
 
+    public function idsOlderThan(int $seconds): array
+    {
+        if ($seconds <= 0) {
+            return [];
+        }
+
+        $cutoff = Carbon::now()->subSeconds($seconds)->getTimestamp();
+
+        return MailboxMessage::query()
+            ->where('timestamp', '<', $cutoff)
+            ->pluck('id')
+            ->map(static fn ($id): string => (string) $id)
+            ->all();
+    }
+
     public function clear(): void
     {
         MailboxMessage::query()->delete();

@@ -1,7 +1,7 @@
 <?php
 
 use Redberry\MailboxForLaravel\CaptureService;
-use Redberry\MailboxForLaravel\Storage\AttachmentStore;
+use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
 use Redberry\MailboxForLaravel\Storage\FileStorage;
 use Redberry\MailboxForLaravel\Transport\MailboxTransport;
 use Symfony\Component\Mailer\Exception\TransportException;

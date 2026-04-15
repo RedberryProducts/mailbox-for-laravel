@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Redberry\MailboxForLaravel\Http\Controllers;
 
 use Illuminate\Http\Response;
-use Redberry\MailboxForLaravel\Storage\AttachmentStore;
+use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttachmentController
@@ -32,7 +32,7 @@ class AttachmentController
         }
 
         return response($content, 200, [
-            'Content-Type' => $attachment->mime_type,
+            'Content-Type' => $attachment->mimeType,
             'Content-Disposition' => 'attachment; filename="'.$attachment->filename.'"',
             'Content-Length' => (string) $attachment->size,
         ]);
@@ -56,7 +56,7 @@ class AttachmentController
         }
 
         return response($content, 200, [
-            'Content-Type' => $attachment->mime_type,
+            'Content-Type' => $attachment->mimeType,
             'Content-Disposition' => 'inline; filename="'.$attachment->filename.'"',
             'Content-Length' => (string) $attachment->size,
         ]);
@@ -76,9 +76,9 @@ class AttachmentController
                 static fn ($attachment) => [
                     'id' => $attachment->id,
                     'filename' => $attachment->filename,
-                    'mime_type' => $attachment->mime_type,
+                    'mime_type' => $attachment->mimeType,
                     'size' => $attachment->size,
-                    'is_inline' => $attachment->is_inline,
+                    'is_inline' => $attachment->isInline,
                     'cid' => $attachment->cid,
                     'download_url' => route('mailbox.attachments.download', ['id' => $attachment->id]),
                     'inline_url' => route('mailbox.attachments.inline', ['id' => $attachment->id]),

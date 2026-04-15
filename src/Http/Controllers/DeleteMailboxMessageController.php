@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Redberry\MailboxForLaravel\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Redberry\MailboxForLaravel\CaptureService;
-use Redberry\MailboxForLaravel\Storage\AttachmentStore;
 
 class DeleteMailboxMessageController
 {
@@ -13,7 +14,6 @@ class DeleteMailboxMessageController
         string $id,
         Request $request,
         CaptureService $service,
-        AttachmentStore $attachmentStore
     ): RedirectResponse {
         $message = $service->find($id);
 
@@ -27,10 +27,6 @@ class DeleteMailboxMessageController
             ]);
         }
 
-        // Delete attachments first
-        $attachmentStore->deleteByMessage($id);
-
-        // Then delete the message
         $service->delete($id);
 
         return redirect()->back()->with([

@@ -253,6 +253,26 @@ $response->assertInertia(fn (Assert $page) => $page
 - `vue`: Package dependency
 - Host app doesn't need to install these
 
+## Storage architecture: paired drivers
+
+Capture is split into two driver-shaped interfaces that are always resolved as a pair:
+
+- **`Contracts\MessageStore`** — persists the canonical message payload (subject, headers, html/text, timestamps).
+- **`Contracts\AttachmentStore`** — persists attachment metadata + content. Returns `DTO\StoredAttachment` value objects so callers never see the underlying Eloquent model or sidecar shape.
+
+`MailboxServiceProvider` reads `mailbox.store.driver` and binds the matching pair:
+
+| `mailbox.store.driver` | MessageStore             | AttachmentStore             | Metadata location                                         |
+| ---------------------- | ------------------------ | --------------------------- | --------------------------------------------------------- |
+| `database` (default)   | `DatabaseMessageStore`   | `DatabaseAttachmentStore`   | `mailbox_messages` + `mailbox_attachments` (cascade FK)   |
+| `file`                 | `FileStorage`            | `FileAttachmentStore`       | `storage/app/mail-inbox/{id}.json` + per-message sidecars |
+
+In both cases the attachment **content bytes** live on the configured `mailbox.attachments.disk`, so download/inline URLs are identical regardless of driver.
+
+`CaptureService` is the only consumer that knows about both halves of the pair and is responsible for cascade cleanup on `delete($id)`, `clearAll()`, and `purgeOlderThan($seconds)` — the `MessageStore::idsOlderThan()` method exists specifically so the service can collect victim ids before delegating purge.
+
+Custom drivers can plug in either half (or both) by binding the relevant contracts in their own service provider; nothing in the package depends on the concrete classes.
+
 ## Summary
 
 This architecture ensures:

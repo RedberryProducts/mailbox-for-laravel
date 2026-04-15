@@ -3,7 +3,7 @@
 namespace Redberry\MailboxForLaravel\Transport;
 
 use Redberry\MailboxForLaravel\CaptureService;
-use Redberry\MailboxForLaravel\Storage\AttachmentStore;
+use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
 use Redberry\MailboxForLaravel\Support\MessageNormalizer;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\AbstractTransport;
@@ -40,13 +40,10 @@ class MailboxTransport extends AbstractTransport
         $envelope = $message->getEnvelope();
 
         if ($this->enabled) {
-            // Normalize message (attachments stored as metadata only for now)
             $payload = MessageNormalizer::normalize($original, $envelope, $raw, false);
 
-            // Store message first to get ID
             $this->storedKey = $this->mailbox->store($payload);
 
-            // Extract and store attachments separately if enabled and it's an Email
             if (config('mailbox.attachments.enabled', true) && $original instanceof Email) {
                 $attachments = MessageNormalizer::extractAttachments($original);
                 foreach ($attachments as $attachment) {

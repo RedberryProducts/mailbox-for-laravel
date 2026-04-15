@@ -8,8 +8,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Redberry\MailboxForLaravel\CaptureService;
+use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
 use Redberry\MailboxForLaravel\DTO\MailboxMessageData;
-use Redberry\MailboxForLaravel\Storage\AttachmentStore;
 use Redberry\MailboxForLaravel\Support\CidRewriter;
 
 class MailboxController
@@ -65,9 +65,9 @@ class MailboxController
             static fn ($attachment) => [
                 'id' => $attachment->id,
                 'filename' => $attachment->filename,
-                'mime_type' => $attachment->mime_type,
+                'mime_type' => $attachment->mimeType,
                 'size' => $attachment->size,
-                'is_inline' => $attachment->is_inline,
+                'is_inline' => $attachment->isInline,
                 'download_url' => route('mailbox.attachments.download', ['id' => $attachment->id]),
                 'inline_url' => route('mailbox.attachments.inline', ['id' => $attachment->id]),
             ],

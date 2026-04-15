@@ -35,11 +35,16 @@ src/
   MailboxServiceProvider.php        # Bindings, transport, boot config (the only place for config() reads and bindings)
   CaptureService.php                # High-level API: store/list/find/update/delete/purge
   StoreManager.php                  # Laravel Manager — resolves storage drivers
-  Contracts/MessageStore.php        # Storage driver interface (8 methods)
+  Contracts/
+    MessageStore.php                # Message storage driver interface (9 methods incl. idsOlderThan)
+    AttachmentStore.php             # Attachment storage driver interface (8 methods)
   Storage/
-    DatabaseMessageStore.php        # Default driver (Eloquent, dedicated SQLite)
-    FileStorage.php                 # JSON-on-disk alternative driver
-    AttachmentStore.php             # File-based attachment persistence
+    DatabaseMessageStore.php        # Default message driver (Eloquent, dedicated SQLite)
+    FileStorage.php                 # JSON-on-disk message driver
+    DatabaseAttachmentStore.php     # DB-backed attachment driver (paired with database message driver)
+    FileAttachmentStore.php         # JSON-sidecar attachment driver (paired with file message driver)
+    AttachmentStore.php             # @deprecated shim — extends DatabaseAttachmentStore (removed in v2.1)
+  DTO/StoredAttachment.php          # Driver-agnostic attachment value object
   Transport/MailboxTransport.php    # Symfony AbstractTransport — captures outgoing mail
   Support/
     MessageNormalizer.php           # Email → canonical array + attachment extraction
@@ -81,7 +86,7 @@ tests/                              # Architecture/, Commands/, Feature/, Unit/
 3. **CaptureService** (`src/CaptureService.php`) — High-level API for store/list/find/update/delete/purge. Returns `MailboxMessageData` DTOs. Storage-driver-agnostic.
 4. **StoreManager** (`src/StoreManager.php`) — Extends Laravel's `Manager`. Resolves `database` (default) or `file` drivers.
 5. **Storage Drivers** (`src/Storage/`) — `DatabaseMessageStore` (Eloquent, dedicated SQLite at `storage/app/mailbox/mailbox.sqlite`) and `FileStorage` (JSON on disk). Both implement `MessageStore` contract.
-6. **AttachmentStore** + **CidRewriter** — Manage attachment files on a dedicated `mailbox` filesystem disk and rewrite inline `cid:` references.
+6. **AttachmentStore pair** — `DatabaseAttachmentStore` or `FileAttachmentStore` is bound alongside the chosen `MessageStore` driver. Both implement `Contracts\AttachmentStore` and return `StoredAttachment` DTOs. **CidRewriter** uses the contract to resolve inline `cid:` references regardless of driver. `CaptureService` cascades attachment cleanup automatically on `delete`, `clearAll`, and `purgeOlderThan`.
 
 ### Isolated Inertia Dashboard
 

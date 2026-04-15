@@ -67,6 +67,18 @@ interface MessageStore
     public function purgeOlderThan(int $seconds): void;
 
     /**
+     * List ids of payloads older than $seconds (relative to now).
+     *
+     * Used by CaptureService to cascade attachment cleanup before the
+     * messages themselves are purged. Returning ids (instead of relying
+     * on a callback inside `purgeOlderThan`) keeps drivers stateless and
+     * easy to test.
+     *
+     * @return array<int, string>
+     */
+    public function idsOlderThan(int $seconds): array;
+
+    /**
      * Remove all stored payloads.
      */
     public function clear(): void;

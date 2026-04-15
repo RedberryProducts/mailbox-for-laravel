@@ -5,18 +5,21 @@ declare(strict_types=1);
 namespace Redberry\MailboxForLaravel;
 
 use InvalidArgumentException;
+use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\DTO\MailboxMessageData;
 
 /**
  * High-level mailbox API that the rest of the package uses.
  *
- * This service is storage-driver-agnostic and only talks to MessageStore.
+ * Storage-driver-agnostic. Owns cascading attachment cleanup so callers
+ * never have to remember to delete attachments alongside messages.
  */
 class CaptureService
 {
     public function __construct(
         protected MessageStore $storage,
+        protected ?AttachmentStore $attachments = null,
     ) {}
 
     /**
@@ -122,6 +125,8 @@ class CaptureService
 
     public function delete(string $id): void
     {
+        $this->attachments?->deleteByMessage($id);
+
         $this->storage->delete($id);
     }
 
@@ -131,11 +136,19 @@ class CaptureService
             throw new InvalidArgumentException('Seconds must be greater than zero.');
         }
 
+        if ($this->attachments !== null) {
+            foreach ($this->storage->idsOlderThan($seconds) as $id) {
+                $this->attachments->deleteByMessage($id);
+            }
+        }
+
         $this->storage->purgeOlderThan($seconds);
     }
 
     public function clearAll(): void
     {
+        $this->attachments?->clear();
+
         $this->storage->clear();
     }
 }

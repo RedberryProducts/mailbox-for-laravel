@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Redberry\MailboxForLaravel\Support;
 
-use Redberry\MailboxForLaravel\Models\MailboxAttachment;
-use Redberry\MailboxForLaravel\Storage\AttachmentStore;
+use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
+use Redberry\MailboxForLaravel\DTO\StoredAttachment;
 
 /**
  * Rewrites CID references in HTML to inline attachment URLs.
@@ -25,7 +25,6 @@ class CidRewriter
             return $html;
         }
 
-        // Find all cid: references in src attributes
         $pattern = '/(<img[^>]+src=["\'](cid:([^"\']+))["\'][^>]*>)/i';
 
         return preg_replace_callback($pattern, function ($matches) use ($messageId) {
@@ -33,7 +32,6 @@ class CidRewriter
             $cidUrl = $matches[2]; // "cid:xyz"
             $cid = $matches[3];    // "xyz"
 
-            // Find attachment by CID
             $attachment = $this->attachmentStore->findByCid($messageId, $cid);
 
             if ($attachment) {
@@ -42,7 +40,6 @@ class CidRewriter
                 return str_replace($cidUrl, $inlineUrl, $fullTag);
             }
 
-            // If no attachment found, leave as is
             return $fullTag;
         }, $html) ?? $html;
     }
@@ -50,12 +47,15 @@ class CidRewriter
     /**
      * Get all inline attachments (CID images) for a message.
      *
-     * @return array<int, MailboxAttachment>
+     * @return array<int, StoredAttachment>
      */
     public function getInlineAttachments(int|string $messageId): array
     {
         $attachments = $this->attachmentStore->findByMessage($messageId);
 
-        return array_filter($attachments, static fn ($attachment) => $attachment->is_inline);
+        return array_values(array_filter(
+            $attachments,
+            static fn (StoredAttachment $attachment): bool => $attachment->isInline,
+        ));
     }
 }

@@ -222,6 +222,38 @@ class FileStorage implements MessageStore
         }
     }
 
+    public function idsOlderThan(int $seconds): array
+    {
+        if ($seconds <= 0) {
+            return [];
+        }
+
+        $cutoff = time() - $seconds;
+        $ids = [];
+
+        foreach (glob($this->basePath.'/*.json') ?: [] as $file) {
+            $contents = file_get_contents($file);
+
+            if ($contents === false || $contents === '') {
+                continue;
+            }
+
+            $decoded = json_decode($contents, true);
+
+            if (! is_array($decoded)) {
+                continue;
+            }
+
+            $timestamp = (int) ($decoded['timestamp'] ?? 0);
+
+            if ($timestamp > 0 && $timestamp < $cutoff && isset($decoded['id'])) {
+                $ids[] = (string) $decoded['id'];
+            }
+        }
+
+        return $ids;
+    }
+
     public function clear(): void
     {
         $files = glob($this->basePath.'/*.json') ?: [];

@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Storage;
 use Redberry\MailboxForLaravel\Models\MailboxAttachment;
 use Redberry\MailboxForLaravel\Models\MailboxMessage;
-use Redberry\MailboxForLaravel\Storage\AttachmentStore;
+use Redberry\MailboxForLaravel\Storage\DatabaseAttachmentStore;
 use Redberry\MailboxForLaravel\Support\CidRewriter;
 
 beforeEach(function () {
@@ -34,7 +34,7 @@ describe(CidRewriter::class, function () {
 
         $html = '<p>Hello</p><img src="cid:logo@example.com" alt="Logo" />';
 
-        $rewriter = new CidRewriter(new AttachmentStore);
+        $rewriter = new CidRewriter(new DatabaseAttachmentStore);
         $rewritten = $rewriter->rewrite($html, $message->id);
 
         $expectedUrl = route('mailbox.attachments.inline', ['id' => 'att123']);
@@ -78,7 +78,7 @@ describe(CidRewriter::class, function () {
             <img src="cid:banner@example.com" alt="Banner" />
         ';
 
-        $rewriter = new CidRewriter(new AttachmentStore);
+        $rewriter = new CidRewriter(new DatabaseAttachmentStore);
         $rewritten = $rewriter->rewrite($html, $message->id);
 
         $logoUrl = route('mailbox.attachments.inline', ['id' => 'att1']);
@@ -98,7 +98,7 @@ describe(CidRewriter::class, function () {
 
         $html = '<p>Hello world</p><img src="https://example.com/image.png" />';
 
-        $rewriter = new CidRewriter(new AttachmentStore);
+        $rewriter = new CidRewriter(new DatabaseAttachmentStore);
         $rewritten = $rewriter->rewrite($html, $message->id);
 
         expect($rewritten)->toBe($html);
@@ -112,14 +112,14 @@ describe(CidRewriter::class, function () {
 
         $html = '<img src="cid:nonexistent@example.com" />';
 
-        $rewriter = new CidRewriter(new AttachmentStore);
+        $rewriter = new CidRewriter(new DatabaseAttachmentStore);
         $rewritten = $rewriter->rewrite($html, $message->id);
 
         expect($rewritten)->toBe($html);
     });
 
     it('handles empty HTML', function () {
-        $rewriter = new CidRewriter(new AttachmentStore);
+        $rewriter = new CidRewriter(new DatabaseAttachmentStore);
         $rewritten = $rewriter->rewrite('', 1);
 
         expect($rewritten)->toBe('');
@@ -145,7 +145,7 @@ describe(CidRewriter::class, function () {
 
         $html = "<img src='cid:image@example.com' alt='Image' />";
 
-        $rewriter = new CidRewriter(new AttachmentStore);
+        $rewriter = new CidRewriter(new DatabaseAttachmentStore);
         $rewritten = $rewriter->rewrite($html, $message->id);
 
         $expectedUrl = route('mailbox.attachments.inline', ['id' => 'att456']);
@@ -181,11 +181,11 @@ describe(CidRewriter::class, function () {
             'is_inline' => false,
         ]);
 
-        $rewriter = new CidRewriter(new AttachmentStore);
+        $rewriter = new CidRewriter(new DatabaseAttachmentStore);
         $inlineAttachments = $rewriter->getInlineAttachments($message->id);
 
         expect($inlineAttachments)->toHaveCount(1)
-            ->and($inlineAttachments[0]->is_inline)->toBeTrue()
+            ->and($inlineAttachments[0]->isInline)->toBeTrue()
             ->and($inlineAttachments[0]->filename)->toBe('inline.png');
     });
 });

@@ -3,7 +3,7 @@
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 
 describe(MessageStore::class, function () {
-    it('defines required methods: store, find, paginate, count, update, delete, purgeOlderThan, clear', function () {
+    it('defines the full contract surface', function () {
         $methods = array_map(
             fn ($m) => $m->getName(),
             (new ReflectionClass(MessageStore::class))->getMethods()
@@ -17,6 +17,7 @@ describe(MessageStore::class, function () {
             'update',
             'delete',
             'purgeOlderThan',
+            'idsOlderThan',
             'clear',
         ]);
     });

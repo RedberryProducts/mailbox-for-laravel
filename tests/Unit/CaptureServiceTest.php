@@ -1,7 +1,10 @@
 <?php
 
+use Illuminate\Support\Facades\Storage;
 use Redberry\MailboxForLaravel\CaptureService;
+use Redberry\MailboxForLaravel\DTO\AttachmentData;
 use Redberry\MailboxForLaravel\DTO\MailboxMessageData;
+use Redberry\MailboxForLaravel\Storage\FileAttachmentStore;
 use Redberry\MailboxForLaravel\Storage\FileStorage;
 
 describe(CaptureService::class, function () {
@@ -133,5 +136,60 @@ describe(CaptureService::class, function () {
         $svc->clearAll();
 
         expect($svc->all())->toBeEmpty();
+    });
+
+    describe('attachment cascade', function () {
+        function withAttachments(): array
+        {
+            Storage::fake('mailbox');
+
+            $messagePath = sys_get_temp_dir().'/mailbox-cascade-msgs-'.uniqid();
+            $attachPath = sys_get_temp_dir().'/mailbox-cascade-atts-'.uniqid();
+
+            $store = new FileStorage($messagePath);
+            $attachments = new FileAttachmentStore($attachPath, 'mailbox', 'attachments');
+            $svc = new CaptureService($store, $attachments);
+
+            return [$svc, $attachments];
+        }
+
+        it('deletes attachments when a message is deleted', function () {
+            [$svc, $attachments] = withAttachments();
+
+            $id = $svc->store(['raw' => 'one']);
+            $attachments->store($id, new AttachmentData('a.txt', 'text/plain', 1, 'a', null, false));
+
+            $svc->delete($id);
+
+            expect($attachments->findByMessage($id))->toBe([]);
+        });
+
+        it('clears every attachment when all messages are cleared', function () {
+            [$svc, $attachments] = withAttachments();
+
+            $a = $svc->store(['raw' => 'one']);
+            $b = $svc->store(['raw' => 'two']);
+            $attachments->store($a, new AttachmentData('a.txt', 'text/plain', 1, 'a', null, false));
+            $attachments->store($b, new AttachmentData('b.txt', 'text/plain', 1, 'b', null, false));
+
+            $svc->clearAll();
+
+            expect($attachments->findByMessage($a))->toBe([])
+                ->and($attachments->findByMessage($b))->toBe([]);
+        });
+
+        it('cascades to attachments during purgeOlderThan', function () {
+            [$svc, $attachments] = withAttachments();
+
+            $old = $svc->store(['raw' => 'old', 'timestamp' => time() - 100]);
+            $new = $svc->store(['raw' => 'new', 'timestamp' => time()]);
+            $attachments->store($old, new AttachmentData('old.txt', 'text/plain', 1, 'a', null, false));
+            $attachments->store($new, new AttachmentData('new.txt', 'text/plain', 1, 'b', null, false));
+
+            $svc->purgeOlderThan(50);
+
+            expect($attachments->findByMessage($old))->toBe([])
+                ->and($attachments->findByMessage($new))->toHaveCount(1);
+        });
     });
 });

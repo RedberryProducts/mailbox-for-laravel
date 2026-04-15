@@ -416,21 +416,15 @@ $key = $this->mailbox->store($payload);
 
 ### Attachments
 
-Email attachments are captured and stored alongside the message. Access them via:
+Attachment storage is **paired with the message store driver**: when you pick `database`, attachment metadata lives in `mailbox_attachments` (with a cascade FK on the message row); when you pick `file`, metadata lives in a per-message JSON sidecar at `storage/app/mail-inbox/attachments-index/{message_id}.json`. In both cases the file *content* lives on the configured `mailbox.attachments.disk` (default: `mailbox` local disk under `attachments/`), so download/inline URLs work identically.
+
+Access them via:
 
 - **Dashboard UI:** Click "View" on the attachment
-- **Direct download:** `/mailbox/messages/{id}/attachments/{index}`
+- **Direct download:** `route('mailbox.attachments.download', ['id' => $attachmentId])`
+- **Inline preview (used by the CID rewriter for inline images):** `route('mailbox.attachments.inline', ['id' => $attachmentId])`
 
-**Attachment metadata:**
-
-```json
-{
-    "filename": "document.pdf",
-    "content_type": "application/pdf",
-    "size": 102400,
-    "content": "base64-encoded-data"
-}
-```
+**Custom attachment drivers:** implement `Redberry\MailboxForLaravel\Contracts\AttachmentStore` (8 methods: `store`, `find`, `findByMessage`, `findByCid`, `delete`, `deleteByMessage`, `getContent`, `clear`) and bind it as a singleton in your service provider — the rest of the package only depends on the contract.
 
 ### Clearing the Inbox
 
@@ -544,12 +538,18 @@ class RedisMessageStore implements MessageStore
         // Implementation
     }
 
-    public function get(string|int $key): ?array
+    public function find(string $id): ?array
     {
         // Implementation
     }
 
-    // ... other methods
+    public function idsOlderThan(int $seconds): array
+    {
+        // Implementation — return ids whose timestamp is older than $seconds.
+        // Used by CaptureService to cascade attachment cleanup before purge.
+    }
+
+    // ... other methods (paginate, count, update, delete, purgeOlderThan, clear)
 }
 ```
 

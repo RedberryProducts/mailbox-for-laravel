@@ -6,9 +6,11 @@ use Illuminate\Mail\MailManager;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Gate;
 use Redberry\MailboxForLaravel\Commands\DevLinkCommand;
+use Redberry\MailboxForLaravel\Contracts\AttachmentStore as AttachmentStoreContract;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
-use Redberry\MailboxForLaravel\Storage\AttachmentStore;
+use Redberry\MailboxForLaravel\Storage\DatabaseAttachmentStore;
+use Redberry\MailboxForLaravel\Storage\FileAttachmentStore;
 use Redberry\MailboxForLaravel\Support\CidRewriter;
 use Redberry\MailboxForLaravel\Transport\MailboxTransport;
 use Spatie\LaravelPackageTools\Package;
@@ -65,26 +67,45 @@ class MailboxServiceProvider extends PackageServiceProvider
     }
 
     /**
-     * Bind the AttachmentStore for attachment operations.
+     * Bind the AttachmentStore contract, paired with the active MessageStore driver.
+     *
+     * - `database` (default) → DatabaseAttachmentStore (Eloquent metadata + disk content)
+     * - `file`               → FileAttachmentStore (per-message JSON sidecar + disk content)
+     * - custom drivers may bind their own implementation in their resolver.
      */
     protected function registerAttachmentStore(): void
     {
-        $this->app->singleton(AttachmentStore::class, function ($app) {
-            return new AttachmentStore;
+        $this->app->singleton(AttachmentStoreContract::class, function ($app) {
+            $driver = (string) config('mailbox.store.driver', 'database');
+
+            if ($driver === 'file') {
+                $fileBase = (string) config('mailbox.store.file.path', storage_path('app/mailbox'));
+
+                return new FileAttachmentStore(
+                    rtrim($fileBase, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'attachments-index',
+                    (string) config('mailbox.attachments.disk', 'mailbox'),
+                    (string) config('mailbox.attachments.path', 'attachments'),
+                );
+            }
+
+            return $app->make(DatabaseAttachmentStore::class);
         });
 
         $this->app->singleton(CidRewriter::class, function ($app) {
-            return new CidRewriter($app->make(AttachmentStore::class));
+            return new CidRewriter($app->make(AttachmentStoreContract::class));
         });
     }
 
     /**
-     * Bind the CaptureService, which depends on MessageStore.
+     * Bind the CaptureService, which depends on MessageStore + AttachmentStore.
      */
     protected function registerCaptureService(): void
     {
         $this->app->bind(CaptureService::class, function ($app) {
-            return new CaptureService($app->make(MessageStore::class));
+            return new CaptureService(
+                $app->make(MessageStore::class),
+                $app->make(AttachmentStoreContract::class),
+            );
         });
     }
 
@@ -104,7 +125,7 @@ class MailboxServiceProvider extends PackageServiceProvider
         $this->app->bind(MailboxTransport::class, function ($app) {
             return new MailboxTransport(
                 $app->make(CaptureService::class),
-                $app->make(AttachmentStore::class)
+                $app->make(AttachmentStoreContract::class)
             );
         });
 

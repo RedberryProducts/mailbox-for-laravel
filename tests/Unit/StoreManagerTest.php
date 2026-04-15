@@ -66,6 +66,11 @@ describe(StoreManager::class, function () {
                 $this->stored = [];
             }
 
+            public function idsOlderThan(int $seconds): array
+            {
+                return array_keys($this->stored);
+            }
+
             public function clear(): void
             {
                 $this->stored = [];
