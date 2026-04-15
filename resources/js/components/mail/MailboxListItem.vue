@@ -33,21 +33,19 @@ const timestamp = computed(() => {
         + ' ago'
 })
 
-// Every row is a card floating on the list column (surface-container-low):
-// default — white card (surface-container-lowest) + ambient shadow
-// selected — same card + 4px primary left stripe as per the mockup
-// Hover lifts slightly brighter via subtle overlay.
+// Unread = red dot to the left of the subject (see template). Dot is
+// absolutely positioned so adding/removing it doesn't shift the subject
+// horizontally when a row transitions from unread → read.
+const isUnread = computed(() => !props.message.seen_at)
+
 const rootClasses = computed(() => [
     'relative block w-full text-left cursor-pointer overflow-hidden rounded-xl bg-surface-container-lowest shadow-ambient transition-[transform,box-shadow] hover:-translate-y-px',
     'px-5 py-4',
-    props.isSelected ? 'ring-0' : '',
 ])
 
-// Subject weight doubles as the read/unread signal — bold for unread,
-// regular for read — so we don't need a separate dot indicator.
 const subjectClasses = computed(() => [
     'headline-sm text-on-surface truncate pr-3',
-    props.message.seen_at ? 'font-medium' : 'font-semibold',
+    isUnread.value ? 'font-semibold' : 'font-medium',
 ])
 
 // Prefer the plain-text body. When the sender only shipped HTML, strip
@@ -95,9 +93,17 @@ function truncate(s: string): string {
 
         <div class="flex items-start justify-between gap-3 mb-1.5">
             <h3 :class="subjectClasses">
+                <span v-if="isUnread" class="sr-only">Unread. </span>
                 {{ props.message.subject }}
             </h3>
-            <span class="flex items-center gap-1.5 body-sm whitespace-nowrap text-on-surface-variant shrink-0">
+            <span class="relative flex items-center gap-1.5 body-sm whitespace-nowrap text-on-surface-variant shrink-0">
+                <span
+                    v-if="isUnread"
+                    class="absolute right-full top-1/2 -translate-y-1/2 mr-2 h-2.5 w-2.5"
+                    aria-hidden="true"
+                >
+                    <span class="absolute inset-0 rounded-full bg-linear-to-br from-red-400 to-red-600 ring-1 ring-white/40 ring-inset" />
+                </span>
                 <Paperclip
                     v-if="hasAttachments"
                     class="h-3.5 w-3.5 text-on-surface-variant"
