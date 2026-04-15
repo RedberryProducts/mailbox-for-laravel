@@ -172,6 +172,7 @@ The keys you're most likely to touch:
 - `store.driver` — `database` (default) or `file`. See [Storage](#storage).
 - `store.database.connection` — the connection the DB driver uses. Defaults to an auto-created `mailbox` SQLite file isolated from your app's database.
 - `retention` — seconds before `mailbox:clear --outdated` prunes a message (default 24 h).
+- `retention_schedule` — when `true` (default), the package auto-registers a daily `mailbox:clear --outdated` on Laravel's scheduler. Set `false` if you prefer to wire the purge yourself.
 - `per_page` — dashboard pagination size (default 20, clamped 1–100).
 - `attachments.disk` — the filesystem disk attachment content is written to (default `mailbox` local disk).
 
@@ -188,6 +189,7 @@ The keys you're most likely to touch:
 | `MAILBOX_STORE_DATABASE_TABLE` | `mailbox_messages` | Messages table name |
 | `MAILBOX_STORE_FILE_PATH` | `storage/app/mailbox` | Path for the file driver |
 | `MAILBOX_RETENTION` | `86400` | Retention period in seconds |
+| `MAILBOX_RETENTION_SCHEDULE` | `true` | Auto-register a daily `mailbox:clear --outdated` on the scheduler |
 | `MAILBOX_PER_PAGE` | `20` | Messages per dashboard page |
 | `MAILBOX_ATTACHMENTS_DISK` | `mailbox` | Disk for attachment content |
 
@@ -277,6 +279,8 @@ Captured messages can include passwords, tokens, and personal data, so leave `MA
 php artisan mailbox:install
 
 # Clear captured mail. With --outdated, only remove messages older than `retention`.
+# The --outdated variant runs daily on Laravel's scheduler automatically unless
+# MAILBOX_RETENTION_SCHEDULE=false.
 php artisan mailbox:clear
 php artisan mailbox:clear --outdated
 
