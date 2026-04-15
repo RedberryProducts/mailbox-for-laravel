@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { formatDistanceToNow } from 'date-fns'
+import { Paperclip } from 'lucide-vue-next'
 import { Message } from '@/types/mailbox'
 
 const props = defineProps<{
@@ -49,13 +50,38 @@ const subjectClasses = computed(() => [
     props.message.seen_at ? 'font-medium' : 'font-semibold',
 ])
 
-// Strip HTML + collapse whitespace for the snippet. Prefer text body,
-// fall back to a cleaned html body if the sender only shipped HTML.
+// Prefer the plain-text body. When the sender only shipped HTML, strip
+// <style> / <script> / <head> blocks *including their contents* before
+// removing the remaining tags — otherwise CSS rules from inlined
+// stylesheets leak into the snippet ("body { color:#333 } Hi there…").
+// This mirrors how Mailtrap / Gmail build list previews.
 const snippet = computed(() => {
-    const source = props.message.text_body || props.message.html_body || ''
-    const stripped = source.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-    return stripped.length > 160 ? stripped.slice(0, 160) + '…' : stripped
+    if (props.message.text_body) {
+        return truncate(collapseWhitespace(props.message.text_body))
+    }
+
+    const html = props.message.html_body || ''
+    if (!html) return ''
+
+    const withoutNonContent = html
+        .replace(/<head\b[\s\S]*?<\/head>/gi, ' ')
+        .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
+        .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<!--([\s\S]*?)-->/g, ' ')
+
+    const stripped = collapseWhitespace(withoutNonContent.replace(/<[^>]*>/g, ' '))
+    return truncate(stripped)
 })
+
+const hasAttachments = computed(() => (props.message.attachments?.length ?? 0) > 0)
+
+function collapseWhitespace(s: string): string {
+    return s.replace(/\s+/g, ' ').trim()
+}
+
+function truncate(s: string): string {
+    return s.length > 160 ? s.slice(0, 160) + '…' : s
+}
 </script>
 
 <template>
@@ -71,7 +97,12 @@ const snippet = computed(() => {
             <h3 :class="subjectClasses">
                 {{ props.message.subject }}
             </h3>
-            <span class="body-sm whitespace-nowrap text-on-surface-variant shrink-0">
+            <span class="flex items-center gap-1.5 body-sm whitespace-nowrap text-on-surface-variant shrink-0">
+                <Paperclip
+                    v-if="hasAttachments"
+                    class="h-3.5 w-3.5 text-on-surface-variant"
+                    :aria-label="`${props.message.attachments.length} attachment${props.message.attachments.length === 1 ? '' : 's'}`"
+                />
                 {{ timestamp }}
             </span>
         </div>

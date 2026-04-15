@@ -16,6 +16,7 @@ const props = defineProps<{
                 v-if="props.view === 'html'"
                 class="prose prose-sm max-w-none bg-surface-container-lowest rounded-lg overflow-auto"
                 :html="props.message.html_body"
+                :text-fallback="props.message.text_body"
             />
             <pre
                 v-else-if="props.view === 'text'"
