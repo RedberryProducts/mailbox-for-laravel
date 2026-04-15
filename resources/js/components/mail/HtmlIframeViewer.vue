@@ -27,10 +27,14 @@ let resizeObserver: ResizeObserver | null = null
 const sandbox =
     'allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation'
 
+// Force a light color scheme inside the iframe so user-agent defaults
+// (which honor the host OS dark-mode preference) don't flip text to
+// white against our explicit white background — the bug was: text-only
+// mail rendered white-on-white when the OS was in dark mode.
 const SHELL_CSS = `
-  :root { color-scheme: light dark; }
+  :root { color-scheme: light; }
   html, body { margin: 0; padding: 0; }
-  body { font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #fff; }
+  body { font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #fff; color: #111; }
   img, video, iframe { max-width: 100%; height: auto; }
   table { max-width: 100%; border-collapse: collapse; }
   pre, code { white-space: pre-wrap; word-wrap: break-word; }
