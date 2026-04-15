@@ -47,7 +47,7 @@ class MailboxAttachment extends Model
      */
     public function getConnectionName()
     {
-        return config('mailbox.store.database.connection', parent::getConnectionName());
+        return config('mailbox.store.database.connection', 'mailbox');
     }
 
     /**

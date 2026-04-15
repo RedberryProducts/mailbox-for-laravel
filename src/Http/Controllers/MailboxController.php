@@ -22,7 +22,8 @@ class MailboxController
     public function __invoke(Request $request, CaptureService $service): Response
     {
         $page = (int) $request->input('page', 1);
-        $perPage = (int) ($request->input('per_page') ?: config('mailbox.per_page'));
+        $perPage = (int) ($request->input('per_page') ?: config('mailbox.per_page', 20));
+        $perPage = max(1, min($perPage, 100));
         $search = trim((string) $request->input('search', ''));
         $search = $search !== '' ? $search : null;
 

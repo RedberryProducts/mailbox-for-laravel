@@ -34,8 +34,7 @@ All notable changes to `mailbox-for-laravel` will be documented in this file.
   - `MAILBOX_DB_CONNECTION` → `MAILBOX_STORE_DATABASE_CONNECTION`
   - `MAILBOX_DB_TABLE` → `MAILBOX_STORE_DATABASE_TABLE`
   - `MAILBOX_REDIRECT` → `MAILBOX_UNAUTHORIZED_REDIRECT`
-  - `MAILBOX_MAX_ATTACHMENT_SIZE` → `MAILBOX_ATTACHMENTS_MAX_SIZE`
-  - `MAILBOX_MAX_TOTAL_SIZE_PER_MESSAGE` → `MAILBOX_ATTACHMENTS_MAX_TOTAL_SIZE`
+- **Removed unimplemented attachment limit keys** — `mailbox.attachments.max_size`, `mailbox.attachments.max_total_size`, and `mailbox.attachments.allowed_mime_types` were declared in the config but never enforced. Removed to avoid misleading users.
 
 ### Added
 - Added Testing Assertions API (`src/Testing/`) for verifying captured emails in test suites

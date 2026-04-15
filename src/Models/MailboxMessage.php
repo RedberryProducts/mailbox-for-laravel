@@ -43,7 +43,7 @@ class MailboxMessage extends Model
      */
     public function getConnectionName()
     {
-        return config('mailbox.store.database.connection', parent::getConnectionName());
+        return config('mailbox.store.database.connection', 'mailbox');
     }
 
     /**
@@ -51,7 +51,7 @@ class MailboxMessage extends Model
      */
     public function getTable()
     {
-        return config('mailbox.store.database.table', parent::getTable());
+        return config('mailbox.store.database.table', 'mailbox_messages');
     }
 
     /**

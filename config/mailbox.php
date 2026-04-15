@@ -146,8 +146,7 @@ return [
     |
     | Attachment metadata follows the chosen store driver (database →
     | rows, file → JSON sidecars), while the content bytes always live
-    | on the configured filesystem disk. Sizes are in bytes. The
-    | "allowed_mime_types" list supports wildcard entries like "image/*".
+    | on the configured filesystem disk.
     |
     */
 
@@ -158,21 +157,6 @@ return [
         'disk' => env('MAILBOX_ATTACHMENTS_DISK', 'mailbox'),
 
         'path' => env('MAILBOX_ATTACHMENTS_PATH', 'attachments'),
-
-        'max_size' => (int) env('MAILBOX_ATTACHMENTS_MAX_SIZE', 5 * 1024 * 1024),
-
-        'max_total_size' => (int) env('MAILBOX_ATTACHMENTS_MAX_TOTAL_SIZE', 20 * 1024 * 1024),
-
-        'allowed_mime_types' => [
-            'image/*',
-            'application/pdf',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-excel',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'text/plain',
-            'text/csv',
-        ],
 
     ],
 

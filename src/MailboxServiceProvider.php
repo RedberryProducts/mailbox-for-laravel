@@ -111,14 +111,11 @@ class MailboxServiceProvider extends PackageServiceProvider
 
     /**
      * Register the custom "mailbox" mail transport, but only when enabled.
-     *
-     * Condition is intentionally preserved:
-     *   - enabled on all non-production envs
-     *   - OR when mailbox.enabled is explicitly true
+     * The "mailbox.enabled" config already encodes the env-based default.
      */
     protected function registerTransport(): void
     {
-        if (config('app.env') === 'production' && ! config('mailbox.enabled', false)) {
+        if (! config('mailbox.enabled')) {
             return;
         }
 
