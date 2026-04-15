@@ -225,7 +225,7 @@ return [
     | Default: null (shows Laravel's 403 page)
     |
     */
-    'unauthorized_redirect' => env('MAILBOX_UNAUTHORIZED_REDIRECT', null),
+    'unauthorized_redirect' => env('MAILBOX_UNAUTHORIZED_REDIRECT'),
 
     /*
     |--------------------------------------------------------------------------
@@ -458,10 +458,14 @@ Mailbox::clearAll();
 Mailbox::delete($messageId);
 ```
 
-**Via Artisan (future feature):**
+**Via Artisan:**
 
 ```bash
+# Clear all captured messages
 php artisan mailbox:clear
+
+# Clear only messages older than the configured retention period
+php artisan mailbox:clear --outdated
 ```
 
 > **Note:** Both clear and delete operations show confirmation dialogs in the UI to prevent accidental data loss.
