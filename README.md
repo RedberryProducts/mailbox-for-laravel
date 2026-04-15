@@ -27,6 +27,7 @@ Mailtrap, but self-contained within your application.
 - [Deploying on Staging / VPS / Docker](#deploying-on-staging--vps--docker)
 - [Authorization & Security](#authorization--security)
 - [Testing](#testing)
+    - [Testing Assertions API](#testing-assertions-api)
 - [Development](#development)
 - [Changelog](#changelog)
 - [Security Vulnerabilities](#security-vulnerabilities)
@@ -51,6 +52,7 @@ Mailtrap, but self-contained within your application.
 - **Responsive UI** — Beautiful TailwindCSS-based interface with dark mode support
 - **Developer-friendly** — Auto-enabled in non-production environments
 - **Test helpers** — Send test emails directly from the dashboard
+- **Testing assertions API** — Laravel-idiomatic helpers for verifying captured emails in your test suite (`assertSentTo`, `assertSeeInHtml`, etc.)
 
 ## Requirements
 
@@ -694,6 +696,158 @@ MAILBOX_REDIRECT=/login
 
 ## Testing
 
+### Testing Assertions API
+
+The package provides expressive, Laravel-idiomatic assertion helpers for verifying captured emails in your test suite. Unlike `Mail::fake()` which only checks if a Mailable was dispatched, these assertions verify the **actual rendered email** — real HTML, real recipients, real attachments.
+
+Works with both **Pest** and **PHPUnit**.
+
+#### Setup
+
+Add the `InteractsWithMailbox` trait to your test class. It automatically clears the mailbox before each test.
+
+**Pest:**
+
+```php
+use Redberry\MailboxForLaravel\Testing\InteractsWithMailbox;
+
+uses(InteractsWithMailbox::class);
+```
+
+**PHPUnit:**
+
+```php
+use Redberry\MailboxForLaravel\Testing\InteractsWithMailbox;
+
+class OrderEmailTest extends TestCase
+{
+    use InteractsWithMailbox;
+}
+```
+
+#### Collection-Level Assertions
+
+Assert against all captured emails using the trait's `$this->mailbox()` method or the `Mailbox` facade:
+
+```php
+use Redberry\MailboxForLaravel\Facades\Mailbox;
+use Redberry\MailboxForLaravel\DTO\MailboxMessageData;
+
+// Assert a specific number of emails were captured
+Mailbox::assertSentCount(2);
+
+// Assert no emails were captured
+Mailbox::assertNothingSent();
+
+// Assert an email was sent to a specific address
+Mailbox::assertSentTo('user@example.com');
+
+// Assert no email was sent to an address
+Mailbox::assertNotSentTo('admin@example.com');
+
+// Assert with a custom callback
+Mailbox::assertSent(fn (MailboxMessageData $m) => $m->subject === 'Welcome');
+
+// Assert exact count with callback
+Mailbox::assertSent(
+    fn (MailboxMessageData $m) => str_contains($m->subject, 'Newsletter'),
+    expectedCount: 3
+);
+
+// Assert with recipient + callback
+Mailbox::assertSentTo('user@example.com', fn (MailboxMessageData $m) => $m->subject === 'Welcome');
+
+// Query captured messages for custom assertions
+$messages = Mailbox::sent(fn (MailboxMessageData $m) => $m->subject === 'Reset');
+expect($messages)->toHaveCount(1);
+```
+
+#### Per-Message Fluent Assertions
+
+Use `firstSent()` to get a fluent assertion object for a captured email:
+
+```php
+Mailbox::firstSent()
+    ->assertHasSubject('Order Confirmation')
+    ->assertFrom('noreply@shop.com')
+    ->assertHasTo('buyer@example.com')
+    ->assertHasCc('accounting@shop.com')
+    ->assertSeeInHtml('Order #12345')
+    ->assertSeeInHtml('$49.99')
+    ->assertDontSeeInHtml('error')
+    ->assertSeeInText('Thank you for your purchase')
+    ->assertHasAttachment('invoice.pdf', 'application/pdf')
+    ->assertAttachmentCount(1)
+    ->assertHasHeader('X-Mailer');
+```
+
+Filter before asserting:
+
+```php
+// Get the first email matching a callback
+Mailbox::firstSent(fn (MailboxMessageData $m) => $m->subject === 'Password Reset')
+    ->assertHasTo('user@example.com')
+    ->assertSeeInHtml('Reset your password');
+```
+
+#### Available Per-Message Assertions
+
+| Method | Description |
+|---|---|
+| `assertFrom($email, $name?)` | Assert the sender email (and optionally name) |
+| `assertHasTo($email, $name?)` | Assert a "to" recipient exists |
+| `assertHasCc($email, $name?)` | Assert a "cc" recipient exists |
+| `assertHasBcc($email, $name?)` | Assert a "bcc" recipient exists |
+| `assertHasReplyTo($email, $name?)` | Assert a "reply-to" address exists |
+| `assertHasSubject($subject)` | Assert exact subject match |
+| `assertSubjectContains($substring)` | Assert subject contains a substring |
+| `assertSeeInHtml($string)` | Assert HTML body contains string |
+| `assertDontSeeInHtml($string)` | Assert HTML body does not contain string |
+| `assertSeeInText($string)` | Assert text body contains string |
+| `assertDontSeeInText($string)` | Assert text body does not contain string |
+| `assertSeeInOrderInHtml($strings)` | Assert strings appear in order in HTML |
+| `assertSeeInOrderInText($strings)` | Assert strings appear in order in text |
+| `assertHasAttachment($filename, $mimeType?)` | Assert attachment exists |
+| `assertHasNoAttachments()` | Assert no attachments |
+| `assertAttachmentCount($count)` | Assert number of attachments |
+| `assertHasHeader($name, $value?)` | Assert header exists (optionally with value) |
+
+#### Full Example
+
+```php
+use Redberry\MailboxForLaravel\Facades\Mailbox;
+use Redberry\MailboxForLaravel\Testing\InteractsWithMailbox;
+
+uses(InteractsWithMailbox::class);
+
+it('sends welcome email with getting started guide', function () {
+    // Trigger the action that sends the email
+    $this->post('/register', [
+        'name' => 'John Doe',
+        'email' => 'john@example.com',
+        'password' => 'secret123',
+    ]);
+
+    // Verify the email was captured
+    Mailbox::assertSentCount(1);
+    Mailbox::assertSentTo('john@example.com');
+
+    // Verify email content
+    Mailbox::firstSent()
+        ->assertHasSubject('Welcome, John!')
+        ->assertFrom('noreply@myapp.com')
+        ->assertSeeInHtml('Getting Started')
+        ->assertSeeInOrderInHtml(['Welcome', 'Getting Started', 'Support'])
+        ->assertHasAttachment('getting-started.pdf');
+});
+
+it('does not send email when registration fails', function () {
+    $this->post('/register', ['email' => 'invalid']);
+
+    Mailbox::assertNothingSent();
+});
+```
+
 ### Running Tests
 
 The package includes comprehensive test coverage using **Pest**.
@@ -744,36 +898,6 @@ composer format
 
 # Or directly
 ./vendor/bin/pint
-```
-
-### Writing Tests
-
-Tests follow the repository structure:
-
-```
-tests/
-├── Architecture/    # Arch tests for architectural rules
-├── Feature/         # Integration tests for controllers, commands
-└── Unit/            # Unit tests for services, transport, storage
-```
-
-**Example test:**
-
-```php
-use Redberry\MailboxForLaravel\CaptureService;
-
-it('stores a message and returns a key', function () {
-    $service = app(CaptureService::class);
-    
-    $key = $service->store([
-        'from' => 'sender@example.com',
-        'subject' => 'Test',
-        'raw' => 'Full message',
-    ]);
-    
-    expect($key)->toBeString();
-    expect($service->get($key))->toBeArray();
-});
 ```
 
 ## Development
