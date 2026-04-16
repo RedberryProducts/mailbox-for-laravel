@@ -155,6 +155,63 @@ describe(CaptureService::class, function () {
         expect($svc->all())->toBeEmpty();
     });
 
+    describe('write-path idempotency', function () {
+        it('second store with same message_id returns the same id', function () {
+            $svc = service();
+
+            $id1 = $svc->store(['raw' => 'v1', 'message_id' => '<dup@example.com>', 'subject' => 'First']);
+            $id2 = $svc->store(['raw' => 'v2', 'message_id' => '<dup@example.com>', 'subject' => 'Second']);
+
+            expect($id2)->toBe($id1);
+
+            $msg = $svc->find($id1);
+            expect($msg->subject)->toBe('Second');
+        });
+
+        it('null message_id never deduplicates', function () {
+            $svc = service();
+
+            $id1 = $svc->store(['raw' => 'one', 'message_id' => null]);
+            $id2 = $svc->store(['raw' => 'two', 'message_id' => null]);
+
+            expect($id1)->not->toBe($id2);
+            expect($svc->all())->toHaveCount(2);
+        });
+
+        it('empty-string message_id never deduplicates', function () {
+            $svc = service();
+
+            $id1 = $svc->store(['raw' => 'one', 'message_id' => '']);
+            $id2 = $svc->store(['raw' => 'two', 'message_id' => '']);
+
+            expect($id1)->not->toBe($id2);
+            expect($svc->all())->toHaveCount(2);
+        });
+
+        it('caller-supplied id takes precedence over message_id lookup', function () {
+            $svc = service();
+
+            $svc->store(['raw' => 'original', 'message_id' => '<x@example.com>']);
+
+            $customId = '01CUSTOM0000000000000000ID';
+            $returned = $svc->store(['id' => $customId, 'raw' => 'override', 'message_id' => '<x@example.com>']);
+
+            expect($returned)->toBe($customId);
+            expect($svc->all())->toHaveCount(2);
+        });
+
+        it('upserted message updates content', function () {
+            $svc = service();
+
+            $id = $svc->store(['raw' => 'v1', 'message_id' => '<up@example.com>', 'subject' => 'Version 1']);
+            $svc->store(['raw' => 'v2', 'message_id' => '<up@example.com>', 'subject' => 'Version 2']);
+
+            $msg = $svc->find($id);
+            expect($msg->subject)->toBe('Version 2')
+                ->and($msg->raw)->toBe('v2');
+        });
+    });
+
     describe('attachment cascade', function () {
         function withAttachments(): array
         {

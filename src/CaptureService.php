@@ -44,6 +44,15 @@ class CaptureService
         $payload['saved_at'] ??= now()->toIso8601String();
 
         $existingId = $payload['id'] ?? null;
+
+        if (! is_string($existingId) || $existingId === '') {
+            $rfcMessageId = $payload['message_id'] ?? null;
+
+            $existingId = is_string($rfcMessageId) && $rfcMessageId !== ''
+                ? $this->storage->findIdByMessageId($rfcMessageId)
+                : null;
+        }
+
         $payload['id'] = is_string($existingId) && $existingId !== ''
             ? $existingId
             : (string) Str::ulid();

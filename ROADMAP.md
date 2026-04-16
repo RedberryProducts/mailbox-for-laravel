@@ -38,13 +38,9 @@ Both drivers hand-roll search over `subject`, `from`, `to`, `text` and drift ind
 
 Shipped on the `v2.0.0-dev` branch. New config key `mailbox.decorate` (env: `MAILBOX_DECORATE`, default `null`). When set to a mailer name (e.g. `'smtp'`, `'ses'`, `'postmark'`), the service provider resolves that mailer's Symfony transport via `MailManager` and passes it as the `$decorated` argument to `MailboxTransport` — capture *and* real delivery with zero user-code changes. Circular references (`decorate => 'mailbox'`) are guarded with a clear exception. See the `## v2.0.0-dev — Declarative Transport Decoration` section in [`CHANGELOG.md`](CHANGELOG.md).
 
-### 7. Write-path idempotency
+### 7. Write-path idempotency — *Implemented*
 
-Duplicate `message_id` values (retries, queued job re-runs, replayed fixtures) currently create duplicate inbox entries.
-
-- Optional unique index on `message_id` when present (database driver).
-- Upsert semantics in `CaptureService::store()` — existing `message_id` updates rather than inserts.
-- Makes test suites that replay fixtures safe by default.
+Shipped on the `v2.0.0-dev` branch. `CaptureService::store()` now checks for an existing record with the same RFC 822 `message_id` before minting a new ULID — if found, it reuses the existing id so the downstream `store()` call becomes an update instead of an insert. A new `findIdByMessageId(string): ?string` method on the `MessageStore` contract (10th method, breaking) enables the lookup in both `DatabaseMessageStore` (indexed query) and `FileStorage` (file scan). A new migration adds a unique index on `mailbox_messages.message_id` (NULLs are exempt). Priority order: explicit caller-supplied `id` > `message_id` lookup > new ULID. Null/empty `message_id` values always create fresh entries. See the `## v2.0.0-dev — Write-Path Idempotency` section in [`CHANGELOG.md`](CHANGELOG.md).
 
 ### 8. Collapse `DatabaseMessageStore` into a SQLite-first story
 

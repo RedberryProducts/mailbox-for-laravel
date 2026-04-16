@@ -91,6 +91,25 @@ describe(FileStorage::class, function () {
         expect($store->paginate(1, 10))->toBeEmpty();
     });
 
+    it('finds existing id by RFC message_id', function () {
+        $store = storage();
+
+        $store->store([
+            'id' => 'msg-abc',
+            'raw' => 'content',
+            'timestamp' => time(),
+            'message_id' => '<abc123@example.com>',
+        ]);
+
+        expect($store->findIdByMessageId('<abc123@example.com>'))->toBe('msg-abc');
+    });
+
+    it('returns null for unknown message_id', function () {
+        $store = storage();
+
+        expect($store->findIdByMessageId('<unknown@example.com>'))->toBeNull();
+    });
+
     it('paginates correctly with multiple pages', function () {
         $store = storage();
         $store->store(['id' => 'msg1', 'raw' => '1', 'timestamp' => 1]);

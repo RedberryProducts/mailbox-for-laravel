@@ -41,6 +41,17 @@ describe(StoreManager::class, function () {
                 return $this->stored[$id] ?? null;
             }
 
+            public function findIdByMessageId(string $messageId): ?string
+            {
+                foreach ($this->stored as $id => $payload) {
+                    if (($payload['message_id'] ?? null) === $messageId) {
+                        return (string) $id;
+                    }
+                }
+
+                return null;
+            }
+
             public function paginate(int $page, int $perPage, ?string $search = null): array
             {
                 return array_values($this->stored);

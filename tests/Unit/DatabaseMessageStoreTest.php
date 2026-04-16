@@ -136,6 +136,26 @@ describe(DatabaseMessageStore::class, function () {
         expect($store->paginate(1, 10))->toBeEmpty();
     });
 
+    it('finds existing id by RFC message_id', function () {
+        $store = new DatabaseMessageStore;
+        $id = ulid();
+
+        $store->store([
+            'id' => $id,
+            'raw' => 'content',
+            'timestamp' => time(),
+            'message_id' => '<abc123@example.com>',
+        ]);
+
+        expect($store->findIdByMessageId('<abc123@example.com>'))->toBe($id);
+    });
+
+    it('returns null for unknown message_id', function () {
+        $store = new DatabaseMessageStore;
+
+        expect($store->findIdByMessageId('<unknown@example.com>'))->toBeNull();
+    });
+
     it('handles updateOrCreate when storing with existing id', function () {
         $store = new DatabaseMessageStore;
         $existingId = $store->store([

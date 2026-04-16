@@ -50,6 +50,15 @@ class DatabaseMessageStore implements MessageStore
         return $record?->toArray();
     }
 
+    public function findIdByMessageId(string $messageId): ?string
+    {
+        $record = MailboxMessage::query()
+            ->where('message_id', $messageId)
+            ->first(['id']);
+
+        return $record?->id;
+    }
+
     public function paginate(int $page, int $perPage, ?string $search = null): array
     {
         $page = max(1, $page);

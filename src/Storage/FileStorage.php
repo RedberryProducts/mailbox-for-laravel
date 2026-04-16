@@ -88,6 +88,29 @@ class FileStorage implements MessageStore
         return is_array($decoded) ? $decoded : null;
     }
 
+    public function findIdByMessageId(string $messageId): ?string
+    {
+        foreach (glob($this->basePath.'/*.json') ?: [] as $file) {
+            $contents = file_get_contents($file);
+
+            if ($contents === false || $contents === '') {
+                continue;
+            }
+
+            $decoded = json_decode($contents, true);
+
+            if (! is_array($decoded)) {
+                continue;
+            }
+
+            if (isset($decoded['message_id']) && $decoded['message_id'] === $messageId) {
+                return isset($decoded['id']) && is_string($decoded['id']) ? $decoded['id'] : null;
+            }
+        }
+
+        return null;
+    }
+
     public function paginate(int $page, int $perPage, ?string $search = null): array
     {
         $page = max(1, $page);

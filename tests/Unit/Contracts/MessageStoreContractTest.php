@@ -12,6 +12,7 @@ describe(MessageStore::class, function () {
         expect($methods)->toBe([
             'store',
             'find',
+            'findIdByMessageId',
             'paginate',
             'count',
             'update',
@@ -36,5 +37,9 @@ describe(MessageStore::class, function () {
 
         $paginateReturnType = $ref->getMethod('paginate')->getReturnType();
         expect($paginateReturnType?->getName())->toBe('array');
+
+        $findByMsgIdReturnType = $ref->getMethod('findIdByMessageId')->getReturnType();
+        expect($findByMsgIdReturnType->allowsNull())->toBeTrue()
+            ->and($findByMsgIdReturnType->getName())->toBe('string');
     });
 });

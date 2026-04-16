@@ -31,6 +31,14 @@ interface MessageStore
     public function find(string $id): ?array;
 
     /**
+     * Look up the canonical id (ULID) for a given RFC 822 Message-ID header.
+     *
+     * Returns null when no message with that header exists.
+     * Callers must guard against null/empty $messageId before calling.
+     */
+    public function findIdByMessageId(string $messageId): ?string;
+
+    /**
      * Retrieve a page of payloads, optionally filtered by a free-text search.
      *
      * @param  int  $page  1-based page index
