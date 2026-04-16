@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Storage;
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\DTO\AttachmentData;
 use Redberry\MailboxForLaravel\DTO\MailboxMessageData;
+use Redberry\MailboxForLaravel\DTO\PaginatedMessages;
 use Redberry\MailboxForLaravel\Storage\FileAttachmentStore;
 use Redberry\MailboxForLaravel\Storage\FileStorage;
 
@@ -90,12 +91,11 @@ describe(CaptureService::class, function () {
 
         $result = $svc->list();
 
-        expect($result)->toBeArray()
-            ->and($result)->toHaveKeys(['data', 'total', 'per_page', 'current_page', 'has_more', 'latest_timestamp'])
-            ->and($result['data'])->toHaveCount(3)
-            ->and($result['data'][0])->toBeInstanceOf(MailboxMessageData::class)
-            ->and($result['total'])->toBe(3)
-            ->and($result['has_more'])->toBeFalse();
+        expect($result)->toBeInstanceOf(PaginatedMessages::class)
+            ->and($result->data)->toHaveCount(3)
+            ->and($result->data[0])->toBeInstanceOf(MailboxMessageData::class)
+            ->and($result->total)->toBe(3)
+            ->and($result->hasMore)->toBeFalse();
     });
 
     it('returns paginated results when perPage is specified', function () {
@@ -106,13 +106,12 @@ describe(CaptureService::class, function () {
 
         $result = $svc->list(1, 2);
 
-        expect($result)->toBeArray()
-            ->and($result)->toHaveKeys(['data', 'total', 'per_page', 'current_page', 'has_more', 'latest_timestamp'])
-            ->and($result['data'])->toHaveCount(2)
-            ->and($result['data'][0])->toBeInstanceOf(MailboxMessageData::class)
-            ->and($result['total'])->toBe(3)
-            ->and($result['has_more'])->toBeTrue()
-            ->and($result['latest_timestamp'])->toBe(3000);
+        expect($result)->toBeInstanceOf(PaginatedMessages::class)
+            ->and($result->data)->toHaveCount(2)
+            ->and($result->data[0])->toBeInstanceOf(MailboxMessageData::class)
+            ->and($result->total)->toBe(3)
+            ->and($result->hasMore)->toBeTrue()
+            ->and($result->latestTimestamp)->toBe(3000);
     });
 
     it('marks message as seen', function () {

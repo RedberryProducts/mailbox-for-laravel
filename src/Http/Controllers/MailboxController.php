@@ -32,14 +32,14 @@ class MailboxController
         return Inertia::render('mailbox::Dashboard', [
             'messages' => array_map(
                 fn (MailboxMessageData $m) => $this->formatMessage($m),
-                $result['data'],
+                $result->data,
             ),
             'pagination' => [
-                'total' => $result['total'],
-                'per_page' => $result['per_page'],
-                'current_page' => $result['current_page'],
-                'has_more' => $result['has_more'],
-                'latest_timestamp' => $result['latest_timestamp'],
+                'total' => $result->total,
+                'per_page' => $result->perPage,
+                'current_page' => $result->currentPage,
+                'has_more' => $result->hasMore,
+                'latest_timestamp' => $result->latestTimestamp,
             ],
             'polling' => [
                 'enabled' => config('mailbox.polling.enabled', true),

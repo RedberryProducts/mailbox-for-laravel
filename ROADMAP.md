@@ -26,13 +26,13 @@ Both drivers hand-roll search over `subject`, `from`, `to`, `text` and drift ind
 - One canonical definition of searchable fields and match semantics.
 - Unlocks future extensions (header search, attachment filename search) without touching drivers.
 
-### 5. Typed pagination result **[breaking]**
+### 5. Typed pagination result **[breaking]** — *Implemented*
 
-`MessageStore::paginate()` returns a loose `array`, losing type information and forcing the controller to hand-assemble `pagination` metadata.
+`CaptureService::list()` returned a loose `array`, losing type information and forcing the controller to hand-assemble `pagination` metadata.
 
-- Replace with a `PaginatedMessages` value object (or Spatie `DataCollection` with typed meta).
-- Controller and Inertia response derive everything from the value object.
-- Cleaner contract for custom-driver authors.
+- Replaced with a `PaginatedMessages` value object (Spatie `Data` DTO with typed properties: `data`, `total`, `perPage`, `currentPage`, `hasMore`, `latestTimestamp`).
+- Controller and Inertia response derive everything from the value object via property access.
+- Cleaner contract for custom-driver authors. `MessageStore::paginate()` still returns `array` — the DTO wrapping happens in `CaptureService`.
 
 ### 6. Declarative transport decoration
 

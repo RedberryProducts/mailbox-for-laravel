@@ -9,6 +9,7 @@ use InvalidArgumentException;
 use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\DTO\MailboxMessageData;
+use Redberry\MailboxForLaravel\DTO\PaginatedMessages;
 
 /**
  * High-level mailbox API that the rest of the package uses.
@@ -63,10 +64,8 @@ class CaptureService
 
     /**
      * Paginated list of messages as DTOs, optionally filtered by a search term.
-     *
-     * @return array{data: array<int, MailboxMessageData>, total: int, per_page: int, current_page: int, has_more: bool, latest_timestamp: int|null}
      */
-    public function list(int $page = 1, int $perPage = 10, ?string $search = null): array
+    public function list(int $page = 1, int $perPage = 10, ?string $search = null): PaginatedMessages
     {
         $page = max(1, $page);
         $perPage = max(1, $perPage);
@@ -82,14 +81,14 @@ class CaptureService
 
         $latestTimestamp = isset($messages[0]) ? $messages[0]->timestamp : null;
 
-        return [
-            'data' => $messages,
-            'total' => $total,
-            'per_page' => $perPage,
-            'current_page' => $page,
-            'has_more' => ($page * $perPage) < $total,
-            'latest_timestamp' => $latestTimestamp,
-        ];
+        return new PaginatedMessages(
+            data: $messages,
+            total: $total,
+            perPage: $perPage,
+            currentPage: $page,
+            hasMore: ($page * $perPage) < $total,
+            latestTimestamp: $latestTimestamp,
+        );
     }
 
     /**

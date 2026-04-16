@@ -13,7 +13,7 @@ use Redberry\MailboxForLaravel\Testing\PendingMailboxMessageAssertion;
 /**
  * @method static string store(array $payload)
  * @method static string storeRaw(string $raw)
- * @method static array list(int $page = 1, int $perPage = 10)
+ * @method static \Redberry\MailboxForLaravel\DTO\PaginatedMessages list(int $page = 1, int $perPage = 10, ?string $search = null)
  * @method static array<int, MailboxMessageData> all()
  * @method static MailboxMessageData|null find(string $id)
  * @method static MailboxMessageData|null update(string $id, array $changes)
