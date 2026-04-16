@@ -261,7 +261,7 @@ Attachment content lives on the `mailbox` filesystem disk, independent of the me
 
 ### Custom drivers
 
-Implement [`Contracts\MessageStore`](src/Contracts/MessageStore.php) for messages, and [`Contracts\AttachmentStore`](src/Contracts/AttachmentStore.php) for their attachments. Register the pair in your service provider and point `mailbox.store.driver` at your resolver key:
+Implement [`Contracts\MessageStore`](src/Contracts/MessageStore.php) for messages, and [`Contracts\AttachmentStore`](src/Contracts/AttachmentStore.php) for their attachments. Register the pair in your service provider and point `mailbox.store.driver` at your resolver key. See [DRIVERS.md](DRIVERS.md) for the full driver author guide.
 
 ```php
 'store' => [
@@ -305,13 +305,24 @@ php artisan mailbox:install
 php artisan mailbox:clear
 php artisan mailbox:clear --outdated
 
+# Upgrade from v1.x to v2.0 — detects stale config, refreshes schema.
+# Use --fresh to skip prompts.
+php artisan mailbox:upgrade
+
 # Recreate the dev-mode asset symlink (rarely needed directly; --dev on install uses it).
 php artisan mailbox:dev-link
 ```
 
 ## Upgrading
 
-Breaking changes between major versions are documented in [CHANGELOG.md](CHANGELOG.md). Re-publish the config after any upgrade to pick up new keys:
+See [UPGRADE.md](UPGRADE.md) for the full v1.x → v2.0.0 migration guide. The quickest path:
+
+```bash
+composer update redberry/mailbox-for-laravel
+php artisan mailbox:upgrade
+```
+
+Breaking changes between major versions are also documented in [CHANGELOG.md](CHANGELOG.md). Re-publish the config after any upgrade to pick up new keys:
 
 ```bash
 php artisan vendor:publish --tag=mailbox-config --force

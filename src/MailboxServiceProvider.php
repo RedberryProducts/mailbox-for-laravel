@@ -33,6 +33,7 @@ class MailboxServiceProvider extends PackageServiceProvider
             ->hasCommands([
                 Commands\InstallCommand::class,
                 Commands\ClearInboxCommand::class,
+                Commands\UpgradeCommand::class,
             ]);
     }
 

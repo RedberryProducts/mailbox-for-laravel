@@ -48,11 +48,11 @@ Shipped on the `v2.0.0-dev` branch. Default driver renamed from `database` to `s
 
 ---
 
-## Cross-cutting concerns for v2.0.0
+## Cross-cutting concerns for v2.0.0 — *Done*
 
-- **Migration guide** from v1.x → v2.0.0 covering ID format, attachment layout, and payload-shape changes.
-- **Driver author guide** reflecting the new contract (`AttachmentStore`, `MessageSearch`, `PaginatedMessages`).
-- **Upgrade command** (`php artisan mailbox:upgrade`) to rewrite existing v1 data into the v2 layout where possible.
+- **Migration guide** — [`UPGRADE.md`](UPGRADE.md) covers every breaking change: ID format, config key renames, env variable renames, schema refresh, contract changes, and route name changes.
+- **Driver author guide** — [`DRIVERS.md`](DRIVERS.md) documents `MessageStore` (10 methods), `AttachmentStore` (8 methods), `MessageSearch` strategy, `PaginatedMessages` DTO, cascade cleanup rules, and registration patterns.
+- **Upgrade command** — `php artisan mailbox:upgrade` detects stale v1 config keys and env variables, prints migration instructions, and offers to refresh the schema. Supports `--fresh` for non-interactive use.
 
 ## Post-2.0 ideas (not scheduled)
 
