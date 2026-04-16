@@ -6,6 +6,7 @@ namespace Redberry\MailboxForLaravel;
 
 use Illuminate\Support\Manager;
 use InvalidArgumentException;
+use Redberry\MailboxForLaravel\Contracts\MessageSearch;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\Storage\DatabaseMessageStore;
 use Redberry\MailboxForLaravel\Storage\FileStorage;
@@ -36,7 +37,10 @@ class StoreManager extends Manager
 
         $path = $config['path'] ?? storage_path('app/mailbox');
 
-        return new FileStorage($path);
+        return new FileStorage(
+            $path,
+            $this->container->make(MessageSearch::class),
+        );
     }
 
     /**
@@ -47,7 +51,9 @@ class StoreManager extends Manager
      */
     protected function createDatabaseDriver(): MessageStore
     {
-        return new DatabaseMessageStore;
+        return new DatabaseMessageStore(
+            $this->container->make(MessageSearch::class),
+        );
     }
 
     /**

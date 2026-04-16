@@ -8,8 +8,10 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Gate;
 use Redberry\MailboxForLaravel\Commands\DevLinkCommand;
 use Redberry\MailboxForLaravel\Contracts\AttachmentStore as AttachmentStoreContract;
+use Redberry\MailboxForLaravel\Contracts\MessageSearch;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\Http\Middleware\AuthorizeMailboxMiddleware;
+use Redberry\MailboxForLaravel\Search\DefaultMessageSearch;
 use Redberry\MailboxForLaravel\Storage\DatabaseAttachmentStore;
 use Redberry\MailboxForLaravel\Storage\FileAttachmentStore;
 use Redberry\MailboxForLaravel\Support\CidRewriter;
@@ -34,6 +36,7 @@ class MailboxServiceProvider extends PackageServiceProvider
 
     public function registeringPackage(): void
     {
+        $this->registerSearch();
         $this->registerStorage();
         $this->registerAttachmentStore();
         $this->registerCaptureService();
@@ -88,6 +91,17 @@ class MailboxServiceProvider extends PackageServiceProvider
             ->daily()
             ->name('mailbox:retention-purge')
             ->onOneServer();
+    }
+
+    /**
+     * Bind the MessageSearch strategy.
+     *
+     * Users can swap this binding to customize which fields are searched
+     * and how matching works, without touching storage drivers.
+     */
+    protected function registerSearch(): void
+    {
+        $this->app->singleton(MessageSearch::class, DefaultMessageSearch::class);
     }
 
     /**

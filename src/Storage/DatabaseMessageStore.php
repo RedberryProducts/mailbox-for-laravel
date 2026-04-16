@@ -7,8 +7,10 @@ namespace Redberry\MailboxForLaravel\Storage;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use InvalidArgumentException;
+use Redberry\MailboxForLaravel\Contracts\MessageSearch;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\Models\MailboxMessage;
+use Redberry\MailboxForLaravel\Search\DefaultMessageSearch;
 
 /**
  * Database-backed storage driver.
@@ -18,6 +20,10 @@ use Redberry\MailboxForLaravel\Models\MailboxMessage;
  */
 class DatabaseMessageStore implements MessageStore
 {
+    public function __construct(
+        private readonly MessageSearch $search = new DefaultMessageSearch,
+    ) {}
+
     public function store(array $payload): string
     {
         $id = $payload['id'] ?? null;
@@ -62,30 +68,16 @@ class DatabaseMessageStore implements MessageStore
     }
 
     /**
-     * Apply a case-insensitive LIKE search across subject, from, to, and
-     * text body. JSON address columns are treated as strings — that matches
-     * the serialized payload on all supported databases (SQLite / MySQL /
-     * Postgres) without needing JSON-specific operators.
-     *
      * @param  Builder<MailboxMessage>  $query
      * @return Builder<MailboxMessage>
      */
     protected function applySearch(Builder $query, ?string $search): Builder
     {
-        $needle = $search !== null ? trim($search) : '';
-
-        if ($needle === '') {
+        if ($search === null || trim($search) === '') {
             return $query;
         }
 
-        $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $needle).'%';
-
-        return $query->where(function (Builder $q) use ($like): void {
-            $q->where('subject', 'like', $like)
-                ->orWhere('from', 'like', $like)
-                ->orWhere('to', 'like', $like)
-                ->orWhere('text', 'like', $like);
-        });
+        return $this->search->applyToQuery($query, $search);
     }
 
     public function update(string $id, array $changes): ?array

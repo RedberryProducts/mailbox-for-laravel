@@ -8,22 +8,21 @@ use const DIRECTORY_SEPARATOR;
 use const JSON_THROW_ON_ERROR;
 
 use InvalidArgumentException;
+use Redberry\MailboxForLaravel\Contracts\MessageSearch;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
+use Redberry\MailboxForLaravel\Search\DefaultMessageSearch;
 
 use function array_slice;
 use function count;
 use function file_get_contents;
 use function file_put_contents;
 use function glob;
-use function implode;
 use function is_array;
 use function is_dir;
 use function is_file;
 use function json_decode;
 use function json_encode;
-use function mb_strtolower;
 use function rtrim;
-use function str_contains;
 use function trim;
 use function unlink;
 use function usort;
@@ -37,8 +36,10 @@ class FileStorage implements MessageStore
 {
     protected string $basePath;
 
-    public function __construct(?string $basePath = null)
-    {
+    public function __construct(
+        ?string $basePath = null,
+        private readonly MessageSearch $search = new DefaultMessageSearch,
+    ) {
         $this->basePath = $basePath ?: storage_path('app/mail-inbox');
 
         if (! is_dir($this->basePath)) {
@@ -125,7 +126,6 @@ class FileStorage implements MessageStore
     {
         $files = glob($this->basePath.'/*.json') ?: [];
         $needle = $search !== null ? trim($search) : '';
-        $needleLower = $needle !== '' ? mb_strtolower($needle) : null;
 
         $messages = [];
 
@@ -142,7 +142,7 @@ class FileStorage implements MessageStore
                 continue;
             }
 
-            if ($needleLower !== null && ! $this->matchesSearch($decoded, $needleLower)) {
+            if ($needle !== '' && ! $this->search->matches($decoded, $needle)) {
                 continue;
             }
 
@@ -150,21 +150,6 @@ class FileStorage implements MessageStore
         }
 
         return $messages;
-    }
-
-    /**
-     * @param  array<string, mixed>  $payload
-     */
-    protected function matchesSearch(array $payload, string $needleLower): bool
-    {
-        $haystack = implode(' ', [
-            (string) ($payload['subject'] ?? ''),
-            is_array($payload['from'] ?? null) ? json_encode($payload['from']) : (string) ($payload['from'] ?? ''),
-            is_array($payload['to'] ?? null) ? json_encode($payload['to']) : (string) ($payload['to'] ?? ''),
-            (string) ($payload['text'] ?? ''),
-        ]);
-
-        return str_contains(mb_strtolower($haystack), $needleLower);
     }
 
     public function update(string $id, array $changes): ?array
