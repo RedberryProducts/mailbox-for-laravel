@@ -137,7 +137,7 @@ describe('applyToQuery()', function () {
 describe('SEARCHABLE_FIELDS constant', function () {
     it('contains the canonical set of searchable fields', function () {
         expect(DefaultMessageSearch::SEARCHABLE_FIELDS)->toBe([
-            'subject', 'from', 'to', 'text',
+            'subject', 'from', 'to', 'html', 'text',
         ]);
     });
 });

@@ -35,7 +35,7 @@ const isUnread = computed(() => !props.message.seen_at)
 
 const rootClasses = computed(() => [
     'relative block w-full text-left cursor-pointer overflow-hidden rounded-xl bg-surface-container-lowest shadow-ambient transition-[transform,box-shadow] hover:-translate-y-px',
-    'px-5 py-4',
+    'px-5 py-3',
 ])
 
 const subjectClasses = computed(() => [
@@ -62,6 +62,8 @@ const snippet = computed(() => {
 })
 
 const hasAttachments = computed(() => (props.message.attachments?.length ?? 0) > 0)
+
+const recipientCount = computed(() => props.message.to.length)
 
 function collapseWhitespace(s: string): string {
     return s.replace(/\s+/g, ' ').trim()
@@ -102,8 +104,13 @@ function truncate(s: string): string {
             </span>
         </div>
 
-        <p class="mb-2 truncate body-sm text-on-surface-variant">
-            {{ props.message.from }}
+        <p class="mb-1 flex items-center gap-1 body-sm text-on-surface-variant min-w-0">
+            <span class="truncate">{{ props.message.from }}</span>
+            <span
+                v-if="recipientCount > 1"
+                class="inline-flex items-center shrink-0 rounded-full bg-surface-container-high px-1.5 py-px text-on-surface-variant" style="font-size: 10px; line-height: 1.4"
+                :title="props.message.to.join(', ')"
+            >+{{ recipientCount - 1 }}</span>
         </p>
 
         <p

@@ -28,7 +28,7 @@ const handleSelect = (id: string) => emit('select', id)
             Cards, not rows: each message floats as its own elevated card on
             the list column. Separation is whitespace + shadow, never a line.
         -->
-        <div v-else class="flex flex-col gap-3 px-4 py-4">
+        <div v-else class="flex flex-col gap-1.5 px-4 py-4">
             <MailboxListItem
                 v-for="message in props.messages"
                 :key="message.id"

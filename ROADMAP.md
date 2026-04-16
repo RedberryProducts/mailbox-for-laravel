@@ -18,7 +18,7 @@ Shipped on the `v2.0.0-dev` branch. `CaptureService::store()` assigns a `Str::ul
 
 Shipped on the `v2.0.0-dev` branch. `MailboxServiceProvider` registers a daily `Schedule::command('mailbox:clear --outdated')` via `callAfterResolving(Schedule::class, …)`, triple-guarded by `mailbox.enabled`, `mailbox.retention > 0`, and a new `mailbox.retention_schedule` flag (env: `MAILBOX_RETENTION_SCHEDULE`, default `true`). Hosts that prefer to wire the purge by hand can flip the flag off; multi-server deployments are covered by `->onOneServer()`. See the `## v2.0.0-dev — Automatic Retention` section in [`CHANGELOG.md`](CHANGELOG.md).
 
-### 4. Search as a strategy, not per-driver
+### 4. Search as a strategy, not per-driver — *Implemented*
 
 Both drivers hand-roll search over `subject`, `from`, `to`, `text` and drift independently.
 
