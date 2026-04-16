@@ -56,8 +56,8 @@ describe(MailboxServiceProvider::class, function () {
     });
 
     it('merges default config values correctly', function () {
-        // Default driver is 'database' per config file
-        expect(config('mailbox.store.driver'))->toBe('database');
+        // Default driver is 'sqlite' per config file
+        expect(config('mailbox.store.driver'))->toBe('sqlite');
         expect(config('mailbox.middleware'))->toBe(['web']);
     });
 

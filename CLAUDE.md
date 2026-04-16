@@ -84,7 +84,7 @@ tests/                              # Architecture/, Commands/, Feature/, Unit/
 1. **MailboxTransport** (`src/Transport/`) — Registered as the `mailbox` mail driver. Intercepts sent mail, optionally decorates another transport. Toggleable.
 2. **MessageNormalizer** (`src/Support/`) — Converts Symfony `Email`/`RawMessage` to a canonical array. Extracts attachments as `AttachmentData` DTOs.
 3. **CaptureService** (`src/CaptureService.php`) — High-level API for store/list/find/update/delete/purge. Returns `MailboxMessageData` DTOs. Storage-driver-agnostic.
-4. **StoreManager** (`src/StoreManager.php`) — Extends Laravel's `Manager`. Resolves `database` (default) or `file` drivers.
+4. **StoreManager** (`src/StoreManager.php`) — Extends Laravel's `Manager`. Resolves `sqlite` (default), `database`, or `file` drivers.
 5. **Storage Drivers** (`src/Storage/`) — `DatabaseMessageStore` (Eloquent, dedicated SQLite at `storage/app/mailbox/mailbox.sqlite`) and `FileStorage` (JSON on disk). Both implement `MessageStore` contract.
 6. **AttachmentStore pair** — `DatabaseAttachmentStore` or `FileAttachmentStore` is bound alongside the chosen `MessageStore` driver. Both implement `Contracts\AttachmentStore` and return `StoredAttachment` DTOs. **CidRewriter** uses the contract to resolve inline `cid:` references regardless of driver. `CaptureService` cascades attachment cleanup automatically on `delete`, `clearAll`, and `purgeOlderThan`.
 

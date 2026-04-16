@@ -90,17 +90,23 @@ return [
     | Storage
     |--------------------------------------------------------------------------
     |
-    | Choose how captured messages are persisted. The "database" driver
-    | stores metadata in its own SQLite database (isolated from your
-    | app's connection), while "file" keeps everything as JSON on disk.
-    | Custom drivers may be registered via the "resolvers" array —
-    | each entry is a callable returning a MessageStore instance.
+    | Choose how captured messages are persisted:
+    |
+    |   "sqlite"   (default) — auto-configured dedicated SQLite file at
+    |               storage/app/mailbox/mailbox.sqlite, zero setup required.
+    |   "database" — bring-your-own connection (MySQL, Postgres, etc.).
+    |               Define the connection in config/database.php first.
+    |   "file"     — JSON files on disk, no database needed.
+    |
+    | Both "sqlite" and "database" use the same Eloquent-backed store
+    | internally. Custom drivers may be registered via the "resolvers"
+    | array — each entry is a callable returning a MessageStore instance.
     |
     */
 
     'store' => [
 
-        'driver' => env('MAILBOX_STORE_DRIVER', 'database'),
+        'driver' => env('MAILBOX_STORE_DRIVER', 'sqlite'),
 
         'resolvers' => [
             // 'custom' => fn () => new \App\Support\CustomMailboxStore(),

@@ -25,7 +25,7 @@ class StoreManager extends Manager
      */
     public function getDefaultDriver(): string
     {
-        return (string) $this->container['config']->get('mailbox.store.driver', 'file');
+        return (string) $this->container['config']->get('mailbox.store.driver', 'sqlite');
     }
 
     /**
@@ -44,10 +44,23 @@ class StoreManager extends Manager
     }
 
     /**
-     * Database-backed driver.
+     * SQLite driver (default).
      *
-     * Uses the MailboxMessage model, which should define connection/table
-     * if you want to point it at a specific DB/connection.
+     * Auto-configured dedicated SQLite file at storage/app/mailbox/mailbox.sqlite.
+     * Uses the Eloquent-backed DatabaseMessageStore under the hood.
+     */
+    protected function createSqliteDriver(): MessageStore
+    {
+        return new DatabaseMessageStore(
+            $this->container->make(MessageSearch::class),
+        );
+    }
+
+    /**
+     * Database driver (bring-your-own-connection).
+     *
+     * Same Eloquent-backed store as "sqlite", but intended for users who
+     * define their own connection (MySQL, Postgres, etc.) in config/database.php.
      */
     protected function createDatabaseDriver(): MessageStore
     {

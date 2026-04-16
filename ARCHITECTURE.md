@@ -264,7 +264,8 @@ Capture is split into two driver-shaped interfaces that are always resolved as a
 
 | `mailbox.store.driver` | MessageStore             | AttachmentStore             | Metadata location                                         |
 | ---------------------- | ------------------------ | --------------------------- | --------------------------------------------------------- |
-| `database` (default)   | `DatabaseMessageStore`   | `DatabaseAttachmentStore`   | `mailbox_messages` + `mailbox_attachments` (cascade FK)   |
+| `sqlite` (default)     | `DatabaseMessageStore`   | `DatabaseAttachmentStore`   | `mailbox_messages` + `mailbox_attachments` (cascade FK)   |
+| `database`             | `DatabaseMessageStore`   | `DatabaseAttachmentStore`   | Same as `sqlite` — alias for bring-your-own-connection    |
 | `file`                 | `FileStorage`            | `FileAttachmentStore`       | `storage/app/mail-inbox/{id}.json` + per-message sidecars |
 
 In both cases the attachment **content bytes** live on the configured `mailbox.attachments.disk`, so download/inline URLs are identical regardless of driver.

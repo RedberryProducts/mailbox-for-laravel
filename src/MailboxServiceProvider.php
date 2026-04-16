@@ -126,14 +126,14 @@ class MailboxServiceProvider extends PackageServiceProvider
     /**
      * Bind the AttachmentStore contract, paired with the active MessageStore driver.
      *
-     * - `database` (default) → DatabaseAttachmentStore (Eloquent metadata + disk content)
-     * - `file`               → FileAttachmentStore (per-message JSON sidecar + disk content)
+     * - `sqlite` (default) / `database` → DatabaseAttachmentStore (Eloquent metadata + disk content)
+     * - `file`                          → FileAttachmentStore (per-message JSON sidecar + disk content)
      * - custom drivers may bind their own implementation in their resolver.
      */
     protected function registerAttachmentStore(): void
     {
         $this->app->singleton(AttachmentStoreContract::class, function ($app) {
-            $driver = (string) config('mailbox.store.driver', 'database');
+            $driver = (string) config('mailbox.store.driver', 'sqlite');
 
             if ($driver === 'file') {
                 $fileBase = (string) config('mailbox.store.file.path', storage_path('app/mailbox'));

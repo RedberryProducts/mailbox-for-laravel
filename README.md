@@ -183,7 +183,7 @@ The keys you're most likely to touch:
 - `path` — the URI prefix the dashboard lives at (default `mailbox`).
 - `middleware` — routes run under the `web` group by default; add your own guards here (e.g. `auth`) for staging access control.
 - `gate` — the Gate ability checked before dashboard access (default `viewMailbox`). See [Authorization](#authorization).
-- `store.driver` — `database` (default) or `file`. See [Storage](#storage).
+- `store.driver` — `sqlite` (default), `database`, or `file`. See [Storage](#storage).
 - `store.database.connection` — the connection the DB driver uses. Defaults to an auto-created `mailbox` SQLite file isolated from your app's database.
 - `retention` — seconds before `mailbox:clear --outdated` prunes a message (default 24 h).
 - `retention_schedule` — when `true` (default), the package auto-registers a daily `mailbox:clear --outdated` on Laravel's scheduler. Set `false` if you prefer to wire the purge yourself.
@@ -199,7 +199,7 @@ The keys you're most likely to touch:
 | `MAILBOX_PATH` | `mailbox` | URL prefix for the dashboard |
 | `MAILBOX_GATE` | `viewMailbox` | Gate ability checked by the authorize middleware |
 | `MAILBOX_UNAUTHORIZED_REDIRECT` | `null` | Redirect target on gate denial (null = 403 response) |
-| `MAILBOX_STORE_DRIVER` | `database` | `database` or `file` |
+| `MAILBOX_STORE_DRIVER` | `sqlite` | `sqlite`, `database`, or `file` |
 | `MAILBOX_STORE_DATABASE_CONNECTION` | `mailbox` | Connection name for the DB driver |
 | `MAILBOX_STORE_DATABASE_TABLE` | `mailbox_messages` | Messages table name |
 | `MAILBOX_STORE_FILE_PATH` | `storage/app/mailbox` | Path for the file driver |
@@ -210,11 +210,17 @@ The keys you're most likely to touch:
 
 ## Storage
 
-### Database driver (default)
+### SQLite driver (default)
 
-Messages are stored in a dedicated `mailbox` SQLite database at `storage/app/mailbox/mailbox.sqlite`, isolated from your app's main database. The package only creates this connection if one with the configured name doesn't already exist, so you can point it elsewhere.
+Messages are stored in a dedicated SQLite database at `storage/app/mailbox/mailbox.sqlite`, fully isolated from your app's main database. This is the zero-config default — no setup required.
 
-To use your own connection (e.g. MySQL), define it in `config/database.php`:
+### Database driver (bring-your-own-connection)
+
+If you'd rather store captured mail in MySQL, Postgres, or another existing connection, switch the driver to `database` and define the connection in `config/database.php`:
+
+```env
+MAILBOX_STORE_DRIVER=database
+```
 
 ```php
 'connections' => [
@@ -228,7 +234,7 @@ To use your own connection (e.g. MySQL), define it in `config/database.php`:
 ],
 ```
 
-Or point `MAILBOX_STORE_DATABASE_CONNECTION` at an existing connection such as `mysql`. Run `php artisan mailbox:install` again to create the `mailbox_messages` and `mailbox_attachments` tables there.
+Or point `MAILBOX_STORE_DATABASE_CONNECTION` at an existing connection such as `mysql`. Run `php artisan mailbox:install` again to create the `mailbox_messages` and `mailbox_attachments` tables there. Both `sqlite` and `database` use the same Eloquent-backed store internally — the difference is only in how the connection is configured.
 
 ### File driver
 

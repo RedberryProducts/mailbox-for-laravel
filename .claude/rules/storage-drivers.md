@@ -7,11 +7,11 @@ globs: src/Storage/**/*.php, src/Contracts/**/*.php, src/StoreManager.php
 
 When adding or modifying a storage driver:
 
-1. Implement `Contracts\MessageStore` interface — 9 methods: `store`, `find`, `paginate`, `count`, `update`, `delete`, `purgeOlderThan`, `idsOlderThan`, `clear`. `idsOlderThan` is what `CaptureService` uses to cascade attachment cleanup before purge — never skip it.
+1. Implement `Contracts\MessageStore` interface — 10 methods: `store`, `find`, `findIdByMessageId`, `paginate`, `count`, `update`, `delete`, `purgeOlderThan`, `idsOlderThan`, `clear`. `idsOlderThan` is what `CaptureService` uses to cascade attachment cleanup before purge — never skip it. `findIdByMessageId` enables write-path idempotency (dedup by RFC Message-ID header).
 2. Register in `StoreManager` via a `createXxxDriver()` method (for built-in drivers) or via config resolvers (for custom drivers)
 3. `store()` receives a payload array with at least: `id`, `timestamp`, `saved_at`
 4. `paginate()` must return results in **newest-first** ordering
-5. Default driver is `database` (`DatabaseMessageStore` with dedicated SQLite at `storage/app/mailbox/mailbox.sqlite`)
+5. Default driver is `sqlite` (`DatabaseMessageStore` with dedicated SQLite at `storage/app/mailbox/mailbox.sqlite`). `database` is an alias for bring-your-own-connection users.
 6. `FileStorage` uses JSON files on disk at a configurable path
 7. Driver-specific config lives under `config('mailbox.store.{driver_name}')`
 8. Write unit tests mirroring `tests/Unit/Contracts/MessageStoreContractTest.php` — this is the contract test that both drivers must pass

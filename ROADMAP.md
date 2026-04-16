@@ -42,13 +42,9 @@ Shipped on the `v2.0.0-dev` branch. New config key `mailbox.decorate` (env: `MAI
 
 Shipped on the `v2.0.0-dev` branch. `CaptureService::store()` now checks for an existing record with the same RFC 822 `message_id` before minting a new ULID — if found, it reuses the existing id so the downstream `store()` call becomes an update instead of an insert. A new `findIdByMessageId(string): ?string` method on the `MessageStore` contract (10th method, breaking) enables the lookup in both `DatabaseMessageStore` (indexed query) and `FileStorage` (file scan). A new migration adds a unique index on `mailbox_messages.message_id` (NULLs are exempt). Priority order: explicit caller-supplied `id` > `message_id` lookup > new ULID. Null/empty `message_id` values always create fresh entries. See the `## v2.0.0-dev — Write-Path Idempotency` section in [`CHANGELOG.md`](CHANGELOG.md).
 
-### 8. Collapse `DatabaseMessageStore` into a SQLite-first story
+### 8. Collapse `DatabaseMessageStore` into a SQLite-first story — *Implemented*
 
-The contract allows arbitrary connections, but the auto-config hardcodes a dedicated SQLite file — which is what nearly everyone actually wants.
-
-- Rename the default flavor to `sqlite` so intent is obvious.
-- Keep `database` as an advanced escape hatch for bring-your-own-connection users.
-- Document the tradeoffs (portability of the SQLite file vs. integration with host DB tooling).
+Shipped on the `v2.0.0-dev` branch. Default driver renamed from `database` to `sqlite` (env: `MAILBOX_STORE_DRIVER`, default `sqlite`). Both `sqlite` and `database` resolve to `DatabaseMessageStore` under the hood — `sqlite` is the zero-config dedicated SQLite file, `database` is the bring-your-own-connection escape hatch for MySQL/Postgres users. `StoreManager` now has `createSqliteDriver()` alongside the existing `createDatabaseDriver()`. See the `## v2.0.0-dev — SQLite-First Driver Naming` section in [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
