@@ -92,17 +92,33 @@ class InstallCommand extends Command
     {
         $path = public_path('vendor/mailbox');
 
-        if (file_exists($path) && is_link($path)) {
-            @unlink($path);
-        }
-
-        if (File::exists($path)) {
-            File::deleteDirectory($path);
-        }
+        $this->cleanPath($path);
 
         $this->call('vendor:publish', [
             '--tag' => 'mailbox-assets',
             '--force' => (bool) $this->option('force'),
         ]);
+    }
+
+    /**
+     * Remove whatever sits at the given path: symlink (even broken), directory, or file.
+     */
+    protected function cleanPath(string $path): void
+    {
+        if (is_link($path)) {
+            unlink($path);
+
+            return;
+        }
+
+        if (is_dir($path)) {
+            File::deleteDirectory($path);
+
+            return;
+        }
+
+        if (file_exists($path)) {
+            unlink($path);
+        }
     }
 }

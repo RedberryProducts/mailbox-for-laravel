@@ -36,12 +36,8 @@ class DevLinkCommand extends Command
      */
     protected function cleanup(string $path): void
     {
-        if (! file_exists($path) && ! is_link($path)) {
-            return;
-        }
-
         if (is_link($path)) {
-            @unlink($path);
+            unlink($path);
 
             return;
         }
@@ -52,6 +48,8 @@ class DevLinkCommand extends Command
             return;
         }
 
-        @unlink($path);
+        if (file_exists($path)) {
+            unlink($path);
+        }
     }
 }
