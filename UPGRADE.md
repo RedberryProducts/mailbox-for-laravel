@@ -129,6 +129,62 @@ The following keys were declared in v1 but never enforced. They have been remove
 
 The clear inbox endpoint changed from `POST /mailbox/clear` to `DELETE /mailbox/messages`. The route name changed from `mailbox.clear` to `mailbox.messages.clear`.
 
+## Common problems
+
+### Dashboard shows a blank page or JavaScript error after upgrade
+
+The v2 assets are built against Inertia.js v3. If you see a console error like `Cannot read properties of undefined (reading 'replace')`, your published assets are stale. Re-publish them:
+
+```bash
+php artisan mailbox:install --force
+```
+
+### Old assets not cleaned up / stale hashed files in `public/vendor/mailbox`
+
+The `mailbox:install` command deletes the entire `public/vendor/mailbox` directory before re-publishing. If old files persist, the directory may have been created by a different user (e.g. a web server or deployment process) and your current user lacks permission to delete it. Fix the ownership and re-run:
+
+```bash
+sudo rm -rf public/vendor/mailbox
+php artisan mailbox:install --force
+```
+
+### "Class 'Inertia\Middleware' not found"
+
+v2 requires `inertiajs/inertia-laravel` `^3.0`. If Composer resolved an older version, update it:
+
+```bash
+composer require inertiajs/inertia-laravel:^3.0
+```
+
+If your host application pins `inertiajs/inertia-laravel` to v1 or v2, you will need to upgrade your application's Inertia setup first. See the [Inertia.js upgrade guide](https://inertiajs.com/upgrade-guide).
+
+### SQLite database file not found after schema refresh
+
+If you see a SQLite "unable to open database file" error after running `mailbox:install --refresh`, the storage directory may not exist:
+
+```bash
+mkdir -p storage/app/mailbox
+php artisan mailbox:install --refresh
+```
+
+The install command normally creates this directory, but it can fail if the `storage/app` directory itself has restrictive permissions.
+
+### Stale config cache
+
+If the package behaves unexpectedly after upgrading (wrong defaults, missing routes, features not working), clear the cached config:
+
+```bash
+php artisan config:clear
+php artisan route:clear
+php artisan cache:clear
+```
+
+Then re-publish the config to pick up new keys:
+
+```bash
+php artisan vendor:publish --tag=mailbox-config --force
+```
+
 ## Need help?
 
 If you run into issues upgrading, please [open an issue](https://github.com/RedberryProducts/mailbox-for-laravel/issues) with your Laravel version and the error you're seeing.
