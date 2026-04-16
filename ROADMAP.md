@@ -34,13 +34,9 @@ Both drivers hand-roll search over `subject`, `from`, `to`, `text` and drift ind
 - Controller and Inertia response derive everything from the value object via property access.
 - Cleaner contract for custom-driver authors. `MessageStore::paginate()` still returns `array` — the DTO wrapping happens in `CaptureService`.
 
-### 6. Declarative transport decoration
+### 6. Declarative transport decoration — *Implemented*
 
-Today, wrapping another transport requires constructor-level wiring in user code.
-
-- New config key: `mailbox.decorate => 'smtp'` (or any driver name the `MailManager` knows).
-- Service provider resolves the named transport from `MailManager` and wraps it with `MailboxTransport` automatically.
-- Capture *and* real delivery with zero user-code changes.
+Shipped on the `v2.0.0-dev` branch. New config key `mailbox.decorate` (env: `MAILBOX_DECORATE`, default `null`). When set to a mailer name (e.g. `'smtp'`, `'ses'`, `'postmark'`), the service provider resolves that mailer's Symfony transport via `MailManager` and passes it as the `$decorated` argument to `MailboxTransport` — capture *and* real delivery with zero user-code changes. Circular references (`decorate => 'mailbox'`) are guarded with a clear exception. See the `## v2.0.0-dev — Declarative Transport Decoration` section in [`CHANGELOG.md`](CHANGELOG.md).
 
 ### 7. Write-path idempotency
 

@@ -10,6 +10,7 @@ use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\MailboxServiceProvider;
 use Redberry\MailboxForLaravel\Storage\FileStorage;
 use Redberry\MailboxForLaravel\Transport\MailboxTransport;
+use Symfony\Component\Mailer\Transport\TransportInterface;
 
 describe(MailboxServiceProvider::class, function () {
     it('registers config, routes, views, and install command', function () {
@@ -239,6 +240,57 @@ describe(MailboxServiceProvider::class, function () {
             $schedule = app()->make(Schedule::class);
 
             expect($mailboxEvents($schedule))->not->toBeEmpty();
+        });
+    });
+
+    describe('transport decoration', function () {
+        it('leaves decorated transport null when decorate config is not set', function () {
+            config(['mailbox.decorate' => null]);
+
+            app()->forgetInstance(MailboxTransport::class);
+            app(MailManager::class)->purge('mailbox');
+
+            $transport = app(MailManager::class)->mailer('mailbox')->getSymfonyTransport();
+
+            $ref = new ReflectionProperty(MailboxTransport::class, 'decorated');
+            expect($ref->getValue($transport))->toBeNull();
+        });
+
+        it('resolves and injects the decorated transport when decorate config is set', function () {
+            config([
+                'mailbox.decorate' => 'log',
+                'mail.mailers.log' => ['transport' => 'log'],
+            ]);
+
+            app()->forgetInstance(MailboxTransport::class);
+            app(MailManager::class)->purge('mailbox');
+
+            $transport = app(MailManager::class)->mailer('mailbox')->getSymfonyTransport();
+
+            $ref = new ReflectionProperty(MailboxTransport::class, 'decorated');
+            $decorated = $ref->getValue($transport);
+
+            expect($decorated)->toBeInstanceOf(TransportInterface::class);
+        });
+
+        it('throws on circular reference when decorate points to mailbox', function () {
+            config(['mailbox.decorate' => 'mailbox']);
+
+            app()->forgetInstance(MailboxTransport::class);
+            app(MailManager::class)->purge('mailbox');
+
+            expect(fn () => app(MailManager::class)->mailer('mailbox')->getSymfonyTransport())
+                ->toThrow(InvalidArgumentException::class, 'circular reference');
+        });
+
+        it('throws when decorate references a nonexistent mailer', function () {
+            config(['mailbox.decorate' => 'nonexistent']);
+
+            app()->forgetInstance(MailboxTransport::class);
+            app(MailManager::class)->purge('mailbox');
+
+            expect(fn () => app(MailManager::class)->mailer('mailbox')->getSymfonyTransport())
+                ->toThrow(InvalidArgumentException::class);
         });
     });
 });

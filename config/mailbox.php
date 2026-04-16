@@ -18,6 +18,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Transport Decoration
+    |--------------------------------------------------------------------------
+    |
+    | When set to a mailer name (e.g. "smtp", "ses", "postmark"), the
+    | Mailbox transport will capture the email locally AND forward it
+    | to the named mailer for real delivery. Leave null for capture-only
+    | mode (the default). Requires MAIL_MAILER=mailbox.
+    |
+    | Example: MAILBOX_DECORATE=smtp → emails appear in the dashboard
+    | and are also delivered via your SMTP server.
+    |
+    */
+
+    'decorate' => env('MAILBOX_DECORATE'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Dashboard Path
     |--------------------------------------------------------------------------
     |

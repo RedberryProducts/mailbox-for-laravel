@@ -46,6 +46,19 @@ Everything your app sends through Laravel's `Mail` facade is intercepted by the 
 
 Internally, the pipeline is: transport → normalizer → `CaptureService` → paired message/attachment store. The architectural details are in [ARCHITECTURE.md](ARCHITECTURE.md).
 
+### Transport decoration (capture + real delivery)
+
+By default, the `mailbox` transport captures mail without sending it. If you want emails to appear in the dashboard **and** be delivered for real (useful in staging or for monitoring production mail), set the `MAILBOX_DECORATE` env variable to any mailer name your app already knows:
+
+```env
+MAIL_MAILER=mailbox
+MAILBOX_DECORATE=smtp
+```
+
+This tells the service provider to resolve the `smtp` mailer's Symfony transport and wrap it with `MailboxTransport`. Every outgoing email is captured locally first, then forwarded to the decorated transport for actual delivery. Any mailer registered in `config/mail.php` works — `smtp`, `ses`, `postmark`, `log`, etc.
+
+To go back to capture-only mode, remove `MAILBOX_DECORATE` (or set it to empty).
+
 ## Testing your emails
 
 `Mail::fake()` only tells you a Mailable was queued; it can't tell you whether the rendered email would actually contain what you expect. This package's assertions run against the captured message after Laravel renders it, so you can assert on subject lines, recipients, HTML content, and attachments as the recipient would see them.
@@ -166,6 +179,7 @@ Add `--force` to overwrite an existing `config/mailbox.php` after a package upgr
 
 The keys you're most likely to touch:
 
+- `decorate` — a mailer name (e.g. `smtp`) to forward captured mail to for real delivery. Default `null` (capture-only). See [Transport decoration](#transport-decoration-capture--real-delivery).
 - `path` — the URI prefix the dashboard lives at (default `mailbox`).
 - `middleware` — routes run under the `web` group by default; add your own guards here (e.g. `auth`) for staging access control.
 - `gate` — the Gate ability checked before dashboard access (default `viewMailbox`). See [Authorization](#authorization).
@@ -181,6 +195,7 @@ The keys you're most likely to touch:
 | Variable | Default | Description |
 |---|---|---|
 | `MAILBOX_ENABLED` | `true` (non-production) | Master on/off switch — routes and transport only register when true |
+| `MAILBOX_DECORATE` | `null` | Mailer name to decorate — capture + forward for real delivery (e.g. `smtp`, `ses`) |
 | `MAILBOX_PATH` | `mailbox` | URL prefix for the dashboard |
 | `MAILBOX_GATE` | `viewMailbox` | Gate ability checked by the authorize middleware |
 | `MAILBOX_UNAUTHORIZED_REDIRECT` | `null` | Redirect target on gate denial (null = 403 response) |

@@ -3,6 +3,7 @@
 namespace Redberry\MailboxForLaravel;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Mail\MailManager;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Gate;
@@ -18,6 +19,7 @@ use Redberry\MailboxForLaravel\Support\CidRewriter;
 use Redberry\MailboxForLaravel\Transport\MailboxTransport;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Symfony\Component\Mailer\Transport\TransportInterface;
 
 class MailboxServiceProvider extends PackageServiceProvider
 {
@@ -177,7 +179,8 @@ class MailboxServiceProvider extends PackageServiceProvider
         $this->app->bind(MailboxTransport::class, function ($app) {
             return new MailboxTransport(
                 $app->make(CaptureService::class),
-                $app->make(AttachmentStoreContract::class)
+                $app->make(AttachmentStoreContract::class),
+                $this->resolveDecoratedTransport($app),
             );
         });
 
@@ -186,6 +189,34 @@ class MailboxServiceProvider extends PackageServiceProvider
                 return $app->make(MailboxTransport::class);
             });
         });
+    }
+
+    /**
+     * Resolve the Symfony transport for the mailer named in "mailbox.decorate".
+     *
+     * Returns null when decoration is not configured, preserving capture-only
+     * mode. Throws on circular references (decorating "mailbox" itself).
+     *
+     * @param  Application  $app
+     */
+    protected function resolveDecoratedTransport($app): ?TransportInterface
+    {
+        $name = config('mailbox.decorate');
+
+        if ($name === null) {
+            return null;
+        }
+
+        if ($name === 'mailbox') {
+            throw new \InvalidArgumentException(
+                'The [mailbox.decorate] option must not reference the "mailbox" mailer (circular reference).'
+            );
+        }
+
+        /** @var MailManager $manager */
+        $manager = $app->make(MailManager::class);
+
+        return $manager->mailer($name)->getSymfonyTransport();
     }
 
     /**
