@@ -168,20 +168,23 @@ class MailboxServiceProvider extends PackageServiceProvider
     }
 
     /**
-     * Register the custom "mailbox" mail transport, but only when enabled.
-     * The "mailbox.enabled" config already encodes the env-based default.
+     * Register the custom "mailbox" mail transport.
+     *
+     * The transport is always registered so that the "mailbox" mailer is
+     * resolvable regardless of config timing. The enabled check is deferred
+     * to resolution time and passed to MailboxTransport, which skips capture
+     * in doSend() when disabled.
      */
     protected function registerTransport(): void
     {
-        if (! config('mailbox.enabled')) {
-            return;
-        }
-
         $this->app->bind(MailboxTransport::class, function ($app) {
+            $enabled = (bool) config('mailbox.enabled', true);
+
             return new MailboxTransport(
                 $app->make(CaptureService::class),
                 $app->make(AttachmentStoreContract::class),
-                $this->resolveDecoratedTransport($app),
+                $enabled ? $this->resolveDecoratedTransport($app) : null,
+                $enabled,
             );
         });
 
