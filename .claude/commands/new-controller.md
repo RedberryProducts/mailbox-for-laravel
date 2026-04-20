@@ -4,7 +4,7 @@ Scaffold a new controller for the mailbox package. For the given name:
    - Namespace: `Redberry\MailboxForLaravel\Http\Controllers`
    - Add `declare(strict_types=1)`
    - Use constructor injection for dependencies
-   - Return `Inertia::render()` for page responses or `JsonResponse` for API endpoints
+   - Return a Blade view (e.g. `view('mailbox::app', ['data' => ...])`) for page responses; return `JsonResponse` for AJAX endpoints. If the same endpoint needs both, branch on `$request->wantsJson()`
    - Keep the controller thin — delegate logic to `CaptureService` or other services
 
 2. **Add route** in `routes/mailbox.php` inside the existing middleware group
@@ -15,6 +15,6 @@ Scaffold a new controller for the mailbox package. For the given name:
    - Use Pest `describe()` and `it()` syntax
    - Test happy path, validation errors, and authorization
    - Use named routes: `route('mailbox.{name}')`
-   - Use `assertInertia()` for Inertia responses
+   - Use `assertViewIs()` + `assertViewHas()` for HTML responses; use `assertJson()` / `assertJsonPath()` for JSON responses
 
 4. **Run QA**: `composer format && composer analyse && composer test`

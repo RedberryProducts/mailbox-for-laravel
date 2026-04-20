@@ -4,7 +4,6 @@ namespace Redberry\MailboxForLaravel\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Testing\TestResponse;
-use Inertia\ServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Redberry\MailboxForLaravel\MailboxServiceProvider;
 
@@ -47,7 +46,6 @@ class TestCase extends Orchestra
     {
         return [
             MailboxServiceProvider::class,
-            ServiceProvider::class,
         ];
     }
 
@@ -68,9 +66,6 @@ class TestCase extends Orchestra
 
         $app['config']->set('mail.mailers.mailbox', ['transport' => 'mailbox']);
         $app['config']->set('mail.default', 'mailbox');
-
-        $app['config']->set('inertia.testing.ensure_pages_exist', false);
-        $app['config']->set('inertia.testing.page_paths', []);
 
         $dataConfig = require __DIR__.'/../config/data.php';
         foreach ($dataConfig as $key => $value) {

@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Redberry\MailboxForLaravel\Http\Controllers;
 
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Support\Facades\View as ViewFactory;
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
 use Redberry\MailboxForLaravel\DTO\MailboxMessageData;
@@ -19,7 +20,7 @@ class MailboxController
         protected CidRewriter $cidRewriter
     ) {}
 
-    public function __invoke(Request $request, CaptureService $service): Response
+    public function __invoke(Request $request, CaptureService $service): View|JsonResponse
     {
         $page = (int) $request->input('page', 1);
         $perPage = (int) ($request->input('per_page') ?: config('mailbox.per_page', 20));
@@ -29,7 +30,7 @@ class MailboxController
 
         $result = $service->list($page, $perPage, $search);
 
-        return Inertia::render('mailbox::Dashboard', [
+        $data = [
             'messages' => array_map(
                 fn (MailboxMessageData $m) => $this->formatMessage($m),
                 $result->data,
@@ -46,7 +47,17 @@ class MailboxController
                 'interval' => config('mailbox.polling.interval', 5000),
             ],
             'search' => $search ?? '',
-        ]);
+            'mailboxPrefix' => config('mailbox.path', 'mailbox'),
+            'csrfToken' => csrf_token(),
+            'title' => 'Mailbox for Laravel',
+            'subtitle' => 'Capture and view emails in your Laravel application',
+        ];
+
+        if ($request->wantsJson()) {
+            return response()->json($data);
+        }
+
+        return ViewFactory::make('mailbox::app', ['data' => $data]);
     }
 
     /**
@@ -58,10 +69,8 @@ class MailboxController
     {
         $formatted = $message->toFrontendArray();
 
-        // Fetch attachments for this message
         $attachments = $this->attachmentStore->findByMessage($message->id);
 
-        // Format attachments for frontend
         $formatted['attachments'] = array_map(
             static fn ($attachment) => [
                 'id' => $attachment->id,
@@ -75,7 +84,6 @@ class MailboxController
             $attachments
         );
 
-        // Rewrite CID references in HTML body
         if ($formatted['html_body']) {
             $formatted['html_body'] = $this->cidRewriter->rewrite(
                 $formatted['html_body'],

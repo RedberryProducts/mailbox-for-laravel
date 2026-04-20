@@ -1,44 +1,58 @@
 import {ref, onMounted, onUnmounted} from 'vue'
-import {router} from '@inertiajs/vue3'
+import axios from 'axios'
+import {store, mailboxUrl} from '@/lib/mailboxStore'
+import type {Message, PaginationMeta} from '@/types/mailbox'
 
 interface PollingConfig {
     enabled: boolean
     interval: number
 }
 
+interface PollingResponse {
+    messages: Message[]
+    pagination: PaginationMeta
+}
+
 /**
- * Composable for polling mailbox messages using Inertia.
+ * Polls the mailbox index endpoint for new messages on an interval.
  *
- * Polls for new messages at a configurable interval, but only when:
- * - Polling is enabled
- * - The page/tab is visible (not hidden)
- *
- * Uses Inertia's router.reload with preserveState and preserveScroll
- * to avoid disrupting the user experience.
+ * Quiet while the tab is hidden. New messages are merged into the shared
+ * store so the list re-renders without replacing the user's selection.
  */
-export function useMailboxPolling(config: PollingConfig, latestTimestamp: number | null) {
+export function useMailboxPolling(config: PollingConfig) {
     const isPolling = ref(false)
     let pollInterval: ReturnType<typeof setInterval> | null = null
+
+    const poll = async () => {
+        if (document.visibilityState === 'hidden') {
+            return
+        }
+
+        isPolling.value = true
+
+        try {
+            const query: Record<string, string | number> = {page: 1}
+            if (store.search) {
+                query.search = store.search
+            }
+
+            const {data} = await axios.get<PollingResponse>(mailboxUrl(), {params: query})
+
+            mergeIntoStore(data.messages)
+            store.pagination.latest_timestamp = data.pagination.latest_timestamp
+        } catch (error) {
+            console.error('Mailbox polling failed', error)
+        } finally {
+            isPolling.value = false
+        }
+    }
 
     const startPolling = () => {
         if (!config.enabled || pollInterval !== null) {
             return
         }
 
-        pollInterval = setInterval(() => {
-            if (document.visibilityState === 'hidden') {
-                return
-            }
-
-            isPolling.value = true
-
-            router.reload({
-                only: ['messages'],
-                onFinish: () => {
-                    isPolling.value = false
-                },
-            })
-        }, config.interval)
+        pollInterval = setInterval(poll, config.interval)
     }
 
     const stopPolling = () => {
@@ -73,4 +87,15 @@ export function useMailboxPolling(config: PollingConfig, latestTimestamp: number
         startPolling,
         stopPolling,
     }
+}
+
+function mergeIntoStore(incoming: Message[]) {
+    const map = new Map<string, Message>()
+
+    store.messages.forEach((msg) => map.set(msg.id, msg))
+    incoming.forEach((msg) => map.set(msg.id, msg))
+
+    store.messages = Array.from(map.values()).sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    )
 }

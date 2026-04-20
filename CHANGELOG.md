@@ -4,6 +4,25 @@ All notable changes to `mailbox-for-laravel` will be documented in this file.
 
 ## [Unreleased]
 
+### v2.0.0-dev — Inertia Removal
+
+#### Removed
+- `inertiajs/inertia-laravel` Composer dependency. The package no longer requires any Inertia version on the host app.
+- `@inertiajs/vue3` npm dependency.
+- `src/Http/Middleware/HandleInertiaRequests.php` and the `mailbox.inertia` middleware alias.
+- `tests/Feature/HandleInertiaRequestsTest.php`.
+
+#### Changed
+- `MailboxController`, `ClearMailboxController`, and `DeleteMailboxMessageController` are now dual-mode: they return a Blade view (`mailbox::app`) for browser requests and JSON when `$request->wantsJson()` is true.
+- `resources/views/app.blade.php` embeds the initial payload as a `<script id="mailbox-data" type="application/json">` block. `resources/js/dashboard.js` parses it, hydrates a shared reactive store (`resources/js/lib/mailboxStore.ts`), and mounts a plain `createApp()` onto `#mailbox-app`.
+- All subsequent dashboard interactions (polling, search, pagination, clear inbox, delete, seen) use `axios` against the same JSON endpoints. URL state syncs via `history.replaceState`.
+- Frontend imports no longer pull from `@inertiajs/vue3`. The only runtime deps are Vue 3, axios, date-fns, reka-ui, and lucide-vue-next.
+
+#### Breaking Changes
+- Host apps that relied on the package's `mailbox.inertia` middleware alias must remove it from custom route wiring. The package's own routes no longer apply it.
+- Custom integrations that asserted Inertia shared props via `assertInertia()` in tests should switch to `assertViewIs('mailbox::app')` + `assertViewHas('data', …)` for HTML responses and `$this->getJson(...)->assertJsonPath(...)` for AJAX responses.
+- The dashboard assets must be rebuilt and re-published: `npm run build && php artisan mailbox:install --force`.
+
 ### v2.0.0-dev — Automatic Retention
 
 #### Added

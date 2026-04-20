@@ -31,7 +31,7 @@ Both drivers hand-roll search over `subject`, `from`, `to`, `text` and drift ind
 `CaptureService::list()` returned a loose `array`, losing type information and forcing the controller to hand-assemble `pagination` metadata.
 
 - Replaced with a `PaginatedMessages` value object (Spatie `Data` DTO with typed properties: `data`, `total`, `perPage`, `currentPage`, `hasMore`, `latestTimestamp`).
-- Controller and Inertia response derive everything from the value object via property access.
+- Controller and JSON response derive everything from the value object via property access.
 - Cleaner contract for custom-driver authors. `MessageStore::paginate()` still returns `array` — the DTO wrapping happens in `CaptureService`.
 
 ### 6. Declarative transport decoration — *Implemented*

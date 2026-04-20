@@ -14,7 +14,7 @@ if (! config('mailbox.enabled')) {
 
 Route::middleware(array_merge(
     config('mailbox.middleware', ['web']),
-    ['mailbox.inertia', 'mailbox.authorize']
+    ['mailbox.authorize']
 ))
     ->prefix(config('mailbox.path', 'mailbox'))
     ->name('mailbox.')

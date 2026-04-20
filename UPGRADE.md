@@ -133,7 +133,7 @@ The clear inbox endpoint changed from `POST /mailbox/clear` to `DELETE /mailbox/
 
 ### Dashboard shows a blank page or JavaScript error after upgrade
 
-The v2 assets are built against Inertia.js v3. If you see a console error like `Cannot read properties of undefined (reading 'replace')`, your published assets are stale. Re-publish them:
+If you see JavaScript errors or the app fails to boot, your published assets are stale. Re-publish them:
 
 ```bash
 php artisan mailbox:install --force
@@ -147,16 +147,6 @@ The `mailbox:install` command deletes the entire `public/vendor/mailbox` directo
 sudo rm -rf public/vendor/mailbox
 php artisan mailbox:install --force
 ```
-
-### "Class 'Inertia\Middleware' not found"
-
-v2 requires `inertiajs/inertia-laravel` `^3.0`. If Composer resolved an older version, update it:
-
-```bash
-composer require inertiajs/inertia-laravel:^3.0
-```
-
-If your host application pins `inertiajs/inertia-laravel` to v1 or v2, you will need to upgrade your application's Inertia setup first. See the [Inertia.js upgrade guide](https://inertiajs.com/upgrade-guide).
 
 ### SQLite database file not found after schema refresh
 
