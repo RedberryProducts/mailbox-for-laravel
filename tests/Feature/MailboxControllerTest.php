@@ -53,6 +53,78 @@ describe(MailboxController::class, function () {
                     && $data['pagination']['total'] === 0;
             });
         });
+
+        it('orders messages newest-first in the view payload', function () {
+            $service = app(CaptureService::class);
+
+            $service->store([
+                'subject' => 'Oldest',
+                'timestamp' => 1000,
+                'from' => [['email' => 'a@example.com']],
+                'raw' => 'a',
+            ]);
+            $service->store([
+                'subject' => 'Middle',
+                'timestamp' => 2000,
+                'from' => [['email' => 'b@example.com']],
+                'raw' => 'b',
+            ]);
+            $service->store([
+                'subject' => 'Newest',
+                'timestamp' => 3000,
+                'from' => [['email' => 'c@example.com']],
+                'raw' => 'c',
+            ]);
+
+            $response = $this->get(route('mailbox.index'));
+
+            $response->assertStatus(200);
+            $response->assertViewHas('data', function (array $data) {
+                $subjects = array_column($data['messages'], 'subject');
+
+                return $subjects === ['Newest', 'Middle', 'Oldest'];
+            });
+        });
+
+        it('embeds the boot payload as a mailbox-data script tag that decodes to the view data', function () {
+            $service = app(CaptureService::class);
+
+            $service->store([
+                'subject' => 'Embedded Payload Test',
+                'timestamp' => 1000,
+                'from' => [['email' => 'test@example.com']],
+                'raw' => 'raw',
+            ]);
+
+            $response = $this->get(route('mailbox.index'));
+
+            $response->assertStatus(200);
+            $response->assertSee('id="mailbox-data"', false);
+            $response->assertSee('type="application/json"', false);
+            $response->assertSee('<div id="mailbox-app">', false);
+
+            $html = $response->getContent();
+            expect($html)->toBeString();
+
+            preg_match(
+                '#<script id="mailbox-data"[^>]*>(.*?)</script>#s',
+                (string) $html,
+                $matches,
+            );
+
+            expect($matches)->toHaveCount(2);
+
+            $payload = json_decode($matches[1], true);
+
+            expect($payload)->toBeArray()
+                ->and($payload['messages'])->toHaveCount(1)
+                ->and($payload['messages'][0]['subject'])->toBe('Embedded Payload Test')
+                ->and($payload['pagination']['total'])->toBe(1)
+                ->and($payload)->toHaveKeys([
+                    'messages', 'pagination', 'polling', 'search',
+                    'mailboxPrefix', 'csrfToken', 'title', 'subtitle',
+                ]);
+        });
     });
 
     describe('JSON (AJAX requests)', function () {
