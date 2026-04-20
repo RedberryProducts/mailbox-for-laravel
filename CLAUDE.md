@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Mailbox for Laravel** (`redberry/mailbox-for-laravel`) is a Laravel package that embeds a local email inbox for development. It intercepts outgoing mail via a custom Symfony transport, stores messages, and serves them through an isolated Inertia.js/Vue 3 dashboard. Works with any Laravel frontend stack (Blade, Livewire, Inertia, React).
+**Mailbox for Laravel** (`redberry/mailbox-for-laravel`) is a Laravel package that embeds a local email inbox for development. It intercepts outgoing mail via a custom Symfony transport, stores messages, and serves them through a self-contained Vue 3 dashboard that talks to the package's own JSON endpoints. Zero dependency on the host app's frontend stack — works with Blade, Livewire, Inertia, React, or anything else.
 
 ## Commands
 
@@ -53,15 +53,15 @@ src/
     MailboxAssertions.php           # Collection-level assertions (assertSent, assertSentTo, etc.)
     PendingMailboxMessageAssertion.php  # Per-message fluent assertions (assertHasSubject, assertSeeInHtml, etc.)
     InteractsWithMailbox.php        # Trait for test classes — auto-clear, provides $this->mailbox()
-  Http/Controllers/                 # 7 thin controllers, return Inertia or JSON responses
-  Http/Middleware/                  # HandleInertiaRequests, AuthorizeMailboxMiddleware
+  Http/Controllers/                 # 7 thin controllers, return Blade views or JSON responses
+  Http/Middleware/                  # AuthorizeMailboxMiddleware
   DTO/                              # MailboxMessageData, AttachmentData (Spatie Laravel Data)
   Models/                           # MailboxMessage, MailboxAttachment (Eloquent)
   Commands/                         # mailbox:install, mailbox:clear, mailbox:dev-link
   Facades/Mailbox.php               # Facade for CaptureService + assertion method proxying
 
 resources/js/
-  dashboard.js                      # Isolated Inertia app entry point
+  dashboard.js                      # Vue app entry point (reads JSON payload embedded in Blade)
   Pages/Dashboard.vue               # Main page component
   components/mail/                  # Domain components (list, preview, filters — 11 components)
   components/ui/                    # Reusable UI primitives (button, input, tabs, select, etc.)
@@ -88,13 +88,13 @@ tests/                              # Architecture/, Commands/, Feature/, Unit/
 5. **Storage Drivers** (`src/Storage/`) — `DatabaseMessageStore` (Eloquent, dedicated SQLite at `storage/app/mailbox/mailbox.sqlite`) and `FileStorage` (JSON on disk). Both implement `MessageStore` contract.
 6. **AttachmentStore pair** — `DatabaseAttachmentStore` or `FileAttachmentStore` is bound alongside the chosen `MessageStore` driver. Both implement `Contracts\AttachmentStore` and return `StoredAttachment` DTOs. **CidRewriter** uses the contract to resolve inline `cid:` references regardless of driver. `CaptureService` cascades attachment cleanup automatically on `delete`, `clearAll`, and `purgeOlderThan`.
 
-### Isolated Inertia Dashboard
+### Self-contained Vue Dashboard
 
-The package runs a **completely isolated** Inertia.js app that does not interfere with the host app. Own root view (`mailbox::layout`), own Vite build (`public/vendor/mailbox/`), own Vue app instance. See `ARCHITECTURE.md` for the full deep-dive.
+The package ships a **completely isolated** Vue 3 dashboard that does not interfere with the host app. The Blade root view (`mailbox::app`) embeds the initial page payload as a `<script type="application/json">` blob; `dashboard.js` parses it, hydrates a shared reactive store, and mounts a plain Vue app. All subsequent interactions (polling, search, pagination, delete) talk to the same `MailboxController` — HTML on first load, JSON on AJAX. Own Vite build (`public/vendor/mailbox/`), own Vue app instance, zero host-app coupling. See `ARCHITECTURE.md` for the full deep-dive.
 
 ### HTTP Layer
 
-Routes under `config('mailbox.path', 'mailbox')` prefix with middleware: `web`, `mailbox.inertia`, `mailbox.authorize`. Authorization via `viewMailbox` gate (allows all in non-production by default).
+Routes under `config('mailbox.path', 'mailbox')` prefix with middleware: `web`, `mailbox.authorize`. Authorization via `viewMailbox` gate (allows all in non-production by default). `MailboxController` returns a Blade view for browser requests and a JSON payload when `$request->wantsJson()` is true.
 
 ## Testing
 
@@ -141,7 +141,8 @@ The package provides Laravel-idiomatic assertion helpers for verifying captured 
 - Coverage target: **90%+ lines, 80%+ branches**
 - Use Pest `describe()` blocks and dataset-driven test cases
 - Use named routes in HTTP tests: `route('mailbox.index')`
-- Inertia assertions: `$response->assertInertia(fn (Assert $page) => ...)`
+- View assertions for initial load: `$response->assertViewIs('mailbox::app')->assertViewHas('data', fn ($data) => ...)`
+- JSON assertions for AJAX: `$this->getJson(route('mailbox.index'))->assertJsonPath('messages.0.subject', ...)`
 - Email assertions: use `InteractsWithMailbox` trait + `Mailbox::assertSent()` facade
 
 ## Coding Conventions

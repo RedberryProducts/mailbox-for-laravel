@@ -106,6 +106,36 @@ describe(DeleteMailboxMessageController::class, function () {
             });
     });
 
+    it('returns JSON success payload for axios/AJAX requests', function () {
+        $service = app(CaptureService::class);
+
+        $id = $service->store([
+            'subject' => 'JSON delete',
+            'from' => [['email' => 'test@example.com']],
+            'raw' => 'raw',
+        ]);
+
+        $response = $this->deleteJson("/mailbox/messages/{$id}");
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'status' => 'success',
+            'title' => 'Message deleted.',
+        ]);
+
+        expect($service->find($id))->toBeNull();
+    });
+
+    it('returns JSON 404 payload for missing message on AJAX request', function () {
+        $response = $this->deleteJson('/mailbox/messages/does-not-exist');
+
+        $response->assertStatus(404);
+        $response->assertJson([
+            'status' => 'error',
+            'title' => 'Message not found.',
+        ]);
+    });
+
     it('is protected by authorization middleware', function () {
         Gate::shouldReceive('allows')->with('viewMailbox')->andReturn(false);
 

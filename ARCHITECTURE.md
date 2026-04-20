@@ -1,142 +1,60 @@
-# Scoped Inertia.js Integration Architecture
+# Dashboard Architecture
 
-This document explains how this package implements a fully isolated Inertia.js dashboard that works independently from the host application.
+This document explains how the package's dashboard works and why it is deliberately decoupled from the host application's frontend stack. Earlier versions of the package shipped with an isolated Inertia.js app; that was removed so the package no longer pins the host app to any particular Inertia or protocol version.
 
-## Overview
+## Design goals
 
-The package provides a self-contained Inertia.js-powered dashboard for viewing captured emails. The implementation ensures complete isolation from the host application's frontend stack, allowing it to work with any Laravel application regardless of whether it uses Inertia, Vue, React, Blade, or any other frontend framework.
+1. **Zero interference with the host app.** Installing the package must not force a particular frontend stack (Inertia, Livewire, React, Blade) on the host, nor conflict with whatever the host already uses.
+2. **Single dependency footprint.** No shared JS runtime, no shared bundle, no protocol to keep in sync across versions.
+3. **Feature parity with the previous Inertia-based dashboard.** Live polling, search, load-more pagination, delete/clear-inbox, and read-state tracking must continue to work.
 
-## Key Components
+## High-level flow
 
-### 1. Backend: Isolated Inertia Stack
-
-#### Middleware: `HandleInertiaRequests`
-
-Located at `src/Http/Middleware/HandleInertiaRequests.php`, this middleware:
-
-- Extends Inertia's base middleware
-- Configures the root view as `mailbox::layout`
-- Shares package-specific data (mailbox prefix, CSRF token)
-- Operates independently from any host application Inertia middleware
-
-```php
-protected $rootView = 'mailbox::layout';
-
-public function share(Request $request): array
-{
-    return array_merge(parent::share($request), [
-        'mailboxPrefix' => config('mailbox.path', 'mailbox'),
-        'csrfToken' => csrf_token(),
-    ]);
-}
+```
+Browser GET /mailbox
+  └─> MailboxController returns:
+        • view('mailbox::app', ['data' => $props])   // HTML request
+        • response()->json($props)                    // AJAX request (wantsJson)
 ```
 
-#### Controllers
+The Blade layout (`resources/views/app.blade.php`) embeds the initial `$props` payload as a `<script id="mailbox-data" type="application/json">` block. The bundled Vue app (`resources/js/dashboard.js`) parses it, hydrates a shared reactive store, and mounts a plain `createApp()` onto `<div id="mailbox-app">`.
 
-All controllers return Inertia responses with namespaced component names:
+All subsequent interactions — polling for new mail, changing the search query, loading the next page, marking a message as seen, deleting a message, clearing the inbox — go through the same `MailboxController` (or the existing JSON-returning sibling controllers like `SeenController`), using axios with an explicit `Accept: application/json` header. No Inertia, no protocol version to worry about.
 
-```php
-// MailboxController.php
-return Inertia::render('mailbox::Dashboard', [
-    'messages' => $messages,
-    'title' => 'Mailbox for Laravel',
-]);
-```
+## Key components
 
-The `mailbox::` prefix ensures component resolution is scoped to this package.
+### Backend
 
-#### Routes
+| File | Role |
+| --- | --- |
+| `src/Http/Controllers/MailboxController.php` | Dual-mode: returns the Blade view for browser requests, JSON for `wantsJson()` requests |
+| `src/Http/Controllers/ClearMailboxController.php` | Returns a redirect for browser, JSON for `wantsJson()` |
+| `src/Http/Controllers/DeleteMailboxMessageController.php` | Same dual-mode as Clear |
+| `src/Http/Controllers/SeenController.php` | Always JSON (only ever called from axios) |
+| `src/Http/Controllers/AttachmentController.php` | Binary downloads / inline serving (unchanged) |
+| `resources/views/app.blade.php` | Root Blade layout. Embeds the initial payload and mounts `#mailbox-app` |
+| `routes/mailbox.php` | Prefixed with `config('mailbox.path', 'mailbox')`. Middleware: `web` + `mailbox.authorize` |
 
-Routes are configured with both authorization and Inertia middleware:
+There is **no Inertia middleware**. The package removed `HandleInertiaRequests` and the `mailbox.inertia` alias.
 
-```php
-Route::middleware([
-    config('mailbox.middleware', ['web']),
-    ['mailbox.inertia', 'mailbox.authorize']
-])
-```
+### Frontend
 
-### 2. Frontend: Scoped Vue + Inertia Application
+| File | Role |
+| --- | --- |
+| `resources/js/dashboard.js` | Entry point. Reads the embedded JSON blob, seeds the store, configures axios, mounts Vue |
+| `resources/js/lib/mailboxStore.ts` | Shared reactive store (`reactive<MailboxData>`) exposed to all components. Also exports `mailboxUrl(path)` for building prefix-aware URLs |
+| `resources/js/Pages/Dashboard.vue` | Thin page shell — delegates to `MailboxLayout` |
+| `resources/js/components/mail/MailboxLayout.vue` | Orchestrates list + preview, handles search and load-more via axios, syncs query string with `history.replaceState` |
+| `resources/js/components/mail/MailboxFilterBar.vue` | Recipient filter + search input + clear-inbox confirm; `axios.delete` to clear |
+| `resources/js/components/mail/MailboxPreviewHeader.vue` | Per-message header with delete confirm; `axios.delete` to remove |
+| `resources/js/composables/useMailboxPolling.ts` | Interval-based polling via `axios.get`; merges new messages into the store without replacing selection |
 
-#### Layout: `resources/views/layout.blade.php`
+### Asset pipeline
 
-The root Blade template for the Inertia application:
+The Vite build is unchanged in spirit: scoped to `public/vendor/mailbox/` with a dedicated hot file.
 
-```blade
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title inertia>Mailbox for Laravel</title>
-    
-    {{ Vite::useHotFile('vendor/mailbox/mailbox.hot')
-        ->useBuildDirectory("vendor/mailbox")
-        ->withEntryPoints(['resources/js/dashboard.js']) }}
-    
-    @inertiaHead
-</head>
-<body>
-    @inertia
-</body>
-</html>
-```
-
-Key features:
-- Uses `@inertia` directive to mount the app
-- References scoped Vite build directory
-- Loads the package's dedicated entry point
-
-#### Entry Point: `resources/js/dashboard.js`
-
-Creates an isolated Inertia application:
-
-```javascript
-import { createApp, h } from 'vue'
-import { createInertiaApp } from '@inertiajs/vue3'
-
-createInertiaApp({
-    resolve: (name) => {
-        // Strip the mailbox:: prefix and load from Pages
-        const pageName = name.replace(/^mailbox::/, '')
-        const pages = import.meta.glob('./Pages/**/*.vue', { eager: true })
-        return pages[`./Pages/${pageName}.vue`]
-    },
-    
-    setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .mount(el)
-    },
-})
-```
-
-Key features:
-- Resolves `mailbox::ComponentName` to `./Pages/ComponentName.vue`
-- Uses Vite's glob imports for component loading
-- Creates its own Vue application instance
-
-#### Pages: `resources/js/Pages/Dashboard.vue`
-
-Inertia page components use the `router` from `@inertiajs/vue3`:
-
-```vue
-<script setup>
-import { router } from '@inertiajs/vue3'
-
-function clearMessages() {
-    router.post(`/${props.mailboxPrefix}/clear`, {}, {
-        preserveState: false,
-        onSuccess: () => alert('All messages cleared.')
-    })
-}
-</script>
-```
-
-### 3. Build Process: Vite Configuration
-
-The `vite.config.js` is configured for package builds:
-
-```javascript
+```js
+// vite.config.js
 laravel({
     hotFile: 'public/vendor/mailbox/mailbox.hot',
     buildDirectory: 'vendor/mailbox',
@@ -145,113 +63,82 @@ laravel({
 })
 ```
 
-This configuration:
-- Outputs to `public/vendor/mailbox/` instead of the standard `public/build/`
-- Uses a dedicated hot file for HMR during development
-- Bundles only the dashboard entry point
+The published assets live under `public/vendor/mailbox/` so they cannot collide with the host app's `public/build/`.
 
-### 4. Service Provider Registration
+## Isolation mechanisms
 
-The `MailboxServiceProvider` registers the Inertia middleware:
+### 1. Dedicated mount point and Vue instance
 
-```php
-$this->app->make(Router::class)
-    ->aliasMiddleware('mailbox.authorize', AuthorizeMailboxMiddleware::class)
-    ->aliasMiddleware('mailbox.inertia', Http\Middleware\HandleInertiaRequests::class);
-```
+The dashboard mounts on `<div id="mailbox-app">` and creates its own Vue app. Nothing from the host app's frontend touches it, and vice versa.
 
-## Isolation Mechanisms
+### 2. Scoped assets
 
-### 1. Namespaced Components
+All bundled JS/CSS publishes to `public/vendor/mailbox/`. The package's Vite manifest is separate from the host's.
 
-All Inertia renders use the `mailbox::` prefix:
-- Backend: `Inertia::render('mailbox::Dashboard')`
-- Frontend: Component resolver strips `mailbox::` and loads from `./Pages/`
+### 3. No shared JavaScript runtime
 
-### 2. Scoped Assets
+The dashboard no longer ships `@inertiajs/vue3`. The only runtime library it pulls in is Vue 3 itself (plus small helpers: axios, date-fns, reka-ui, lucide-vue-next). The host app's Inertia/React/Livewire setup — whatever it happens to be — is untouched.
 
-Assets are built to `public/vendor/mailbox/`:
-- Manifest: `public/vendor/mailbox/manifest.json`
-- JS: `public/vendor/mailbox/assets/dashboard-[hash].js`
-- CSS: `public/vendor/mailbox/assets/dashboard-[hash].css`
+### 4. No Composer dependency on `inertiajs/inertia-laravel`
 
-### 3. Dedicated Middleware Stack
+Previously the package required `inertiajs/inertia-laravel: ^3.0`, which forced the host app's Inertia version to intersect with that constraint. That dependency has been removed entirely.
 
-The package registers its own Inertia middleware (`mailbox.inertia`) which:
-- Doesn't interfere with host app's Inertia middleware (if any)
-- Uses its own root view (`mailbox::layout`)
-- Shares package-specific data
+## Data payload shape
 
-### 4. Independent Vue Application
+The JSON blob embedded in `app.blade.php` — and the payload returned from `MailboxController` on `wantsJson()` — has this structure:
 
-The dashboard creates its own Vue app instance:
-- Doesn't mount to the host app's root element
-- Uses its own Inertia plugin instance
-- Has its own component resolution logic
-
-## Compatibility
-
-### Works With Blade-Only Apps
-- Host app doesn't need Inertia installed
-- Package bundles its own Inertia dependencies
-- Assets are self-contained
-
-### Works With Existing Inertia Apps
-- Different middleware instances
-- Different root elements
-- Different component namespaces
-- No shared state or conflicts
-
-### Works With Vue/React (Non-Inertia)
-- Package's Inertia stack is isolated
-- No interference with host app's Vue/React setup
-- Different mount points
-
-## Testing Strategy
-
-### Mock Vite Manifest
-Tests create a fake manifest to avoid requiring built assets:
-
-```php
-protected function setUp(): void
-{
-    parent::setUp();
-    
-    $manifestPath = base_path('public/vendor/mailbox');
-    mkdir($manifestPath, 0755, true);
-    
-    file_put_contents($manifestPath.'/manifest.json', json_encode([
-        'resources/js/dashboard.js' => [
-            'file' => 'assets/dashboard.js',
-            'src' => 'resources/js/dashboard.js',
-            'isEntry' => true,
-            'css' => ['assets/dashboard.css'],
-        ],
-    ]));
+```ts
+interface MailboxData {
+    messages: Message[]
+    pagination: {
+        total: number
+        per_page: number
+        current_page: number
+        has_more: boolean
+        latest_timestamp: number | null
+    }
+    polling: { enabled: boolean; interval: number }
+    search: string
+    mailboxPrefix: string    // dynamic — matches config('mailbox.path')
+    csrfToken: string | null // rotated per session; axios sets X-CSRF-TOKEN from this
+    title: string
+    subtitle: string
 }
 ```
 
-### Inertia Test Assertions
-Tests use Inertia's testing helpers:
+## Testing strategy
+
+### Mock Vite manifest
+
+`tests/TestCase.php` still creates a fake manifest so the `Vite::useBuildDirectory(...)` call in the Blade layout does not need real built assets:
 
 ```php
-$response->assertInertia(fn (Assert $page) => $page
-    ->component('mailbox::Dashboard')
-    ->has('messages', 2)
-    ->has('title')
-);
+file_put_contents($manifestPath.'/manifest.json', json_encode([
+    'resources/js/dashboard.js' => [
+        'file' => 'assets/dashboard.js',
+        'src' => 'resources/js/dashboard.js',
+        'isEntry' => true,
+        'css' => ['assets/dashboard.css'],
+    ],
+]));
 ```
 
-## Dependencies
+### HTTP-level assertions
 
-### Backend
-- `inertiajs/inertia-laravel`: Installed as a package dependency (not peer dependency)
-- Automatically available when package is installed
+For the initial HTML response:
 
-### Frontend
-- `@inertiajs/vue3`: Installed as package dependency
-- `vue`: Package dependency
-- Host app doesn't need to install these
+```php
+$response->assertViewIs('mailbox::app');
+$response->assertViewHas('data', fn (array $data) => count($data['messages']) === 2);
+```
+
+For axios/AJAX responses:
+
+```php
+$this->getJson(route('mailbox.index'))
+    ->assertJsonPath('messages.0.subject', 'Test Email')
+    ->assertJsonPath('pagination.total', 1);
+```
 
 ## Storage architecture: paired drivers
 
@@ -310,10 +197,7 @@ The transport is stateless — if a previous transport is chained (via `mail.mai
 
 ## Summary
 
-This architecture ensures:
-- ✅ Complete isolation from host application
-- ✅ No conflicts with existing Inertia setups
-- ✅ Works with any frontend stack
-- ✅ Self-contained and easy to install
-- ✅ Minimal host configuration required
-- ✅ Follows Laravel package best practices
+- Dashboard is a plain Vue 3 SPA that bootstraps from JSON embedded in a Blade view
+- Subsequent interactions are vanilla axios calls to JSON endpoints — no Inertia, no protocol negotiation
+- Host app can use any frontend stack (or none) without conflict
+- The package no longer depends on `inertiajs/inertia-laravel` at any version

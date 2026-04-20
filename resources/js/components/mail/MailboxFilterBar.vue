@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { router } from '@inertiajs/vue3'
+import axios from 'axios'
+import { store, mailboxUrl } from '@/lib/mailboxStore'
 import MailboxRecipientFilterDropdown from '@/components/mail/MailboxRecipientFilterDropdown.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,15 +43,21 @@ const clearSearch = () => emit('search-change', '')
 const handleClearInbox = () => {
     isClearing.value = true
 
-    router.delete('/mailbox/messages', {
-        preserveState: false,
-        onSuccess: () => {
+    axios
+        .delete(mailboxUrl('messages'))
+        .then(() => {
+            store.messages = []
+            store.pagination.total = 0
+            store.pagination.has_more = false
+            store.pagination.current_page = 1
             showClearDialog.value = false
-        },
-        onFinish: () => {
+        })
+        .catch((error) => {
+            console.error('Failed to clear mailbox', error)
+        })
+        .finally(() => {
             isClearing.value = false
-        },
-    })
+        })
 }
 </script>
 

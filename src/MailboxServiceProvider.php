@@ -293,7 +293,6 @@ class MailboxServiceProvider extends PackageServiceProvider
         $router = $this->app->make(Router::class);
 
         $router->aliasMiddleware('mailbox.authorize', AuthorizeMailboxMiddleware::class);
-        $router->aliasMiddleware('mailbox.inertia', Http\Middleware\HandleInertiaRequests::class);
     }
 
     /**

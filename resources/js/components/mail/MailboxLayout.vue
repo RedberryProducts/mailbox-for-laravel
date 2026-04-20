@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import axios from "axios";
-import { usePage, router } from "@inertiajs/vue3";
 import {
     Message,
     TabType,
     PaginationMeta,
-    PollingConfig,
 } from "@/types/mailbox";
+import { store, mailboxUrl } from "@/lib/mailboxStore";
 import MailboxFilterBar from "@/components/mail/MailboxFilterBar.vue";
 import MailboxList from "@/components/mail/MailboxList.vue";
 import MailboxPreview from "@/components/mail/MailboxPreview.vue";
@@ -15,132 +14,69 @@ import { useMailboxPolling } from "@/composables/useMailboxPolling";
 import { Button } from "@/components/ui/button";
 import Logo from "@mailbox/images/logo.svg";
 
-const props = defineProps<{
-    messages: Message[];
-    pagination: PaginationMeta;
-    polling: PollingConfig;
-    title: string;
-    subtitle: string;
-    search: string;
-}>();
-
-// Typed Inertia page props
-const page = usePage<{
-    messages: Message[];
-    pagination: PaginationMeta;
-    polling: PollingConfig;
-    title: string;
-    subtitle: string;
-    search: string;
-}>();
-
-const localMessages = ref<Message[]>([...props.messages]);
-
-const currentPage = ref<number>(props.pagination.current_page);
-const hasMore = ref<boolean>(props.pagination.has_more);
-
 const selectedMessageId = ref<string | null>(null);
 const selectedRecipient = ref<string>("all");
-const searchQuery = ref<string>(props.search ?? "");
+const searchQuery = ref<string>(store.search ?? "");
 const activeTab = ref<TabType>("html");
 const isLoadingMore = ref(false);
 
-useMailboxPolling(props.polling, props.pagination.latest_timestamp);
+useMailboxPolling(store.polling);
 
-/**
- * Deduplicate and merge messages by ID.
- * - Polling: new messages (top).
- * - Load-more: more pages (bottom).
- */
-function mergeMessages(newMessages: Message[]) {
-    const map = new Map<string, Message>();
-
-    localMessages.value.forEach((msg) => {
-        map.set(msg.id, msg);
-    });
-
-    newMessages.forEach((msg) => {
-        map.set(msg.id, msg);
-    });
-
-    localMessages.value = Array.from(map.values()).sort((a, b) => {
-        return (
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-    });
+interface ListResponse {
+    messages: Message[];
+    pagination: PaginationMeta;
+    search: string;
 }
 
-/**
- * Whenever Inertia sends updated `messages` props:
- *
- * - Polling / load-more keep the same `search` value → merge into state.
- * - Search changes → the server returns a fresh scoped set; replace state
- *   wholesale (merging would leak stale "no-longer-matching" messages).
- */
-let lastAppliedSearch = props.search ?? "";
-
-watch(
-    () => page.props.messages as Message[] | undefined,
-    (newMessages) => {
-        if (!newMessages) return;
-
-        const incomingSearch = (page.props.search as string | undefined) ?? "";
-
-        if (incomingSearch !== lastAppliedSearch) {
-            localMessages.value = [...newMessages];
-            currentPage.value = (page.props.pagination as PaginationMeta).current_page;
-            hasMore.value = (page.props.pagination as PaginationMeta).has_more;
-            // If the selected message dropped out of the new set, clear it.
-            if (
-                selectedMessageId.value !== null
-                && !newMessages.some((m) => m.id === selectedMessageId.value)
-            ) {
-                selectedMessageId.value = null;
-            }
-            lastAppliedSearch = incomingSearch;
-            return;
-        }
-
-        mergeMessages(newMessages);
-    },
-);
+function syncQueryString(query: Record<string, string | number>): void {
+    const url = new URL(window.location.href);
+    url.search = "";
+    Object.entries(query).forEach(([key, value]) => {
+        if (value === "" || value === null || value === undefined) return;
+        url.searchParams.set(key, String(value));
+    });
+    window.history.replaceState({}, "", url.toString());
+}
 
 function loadMoreMessages() {
-    if (isLoadingMore.value || !hasMore.value) {
+    if (isLoadingMore.value || !store.pagination.has_more) {
         return;
     }
 
     isLoadingMore.value = true;
 
-    const nextPage = currentPage.value + 1;
-
+    const nextPage = store.pagination.current_page + 1;
     const activeSearch = searchQuery.value.trim();
     const query: Record<string, string | number> = { page: nextPage };
     if (activeSearch !== "") {
         query.search = activeSearch;
     }
 
-    router.get("/mailbox", query, {
-        only: ["messages", "pagination"],
-        preserveScroll: true,
-        preserveState: true,
-        preserveUrl: true,
-        replace: true,
-        onSuccess: () => {
-            const pagination = page.props.pagination as PaginationMeta;
-            currentPage.value = pagination.current_page;
-            hasMore.value = pagination.has_more;
-        },
-        onFinish: () => {
+    axios
+        .get<ListResponse>(mailboxUrl(), { params: query })
+        .then(({ data }) => {
+            const map = new Map<string, Message>();
+            store.messages.forEach((msg) => map.set(msg.id, msg));
+            data.messages.forEach((msg) => map.set(msg.id, msg));
+            store.messages = Array.from(map.values()).sort(
+                (a, b) =>
+                    new Date(b.created_at).getTime() -
+                    new Date(a.created_at).getTime(),
+            );
+            store.pagination = data.pagination;
+        })
+        .catch((error) => {
+            console.error("Failed to load more messages", error);
+        })
+        .finally(() => {
             isLoadingMore.value = false;
-        },
-    });
+        });
 }
 
 const recipients = computed(() => {
     const set = new Set<string>();
 
-    localMessages.value.forEach((msg) => {
+    store.messages.forEach((msg) => {
         msg.to.forEach((r) => set.add(r));
     });
 
@@ -154,17 +90,17 @@ const filteredMessages = computed(() => {
     const recipient = selectedRecipient.value;
 
     if (recipient === "all") {
-        return localMessages.value;
+        return store.messages;
     }
 
-    return localMessages.value.filter((msg) =>
+    return store.messages.filter((msg) =>
         msg.to.includes(recipient),
     );
 });
 
 const selectedMessage = computed<Message | null>(() => {
     return (
-        localMessages.value.find((msg) => msg.id === selectedMessageId.value) ||
+        store.messages.find((msg) => msg.id === selectedMessageId.value) ||
         null
     );
 });
@@ -188,34 +124,54 @@ const handleSearchChange = (query: string) => {
     searchDebounce = setTimeout(() => {
         const next = searchQuery.value.trim();
 
-        // Skip the round-trip when the effective query is unchanged.
-        if (next === (lastAppliedSearch ?? "").trim()) {
+        if (next === (store.search ?? "").trim()) {
             return;
         }
 
-        router.get(
-            "/mailbox",
-            next === "" ? { page: 1 } : { search: next, page: 1 },
-            {
-                only: ["messages", "pagination", "search"],
-                preserveScroll: true,
-                preserveState: true,
-                preserveUrl: false,
-                replace: true,
-            },
-        );
+        const params: Record<string, string | number> =
+            next === "" ? { page: 1 } : { search: next, page: 1 };
+
+        axios
+            .get<ListResponse>(mailboxUrl(), { params })
+            .then(({ data }) => {
+                store.messages = [...data.messages];
+                store.pagination = data.pagination;
+                store.search = data.search;
+
+                if (
+                    selectedMessageId.value !== null &&
+                    !data.messages.some((m) => m.id === selectedMessageId.value)
+                ) {
+                    selectedMessageId.value = null;
+                }
+
+                syncQueryString(params);
+            })
+            .catch((error) => {
+                console.error("Search failed", error);
+            });
     }, 300);
 };
+
+// Keep the input in sync if the store's search value is mutated externally
+// (e.g. after a full-page reload that seeded a fresh search).
+watch(
+    () => store.search,
+    (next) => {
+        if (next !== searchQuery.value) {
+            searchQuery.value = next;
+        }
+    },
+);
 
 const handleSelectMessage = (id: string) => {
     selectedMessageId.value = id;
 
-    const msg = localMessages.value.find((m) => m.id === id);
+    const msg = store.messages.find((m) => m.id === id);
     if (!msg || msg.seen_at) return;
 
-    // Plain JSON endpoint – axios is fine here.
     axios
-        .post(`/mailbox/messages/${id}/seen`)
+        .post(mailboxUrl(`messages/${id}/seen`))
         .then((response) => {
             msg.seen_at = response.data.seen_at;
         })
@@ -239,10 +195,10 @@ const handleViewChange = (view: TabType) => {
             <img :src="Logo" alt="Redberry International" class="w-12 h-12" />
             <div>
                 <h1 class="headline-md text-on-surface">
-                    {{ props.title }}
+                    {{ store.title }}
                 </h1>
                 <p class="body-sm text-on-surface-variant">
-                    {{ props.subtitle }}
+                    {{ store.subtitle }}
                 </p>
             </div>
         </header>
@@ -265,7 +221,7 @@ const handleViewChange = (view: TabType) => {
                     @select="handleSelectMessage"
                 />
 
-                <div v-if="hasMore" class="p-4 text-center">
+                <div v-if="store.pagination.has_more" class="p-4 text-center">
                     <Button
                         @click="loadMoreMessages"
                         :disabled="isLoadingMore"

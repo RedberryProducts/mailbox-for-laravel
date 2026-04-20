@@ -1,21 +1,18 @@
-import {createApp, h} from 'vue'
-import {createInertiaApp} from '@inertiajs/vue3'
+import { createApp } from 'vue'
+import axios from 'axios'
+import Dashboard from './Pages/Dashboard.vue'
+import { hydrateStore } from './lib/mailboxStore'
 import '../css/mailbox.css'
 
-createInertiaApp({
-    resolve: (name) => {
-        const pageName = name.replace(/^mailbox::/, '')
-        const pages = import.meta.glob('./Pages/**/*.vue', {eager: true})
-        return pages[`./Pages/${pageName}.vue`]
-    },
+const dataElement = document.getElementById('mailbox-data')
+const initialData = dataElement ? JSON.parse(dataElement.textContent) : {}
 
-    setup({el, App, props, plugin}) {
-        createApp({render: () => h(App, props)})
-            .use(plugin)
-            .mount(el)
-    },
+hydrateStore(initialData)
 
-    progress: {
-        color: '#3b82f6',
-    },
-})
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
+axios.defaults.headers.common['Accept'] = 'application/json'
+if (initialData.csrfToken) {
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = initialData.csrfToken
+}
+
+createApp(Dashboard).mount('#mailbox-app')

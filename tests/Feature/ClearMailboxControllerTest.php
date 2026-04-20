@@ -117,4 +117,23 @@ describe(ClearMailboxController::class, function () {
         expect($service->find($key))->toBeNull()
             ->and($service->all())->toBeEmpty();
     });
+
+    it('returns JSON success payload for axios/AJAX requests', function () {
+        $service = app(CaptureService::class);
+        $service->store([
+            'subject' => 'JSON delete',
+            'from' => [['email' => 'test@example.com']],
+            'raw' => 'raw',
+        ]);
+
+        $response = $this->deleteJson('/mailbox/messages');
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'status' => 'success',
+            'title' => 'Mailbox cleared.',
+        ]);
+
+        expect($service->all())->toBeEmpty();
+    });
 });

@@ -2,7 +2,7 @@
 
 > Place this file at **`.github/copilot-instructions.md`** in the repository root so Copilot (Chat, PR review, code suggestions, and Coding Agent) loads it automatically.
 >
-> See also: `CLAUDE.md` for Claude Code-specific guidance and `ARCHITECTURE.md` for Inertia isolation details.
+> See also: `CLAUDE.md` for Claude Code-specific guidance and `ARCHITECTURE.md` for dashboard isolation details.
 
 ## Project overview
 

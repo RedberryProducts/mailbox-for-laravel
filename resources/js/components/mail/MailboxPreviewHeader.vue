@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import {ref, computed} from 'vue'
-import {router} from '@inertiajs/vue3'
+import axios from 'axios'
 import {format} from 'date-fns'
+import {store, mailboxUrl} from '@/lib/mailboxStore'
 import {Button} from '@/components/ui/button'
 import {
     AlertDialog,
@@ -35,15 +36,19 @@ const formattedDate = computed(() =>
 const handleDeleteMessage = () => {
     isDeleting.value = true
 
-    router.delete(`/mailbox/messages/${props.messageId}`, {
-        preserveState: false,
-        onSuccess: () => {
+    axios
+        .delete(mailboxUrl(`messages/${props.messageId}`))
+        .then(() => {
+            store.messages = store.messages.filter((m) => m.id !== props.messageId)
+            store.pagination.total = Math.max(0, store.pagination.total - 1)
             showDeleteDialog.value = false
-        },
-        onFinish: () => {
+        })
+        .catch((error) => {
+            console.error('Failed to delete message', error)
+        })
+        .finally(() => {
             isDeleting.value = false
-        },
-    })
+        })
 }
 </script>
 

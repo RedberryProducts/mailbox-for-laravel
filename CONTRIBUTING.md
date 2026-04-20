@@ -41,7 +41,7 @@ Coverage target: **90%+ lines, 80%+ branches.** CI will fail a PR that drops bel
 
 ## Frontend assets
 
-The dashboard is a scoped Inertia.js + Vue 3 app, built independently of the host app (see [ARCHITECTURE.md](ARCHITECTURE.md) for why).
+The dashboard is a scoped Vue 3 app that bootstraps from a JSON payload embedded in the Blade layout and talks to the package's own JSON endpoints via axios — no Inertia, no shared frontend runtime with the host. See [ARCHITECTURE.md](ARCHITECTURE.md) for the deep-dive.
 
 ```bash
 npm run dev    # Vite watch mode with HMR
