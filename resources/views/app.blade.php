@@ -6,8 +6,8 @@
     <meta name="csrf-token" content="{{ $data['csrfToken'] ?? csrf_token() }}">
     <title>{{ $data['title'] ?? 'Mailbox for Laravel' }}</title>
 
-    {{ Vite::useHotFile('vendor/mailbox/mailbox.hot')
-        ->useBuildDirectory("vendor/mailbox")
+    {{ \Illuminate\Support\Facades\Vite::useHotFile('vendor/mailbox/mailbox.hot')
+        ->useBuildDirectory('vendor/mailbox')
         ->withEntryPoints(['resources/js/dashboard.js']) }}
 </head>
 <body>
