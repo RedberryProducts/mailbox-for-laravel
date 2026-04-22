@@ -31,7 +31,7 @@ MAIL_MAILER=mailbox
 
 The dashboard is then available at `/mailbox` (or whatever path you configure). The package is auto-discovered — no manual provider registration needed.
 
-**Requirements:** PHP 8.3+, Laravel 10 / 11 / 12.
+**Requirements:** PHP 8.3+, Laravel 10 / 11 / 12 / 13.
 
 ## Capturing Mail
 
