@@ -34,7 +34,12 @@ const sandbox =
 const SHELL_CSS = `
   :root { color-scheme: light; }
   html, body { margin: 0; padding: 0; }
-  body { font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #fff; color: #111; }
+  /* display: flow-root establishes a block formatting context so child
+     margins can't collapse through <body>. Without it, the first/last
+     child's default UA margins escape to the viewport — rendered as
+     whitespace but NOT counted in body.scrollHeight — and the iframe
+     resize logic below clips the last ~30px of text-only emails. */
+  body { display: flow-root; font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #fff; color: #111; }
   img, video, iframe { max-width: 100%; height: auto; }
   table { max-width: 100%; border-collapse: collapse; }
   pre, code { white-space: pre-wrap; word-wrap: break-word; }
