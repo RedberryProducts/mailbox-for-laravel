@@ -26,7 +26,7 @@ npm run dev                      # Watch mode
 composer prepare                 # testbench package:discover
 ```
 
-CI runs on PHP 8.3/8.4 with Laravel 11/12 on Ubuntu and Windows.
+CI runs on PHP 8.3/8.4 with Laravel 11/12/13 on Ubuntu and Windows.
 
 ## File Map
 

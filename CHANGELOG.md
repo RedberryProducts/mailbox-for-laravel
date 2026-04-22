@@ -4,6 +4,9 @@ All notable changes to `mailbox-for-laravel` will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Laravel 13 support. `illuminate/contracts` constraint now allows `^13.0`; `orchestra/testbench` allows `^11.0`. CI matrix now covers Laravel 11/12/13. Dev-only constraints (pest, pest-plugin-laravel, pest-plugin-arch, larastan, nunomaduro/collision) widened to include the majors that support Laravel 13.
+
 ### v2.0.0-dev — Inertia Removal
 
 #### Removed
