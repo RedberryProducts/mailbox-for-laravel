@@ -12,11 +12,12 @@
 ## Tech stack & versions (default)
 
 * **PHP**: ^8.3 (strict types, typed properties, readonly where applicable)
-* **Laravel**: ^10 | ^11 | ^12
-* **Testing**: Pest 3/4, Laravel test helpers; Coverage target: **90%+ lines**, **80%+ branches**
+* **Laravel**: ^10 | ^11 | ^12 | ^13
+* **Testing**: Pest 2/3/4, Laravel test helpers; Coverage target: **90%+ lines**, **80%+ branches**
 * **Static analysis**: PHPStan (Larastan) level 5
 * **Code style**: Laravel Pint (PSR‑12), EditorConfig
-* **Front end**: Vue 3 + Vite, TypeScript (for any new scripts), TailwindCSS with **scoped/prefixed classes** to avoid collisions with host apps
+* **Front end**: Vue 3 + Vite, TypeScript (for any new scripts), TailwindCSS v4 with **scoped/prefixed classes** to avoid collisions with host apps
+* **UI components**: Reka UI (radix-vue successor)
 * **Tooling**: ESLint + Prettier (for JS/TS/Vue), Stylelint (optional)
 
 ## How to build & test (for Copilot to follow)
@@ -31,23 +32,28 @@
 
 ## Architecture (high level)
 
-* **Transport**: `MailboxTransport` captures `SentMessage`, normalizes it, stores payload, optionally decorates another transport.
+* **Transport**: `MailboxTransport` captures `SentMessage`, normalizes it, stores payload, optionally decorates another transport. Decoration is declarative via `mailbox.decorate` (mailer name) — when set, capture and real delivery happen with zero user-code changes.
 * **Capture & Storage**:
 
-    * `CaptureService` generates deterministic keys, persists payloads with metadata, lists/paginates, update, clear.
-    * `MessageStore` (contract) with a default `DatabaseMessageStore` driver.
+    * `CaptureService` is the high-level API: store/list/find/update/delete/purge. Owns cascading attachment cleanup. Mints canonical ULIDs and provides write-path idempotency via the RFC 822 `message_id` header.
+    * `MessageStore` contract (10 methods) — default driver is `sqlite` (`DatabaseMessageStore` against a dedicated SQLite file at `storage/app/mailbox/mailbox.sqlite`). `database` is an alias for bring-your-own-connection users. `file` driver writes JSON on disk.
+    * `AttachmentStore` contract (8 methods) — paired with the active `MessageStore` driver. `DatabaseAttachmentStore` for sqlite/database; `FileAttachmentStore` for the file driver. Both return `DTO\StoredAttachment` value objects.
+    * `MessageSearch` contract — pluggable search strategy (`DefaultMessageSearch` searches `subject`, `from`, `to`, `html`, `text`).
     * `StoreManager` resolves drivers via config & custom resolvers.
-* **HTTP**: `MailboxController`, `SendTestMailController`, `ClearMailboxController`, `SeenController`, `AssetController` (static assets), `AuthorizeMailboxMiddleware` (route gating).
-* **Support**: `MessageNormalizer` (creates canonical payload), `MailboxServiceProvider`, `InstallCommand` (publishes assets/config/routes), `config/mailbox.php`.
+* **DTOs**: `MailboxMessageData`, `AttachmentData`, `StoredAttachment`, `PaginatedMessages` — typed value objects under `src/DTO/`.
+* **HTTP**: `MailboxController`, `SendTestMailController`, `ClearMailboxController`, `DeleteMailboxMessageController`, `SeenController`, `PublicAssetController`, `AttachmentController`, `AuthorizeMailboxMiddleware` (route gating).
+* **Retention**: `MailboxServiceProvider` registers a daily `mailbox:clear --outdated` via `callAfterResolving(Schedule::class, …)`, triple-guarded by `mailbox.enabled`, `mailbox.retention > 0`, and `mailbox.retention_schedule`.
+* **Support**: `MessageNormalizer` (canonical payload + attachment extraction), `CidRewriter` (rewrites inline `cid:` references), `MailboxServiceProvider`, `InstallCommand`, `UpgradeCommand`, `ClearInboxCommand`, `config/mailbox.php`.
+* **Testing API**: `src/Testing/` — `InteractsWithMailbox` trait, `MailboxAssertions`, `PendingMailboxMessageAssertion`, plus facade-level `Mailbox::assertSent()` etc.
 
 ## Directory & naming conventions
 
 * **Namespaces**: `Redberry\MailboxForLaravel\...`
-* **Contracts** under `Contracts/`; **Support** under `Support/`
+* **Contracts** under `Contracts/`; **Support** under `Support/`; **DTO** under `DTO/`; **Testing** under `Testing/`
 * **HTTP** under `Http/Controllers` and `Http/Middleware`
 * **Storage drivers** under `Storage/`
-* **Tests** mirror src namespaces: `tests/Unit`, `tests/Feature`, `tests/Arch`
-* **Vue** in `resources/js/mailbox` (or equivalent), single entry `resources/js/mailbox.js`
+* **Tests** mirror src namespaces: `tests/Unit`, `tests/Feature`, `tests/Commands`, `tests/Architecture`
+* **Vue** in `resources/js/`, entry `resources/js/dashboard.js`. Built assets ship to `public/vendor/mailbox/` (NOT `public/build/`).
 
 ## Coding standards for Copilot
 
@@ -102,49 +108,58 @@ When writing tests that verify email sending, prefer these helpers over manual `
 
 * **CaptureService (Unit)**
 
-    * stores payload with metadata and deterministic key format
-    * lists messages in **newest‑first** order (server‐side sort)
-    * updates existing message; returns null for unknown key
-    * clears all messages; purge older than N seconds
-    * rejects invalid keys (assertions/exceptions)
+    * mints a canonical ULID id; preserves caller-supplied ids
+    * dedups by RFC 822 `message_id` via `findIdByMessageId()` (write-path idempotency)
+    * lists messages in **newest‑first** order via `PaginatedMessages` DTO
+    * updates existing message; returns null for unknown id
+    * cascades attachment cleanup on `delete()`, `clearAll()`, `purgeOlderThan()`
 * **StoreManager (Unit)**
 
-    * resolves default `file` driver
+    * resolves default `sqlite` driver; `database` alias resolves to the same backend
     * throws on unsupported driver
     * accepts **custom resolver** via config and returns custom store instance
-* **Storage\FileStorage (Unit)**
+* **Storage drivers (Unit)** — share a common contract test (`tests/Unit/Contracts/MessageStoreContractTest.php`, `AttachmentStoreContractTest.php`)
 
-    * persists and retrieves JSON payloads
-    * `keys()` filters by timestamp; `delete()` removes files
-    * `update()` merges atomically without data loss
-    * `clear()` wipes namespace safely
+    * persists and retrieves payloads
+    * `paginate()` returns newest‑first
+    * `update()` merges without data loss
+    * `clear()` wipes safely
+    * `findIdByMessageId()` powers write‑path idempotency
+    * `idsOlderThan()` powers cascade attachment cleanup
 * **Transport\MailboxTransport (Unit)**
 
-    * normalizes and saves message when `enabled=true` and sets `storedKey`
-    * decorates underlying transport when provided
+    * normalizes and saves message when `enabled=true`
+    * decorates underlying transport when `mailbox.decorate` is set
     * no‑op capture when disabled; still delegates if decorated
 * **Support\MessageNormalizer (Unit)**
 
     * converts `SentMessage` to canonical structure (from, to, cc, subject, date, text, html, attachments, raw)
+    * extracts attachments as `AttachmentData` DTOs
     * handles edge cases: missing headers, non‑UTF8, multiple parts
+* **Support\CidRewriter (Unit)**
+
+    * rewrites inline `cid:` references in HTML to attachment download URLs
 * **Http Controllers (Feature)**
 
-    * `MailboxController` returns paginated list and sorts newest‑first
-    * `SendTestMailController` sends sample mail through mailbox transport
-    * `ClearMailboxController` empties store and returns success
+    * `MailboxController` returns Blade view on first load, JSON on `wantsJson()`; paginates newest-first
+    * `ClearMailboxController` empties store on `DELETE /mailbox/messages`
+    * `DeleteMailboxMessageController` deletes a single message on `DELETE /mailbox/messages/{id}`
     * `SeenController` toggles `seen_at` and returns updated entity
-    * `AssetController` serves versioned assets with correct headers
+    * `AttachmentController` streams attachment content from the active `AttachmentStore`
+    * `PublicAssetController` serves versioned assets with correct headers
 * **Middleware (Feature)**
 
     * `AuthorizeMailboxMiddleware` denies/permits based on config/closure/gate
-* **Service Provider & Command (Feature)**
+* **Service Provider & Commands (Feature)**
 
-    * `MailboxServiceProvider` registers bindings, publishes assets/config/routes
+    * `MailboxServiceProvider` registers bindings, publishes assets/config/routes, schedules retention purge
     * `InstallCommand` publishes resources and prints next steps
-* **Config (Arch)**
+    * `UpgradeCommand` detects stale v1 config and offers a refresh
+    * `ClearInboxCommand` clears all (or only outdated) messages
+* **Architecture**
 
-    * test no `env()` usage outside `config/`
-    * config keys exist; defaults are sensible; validation for required options
+    * dependency-boundary rules (storage drivers don't depend on HTTP/Transport, services depend on contracts not concrete classes, etc.)
+    * no `env()` usage outside `config/`
 
 > Copilot: when you add a **new file**, also scaffold **tests** (Unit or Feature) with realistic data and edge cases. Update `phpstan.neon`, `pint.json`, and CI as needed.
 
@@ -164,9 +179,9 @@ When writing tests that verify email sending, prefer these helpers over manual `
 
 ## Example prompts (for maintainers)
 
-* “Add newest‑first sorting to `CaptureService::all()` and cover with unit & feature tests.”
-* “Implement a `S3Storage` driver behind the `MessageStore` contract with contract tests mirrored from `FileStorage`.”
-* “Generate Vue components for Mailbox list with read/unread states;
+* “Implement a Redis-backed `MessageStore` driver and a paired `AttachmentStore`, registered via `mailbox.store.resolvers`, with contract tests mirrored from the existing drivers.”
+* “Add a `MessageSearch` strategy that searches inside attachment filenames, behind the `Contracts\MessageSearch` contract.”
+* “Generate Vue components for the Mailbox list with read/unread states; consume the JSON endpoints via axios + the shared `mailboxStore`.”
 * “Write an arch test preventing `env()` usage outside `config/` and preventing `Http\Controllers` from depending on `Storage\*` directly.”
 
 ## Documentation expectations

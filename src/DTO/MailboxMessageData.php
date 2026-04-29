@@ -56,7 +56,7 @@ class MailboxMessageData
     public static function fromArray(array $data): self
     {
         return new self(
-            id: (string) $data['id'],
+            id: $data['id'],
             timestamp: isset($data['timestamp']) ? (int) $data['timestamp'] : null,
             message_id: $data['message_id'] ?? null,
             subject: $data['subject'] ?? null,
