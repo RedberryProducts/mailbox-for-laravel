@@ -27,7 +27,7 @@ function messageAssertion(array $overrides = []): PendingMailboxMessageAssertion
     ];
 
     return new PendingMailboxMessageAssertion(
-        MailboxMessageData::from(array_merge($defaults, $overrides)),
+        MailboxMessageData::fromArray(array_merge($defaults, $overrides)),
     );
 }
 

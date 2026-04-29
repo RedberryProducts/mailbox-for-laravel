@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Redberry\MailboxForLaravel\DTO;
 
-use Spatie\LaravelData\Data;
-
 /**
  * Typed pagination result for mailbox messages.
  *
@@ -13,7 +11,7 @@ use Spatie\LaravelData\Data;
  * for the pagination shape so controllers and tests never rely on loose
  * array keys.
  */
-class PaginatedMessages extends Data
+class PaginatedMessages
 {
     /**
      * @param  array<int, MailboxMessageData>  $data

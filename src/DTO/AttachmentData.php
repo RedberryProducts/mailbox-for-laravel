@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Redberry\MailboxForLaravel\DTO;
 
-use Spatie\LaravelData\Data;
-
 /**
  * Represents a single attachment extracted from an email.
  */
-class AttachmentData extends Data
+class AttachmentData
 {
     public function __construct(
         public string $filename,
