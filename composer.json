@@ -54,6 +54,28 @@
         "test-coverage": "vendor/bin/pest --coverage",
         "format": "vendor/bin/pint"
     },
+    "archive": {
+        "exclude": [
+            "/.claude",
+            "/.github",
+            "/CLAUDE.md",
+            "/tests",
+            "/workbench",
+            "/node_modules",
+            "/resources/js",
+            "/components.json",
+            "/vite.config.js",
+            "/tailwind.config.js",
+            "/postcss.config.js",
+            "/tsconfig.json",
+            "/package.json",
+            "/package-lock.json",
+            "/phpstan.neon.dist",
+            "/phpstan-baseline.neon",
+            "/phpunit.xml.dist",
+            "/.editorconfig"
+        ]
+    },
     "config": {
         "sort-packages": true,
         "allow-plugins": {
