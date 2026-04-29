@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Redberry\MailboxForLaravel\DTO;
 
 use Illuminate\Support\Carbon;
-use Spatie\LaravelData\Data;
 
 use function array_filter;
 use function array_map;
@@ -16,7 +15,7 @@ use function array_values;
  *
  * This is the shape the frontend consumes.
  */
-class MailboxMessageData extends Data
+class MailboxMessageData
 {
     public function __construct(
         public string $id,
@@ -46,6 +45,37 @@ class MailboxMessageData extends Data
         public ?string $saved_at = null,
         public ?string $seen_at = null,
     ) {}
+
+    /**
+     * Build the DTO from a storage payload array.
+     *
+     * Tolerates extra keys (e.g. Eloquent timestamps) by reading only known fields.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            id: (string) $data['id'],
+            timestamp: isset($data['timestamp']) ? (int) $data['timestamp'] : null,
+            message_id: $data['message_id'] ?? null,
+            subject: $data['subject'] ?? null,
+            date: $data['date'] ?? null,
+            from: $data['from'] ?? null,
+            sender: $data['sender'] ?? null,
+            to: $data['to'] ?? null,
+            cc: $data['cc'] ?? null,
+            bcc: $data['bcc'] ?? null,
+            reply_to: $data['reply_to'] ?? null,
+            text: $data['text'] ?? null,
+            html: $data['html'] ?? null,
+            headers: $data['headers'] ?? null,
+            attachments: $data['attachments'] ?? null,
+            raw: $data['raw'] ?? null,
+            saved_at: $data['saved_at'] ?? null,
+            seen_at: $data['seen_at'] ?? null,
+        );
+    }
 
     /**
      * Convert into a compact frontend-friendly array.

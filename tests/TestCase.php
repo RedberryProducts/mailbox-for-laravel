@@ -67,11 +67,6 @@ class TestCase extends Orchestra
         $app['config']->set('mail.mailers.mailbox', ['transport' => 'mailbox']);
         $app['config']->set('mail.default', 'mailbox');
 
-        $dataConfig = require __DIR__.'/../config/data.php';
-        foreach ($dataConfig as $key => $value) {
-            $app['config']->set("data.{$key}", $value);
-        }
-
         $app['config']->set('view.paths', [
             base_path('resources/views'),
         ]);
