@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Redberry\MailboxForLaravel\DTO;
 
-use Spatie\LaravelData\Data;
-
 /**
  * Driver-agnostic attachment record returned by any AttachmentStore.
  *
@@ -14,7 +12,7 @@ use Spatie\LaravelData\Data;
  * assertions) only ever depend on this contract — not on a specific
  * storage backend.
  */
-class StoredAttachment extends Data
+class StoredAttachment
 {
     public function __construct(
         public string $id,

@@ -84,7 +84,7 @@ class CaptureService
         $total = $this->storage->count($search);
 
         $messages = array_map(
-            static fn (array $data): MailboxMessageData => MailboxMessageData::from($data),
+            static fn (array $data): MailboxMessageData => MailboxMessageData::fromArray($data),
             $items,
         );
 
@@ -110,7 +110,7 @@ class CaptureService
         $items = $this->storage->paginate(1, PHP_INT_MAX);
 
         return array_map(
-            static fn (array $data): MailboxMessageData => MailboxMessageData::from($data),
+            static fn (array $data): MailboxMessageData => MailboxMessageData::fromArray($data),
             $items,
         );
     }
@@ -119,7 +119,7 @@ class CaptureService
     {
         $data = $this->storage->find($id);
 
-        return $data ? MailboxMessageData::from($data) : null;
+        return $data ? MailboxMessageData::fromArray($data) : null;
     }
 
     /**
@@ -131,7 +131,7 @@ class CaptureService
     {
         $data = $this->storage->update($id, $changes);
 
-        return $data ? MailboxMessageData::from($data) : null;
+        return $data ? MailboxMessageData::fromArray($data) : null;
     }
 
     /**
