@@ -36,14 +36,15 @@ src/
   CaptureService.php                # High-level API: store/list/find/update/delete/purge
   StoreManager.php                  # Laravel Manager — resolves storage drivers
   Contracts/
-    MessageStore.php                # Message storage driver interface (9 methods incl. idsOlderThan)
+    MessageStore.php                # Message storage driver interface (10 methods incl. idsOlderThan, findIdByMessageId)
     AttachmentStore.php             # Attachment storage driver interface (8 methods)
+    MessageSearch.php               # Pluggable search strategy (consumed by the storage drivers)
   Storage/
     DatabaseMessageStore.php        # Default message driver (Eloquent, dedicated SQLite)
     FileStorage.php                 # JSON-on-disk message driver
     DatabaseAttachmentStore.php     # DB-backed attachment driver (paired with database message driver)
     FileAttachmentStore.php         # JSON-sidecar attachment driver (paired with file message driver)
-    AttachmentStore.php             # @deprecated shim — extends DatabaseAttachmentStore (removed in v2.1)
+    AttachmentStore.php             # @deprecated shim — extends DatabaseAttachmentStore (scheduled for removal in v2.1)
   DTO/StoredAttachment.php          # Driver-agnostic attachment value object
   Transport/MailboxTransport.php    # Symfony AbstractTransport — captures outgoing mail
   Support/
@@ -55,9 +56,9 @@ src/
     InteractsWithMailbox.php        # Trait for test classes — auto-clear, provides $this->mailbox()
   Http/Controllers/                 # 7 thin controllers, return Blade views or JSON responses
   Http/Middleware/                  # AuthorizeMailboxMiddleware
-  DTO/                              # MailboxMessageData, AttachmentData (Spatie Laravel Data)
+  DTO/                              # MailboxMessageData, AttachmentData (plain PHP DTOs with constructor property promotion)
   Models/                           # MailboxMessage, MailboxAttachment (Eloquent)
-  Commands/                         # mailbox:install, mailbox:clear, mailbox:dev-link
+  Commands/                         # mailbox:install, mailbox:clear, mailbox:dev-link, mailbox:upgrade
   Facades/Mailbox.php               # Facade for CaptureService + assertion method proxying
 
 resources/js/
@@ -71,7 +72,7 @@ resources/js/
 
 config/mailbox.php                  # All package configuration
 routes/mailbox.php                  # Route definitions (prefixed, middlewared)
-database/migrations/                # 2 migrations (messages table + attachments table)
+database/migrations/                # 3 migrations (messages table, attachments table, unique index on message_id)
 tests/                              # Architecture/, Commands/, Feature/, Unit/
 ```
 
@@ -102,7 +103,7 @@ Uses **Pest** with Orchestra Testbench. Base `TestCase` sets up in-memory SQLite
 
 ```
 tests/
-├── Architecture/    # Arch rules (26 rules enforcing boundaries)
+├── Architecture/    # Arch rules (currently 31 stub rules — see ArchitectureTest.php; bodies are placeholders)
 ├── Commands/        # Artisan command tests
 ├── Feature/         # HTTP/integration + InteractsWithMailbox tests
 └── Unit/            # Unit tests (services, storage, testing assertions)

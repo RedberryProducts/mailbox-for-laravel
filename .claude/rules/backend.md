@@ -13,7 +13,7 @@ globs: src/**/*.php
 - `CaptureService` is the single entry point for all storage operations — don't bypass it
 - `MailboxServiceProvider` is the ONLY place that reads `config()` and creates bindings
 - Transport depends on `CaptureService` + `AttachmentStore`, not on `MessageStore` directly
-- DTOs use Spatie Laravel Data (extend `Data` class)
+- DTOs are plain PHP classes using constructor property promotion (no Spatie Laravel Data); `fromArray()` factories rehydrate stored payloads
 - Models use configurable connection via `config('mailbox.store.database.connection')`
 - Return types and parameter types are mandatory on all public methods
 - Throw domain exceptions for invalid states — no silent failures

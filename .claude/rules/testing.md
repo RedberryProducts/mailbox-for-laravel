@@ -7,7 +7,7 @@ globs: tests/**/*.php
 
 - Framework: **Pest** (not PHPUnit directly)
 - Base class: `Redberry\MailboxForLaravel\Tests\TestCase` (extends Orchestra Testbench)
-- `TestCase` auto-configures: in-memory SQLite, mock Vite manifest, package providers, Spatie Data config
+- `TestCase` auto-configures: in-memory SQLite, mock Vite manifest, package providers, mailbox config defaults
 - Test file naming: `{ClassName}Test.php` in a directory matching its domain (`Unit/`, `Feature/`, `Commands/`, `Architecture/`)
 - Use `describe()` blocks and `it()` functions — Pest style, not PHPUnit methods
 - Use `beforeEach()` for shared setup within a describe block
@@ -16,7 +16,7 @@ globs: tests/**/*.php
 - JSON assertions for axios/AJAX requests: `$this->getJson(route('mailbox.index'))->assertJsonPath('messages.0.subject', '...')`
 - Use Pest datasets for data-driven test cases with realistic data
 - For storage tests, go through the `MessageStore` contract — never manipulate file paths directly
-- Architecture tests in `tests/Architecture/` enforce dependency boundaries (26 rules)
+- Architecture tests in `tests/Architecture/` declare 31 dependency-boundary rules; bodies are currently stubs (`expect(true)->toBeTrue()`) — fill them in when adding new tests rather than adding more stubs
 - Run a single test: `vendor/bin/pest --filter="test name"`
 - Run a directory: `vendor/bin/pest tests/Unit/`
 - Coverage target: **90%+ lines, 80%+ branches**
