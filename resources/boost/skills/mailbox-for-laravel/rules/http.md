@@ -7,12 +7,20 @@ All routes are mounted under `config('mailbox.path', 'mailbox')` with two middle
 - `web` — session, CSRF, cookie encryption
 - `mailbox.authorize` — wraps the `viewMailbox` gate
 
-Use named routes in tests and views, never hardcoded paths:
+Use named routes in tests and views, never hardcoded paths. The package exposes:
 
 ```php
-route('mailbox.index')
-route('mailbox.show', $message)
+route('mailbox.index')                              // GET   /
+route('mailbox.messages.clear')                     // DELETE /messages
+route('mailbox.messages.destroy', $id)              // DELETE /messages/{id}
+route('mailbox.messages.seen', $id)                 // POST  /messages/{id}/seen
+route('mailbox.messages.attachments', $messageId)   // GET   /messages/{messageId}/attachments
+route('mailbox.attachments.download', $id)          // GET   /attachments/{id}/download
+route('mailbox.attachments.inline', $id)            // GET   /attachments/{id}/inline
+route('mailbox.test-email')                         // POST  /test-email
 ```
+
+There is no per-message `show` route — single-message views are rendered client-side from the dashboard payload.
 
 ## Authorization
 
