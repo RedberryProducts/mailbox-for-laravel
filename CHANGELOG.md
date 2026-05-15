@@ -2,6 +2,26 @@
 
 All notable changes to `mailbox-for-laravel` will be documented in this file.
 
+## [2.2.1] - 2026-05-15
+
+Patch release. Documentation-only fixes to the Laravel Boost skill that shipped in v2.2.0 — no package code, runtime behavior, or APIs changed. Downstream consumers should re-run `php artisan boost:install` to refresh the skill in their agent folder.
+
+### Fixed
+- **`rules/architecture.md`** — corrected the custom-driver section:
+  - `Contracts\MessageStore` method count from 9 to **10** (`store`, `find`, `findIdByMessageId`, `paginate`, `count`, `update`, `delete`, `purgeOlderThan`, `idsOlderThan`, `clear`).
+  - Registration mechanism from the inaccurate `StoreManager::extend()` to the package's actual config-driven path: `config('mailbox.store.resolvers')`.
+  - Config key from `mailbox.stores` (plural, wrong) to `mailbox.store` (singular).
+  - Added a real resolver example, an `AttachmentStore` binding example, and an explicit warning about falling back to `DatabaseAttachmentStore` when only one half of the driver pair is registered.
+- **`rules/http.md`** — removed the non-existent `route('mailbox.show', $message)` example; replaced with the actual eight named routes the package exposes (`mailbox.index`, `mailbox.messages.destroy`, `mailbox.attachments.download`, etc.).
+- **`rules/conventions.md`** — architecture rule count corrected from 26 to **31** declared rules (currently stubs in `tests/Architecture/ArchitectureTest.php`).
+
+### Added
+- **`rules/frontend.md`** — covers the standalone Vue 3 dashboard: boot sequence, `mailboxStore.ts` / `mailboxUrl()` API, Vite output at `public/vendor/mailbox/`, hot file location, Reka UI primitives, and the explicit "Inertia is **not** used" callout.
+- **`rules/commands.md`** — full signatures and intent for all four Artisan commands: `mailbox:install`, `mailbox:clear`, `mailbox:dev-link`, and the previously undocumented `mailbox:upgrade` (v1 → v2 config/env rewriter).
+
+### Changed
+- **`SKILL.md`** — activation description now mentions the 10/8 method counts, the resolvers-not-extend mechanism, the no-Inertia stance, `mailbox:upgrade`, and `CidRewriter`. Quick-reference indexes the two new rule files. Storage-driver section gained the `sqlite` (auto-configured) vs. `database` (bring-your-own-connection) distinction.
+
 ## [Unreleased]
 
 ### Added
