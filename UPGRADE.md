@@ -55,7 +55,7 @@ New variables in v2 (all have sensible defaults):
 |---|---|---|
 | `MAILBOX_STORE_DRIVER` | `sqlite` | Was `database` — renamed for clarity |
 | `MAILBOX_DECORATE` | `null` | Forward captured mail to another mailer for real delivery |
-| `MAILBOX_RETENTION_SCHEDULE` | `true` | Auto-register daily retention purge |
+| `MAILBOX_RETENTION_SCHEDULE` | `false` | Opt in to auto-register the daily retention purge |
 | `MAILBOX_ATTACHMENTS_ENABLED` | `true` | Toggle attachment capture |
 | `MAILBOX_ATTACHMENTS_DISK` | `mailbox` | Filesystem disk for attachment content |
 | `MAILBOX_POLLING_ENABLED` | `true` | Dashboard live-update polling |

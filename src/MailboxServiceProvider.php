@@ -86,7 +86,7 @@ class MailboxServiceProvider extends PackageServiceProvider
             return;
         }
 
-        if (! config('mailbox.retention_schedule', true)) {
+        if (! config('mailbox.retention_schedule', false)) {
             return;
         }
 

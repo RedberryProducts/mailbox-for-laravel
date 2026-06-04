@@ -23,7 +23,7 @@ mailbox:clear [--outdated]
 Deletes stored messages and their attachments through the configured storage drivers.
 
 - Without flags: clears everything.
-- `--outdated`: prunes only messages older than `config('mailbox.retention')` (default 86400 seconds = 24 h). The retention scheduler runs this nightly when `config('mailbox.retention_schedule')` is true.
+- `--outdated`: prunes only messages older than `config('mailbox.retention')` (default 86400 seconds = 24 h). The retention scheduler runs this nightly only when `config('mailbox.retention_schedule')` is true — it defaults to `false`, so auto-pruning is opt-in.
 
 ## `mailbox:dev-link`
 

@@ -143,12 +143,12 @@ return [
     |
     | When enabled, the package registers a daily scheduled task that runs
     | "mailbox:clear --outdated" to prune messages older than the retention
-    | window. Set to false if you prefer to wire the purge manually in
-    | your application's schedule.
+    | window. Disabled by default — set to true to let the package manage
+    | the purge automatically, or wire it manually in your own schedule.
     |
     */
 
-    'retention_schedule' => (bool) env('MAILBOX_RETENTION_SCHEDULE', true),
+    'retention_schedule' => (bool) env('MAILBOX_RETENTION_SCHEDULE', false),
 
     /*
     |--------------------------------------------------------------------------

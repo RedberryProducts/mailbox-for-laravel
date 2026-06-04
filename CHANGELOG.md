@@ -2,6 +2,14 @@
 
 All notable changes to `mailbox-for-laravel` will be documented in this file.
 
+## [2.3.0] - 2026-06-04
+
+### Added
+- Laravel 13 support. `illuminate/contracts` constraint now allows `^13.0`; `orchestra/testbench` allows `^11.0`. CI matrix now covers Laravel 11/12/13. Dev-only constraints (pest, pest-plugin-laravel, pest-plugin-arch, larastan, nunomaduro/collision) widened to include the majors that support Laravel 13.
+
+### Changed
+- **Auto-pruning is now opt-in.** `mailbox.retention_schedule` (env: `MAILBOX_RETENTION_SCHEDULE`) now defaults to `false` instead of `true`. The package no longer registers the daily `mailbox:clear --outdated` purge unless you explicitly enable it. Hosts that relied on the automatic purge should set `MAILBOX_RETENTION_SCHEDULE=true` to keep it running.
+
 ## [2.2.1] - 2026-05-15
 
 Patch release. Documentation-only fixes to the Laravel Boost skill that shipped in v2.2.0 — no package code, runtime behavior, or APIs changed. Downstream consumers should re-run `php artisan boost:install` to refresh the skill in their agent folder.
@@ -23,9 +31,6 @@ Patch release. Documentation-only fixes to the Laravel Boost skill that shipped 
 - **`SKILL.md`** — activation description now mentions the 10/8 method counts, the resolvers-not-extend mechanism, the no-Inertia stance, `mailbox:upgrade`, and `CidRewriter`. Quick-reference indexes the two new rule files. Storage-driver section gained the `sqlite` (auto-configured) vs. `database` (bring-your-own-connection) distinction.
 
 ## [Unreleased]
-
-### Added
-- Laravel 13 support. `illuminate/contracts` constraint now allows `^13.0`; `orchestra/testbench` allows `^11.0`. CI matrix now covers Laravel 11/12/13. Dev-only constraints (pest, pest-plugin-laravel, pest-plugin-arch, larastan, nunomaduro/collision) widened to include the majors that support Laravel 13.
 
 ### v2.0.0-dev — Inertia Removal
 
