@@ -344,6 +344,10 @@ If you discover a security vulnerability within this package, please email **sec
 - [Redberry](https://redberry.international)
 - [All contributors](https://github.com/RedberryProducts/mailbox-for-laravel/graphs/contributors)
 
+## About Redberry
+
+This package is built and maintained by [Redberry](https://redberry.international/?utm_source=github&utm_medium=github_mailbox_readme&utm_campaign=laravel_service_campaign), one of the few Official Premier Laravel Partner agencies worldwide. With 250+ Laravel projects shipped across 20+ countries, a 200-person team, and over a decade in the Laravel ecosystem, Redberry has helped startups, SMEs, and publicly traded enterprises in regulated industries build SaaS platforms, custom web applications, APIs, and more. [Learn about our Laravel development services](https://redberry.international/laravel-development/?utm_source=github&utm_medium=github_mailbox_readme&utm_campaign=laravel_service_campaign).
+
 ## License
 
 The MIT License (MIT). See [LICENSE.md](LICENSE.md).
