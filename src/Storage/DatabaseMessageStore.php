@@ -20,6 +20,36 @@ use Redberry\MailboxForLaravel\Search\DefaultMessageSearch;
  */
 class DatabaseMessageStore implements MessageStore
 {
+    /**
+     * Payload keys this driver can persist, i.e. the writable columns on the
+     * messages table. The payload contract is an open map — the file driver
+     * keeps it verbatim as JSON — but here it has to land on a fixed schema,
+     * so anything outside this list is dropped instead of being handed to the
+     * query builder as an unknown column.
+     *
+     * `id` is absent on purpose: it is passed as the match attribute.
+     */
+    private const COLUMNS = [
+        'timestamp',
+        'seen_at',
+        'version',
+        'saved_at',
+        'message_id',
+        'subject',
+        'date',
+        'from',
+        'sender',
+        'to',
+        'cc',
+        'bcc',
+        'reply_to',
+        'text',
+        'html',
+        'headers',
+        'attachments',
+        'raw',
+    ];
+
     public function __construct(
         private readonly MessageSearch $search = new DefaultMessageSearch,
     ) {}
@@ -37,7 +67,7 @@ class DatabaseMessageStore implements MessageStore
 
         MailboxMessage::query()->updateOrCreate(
             ['id' => $id],
-            $payload,
+            array_intersect_key($payload, array_flip(self::COLUMNS)),
         );
 
         return $id;

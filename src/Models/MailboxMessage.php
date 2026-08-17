@@ -5,8 +5,35 @@ namespace Redberry\MailboxForLaravel\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Redberry\MailboxForLaravel\Database\Factories\MailboxMessageFactory;
 
+/**
+ * The table name is resolved from config at runtime, so static analysis cannot
+ * read the columns off the migration. They are declared here instead.
+ *
+ * @property string $id
+ * @property int $timestamp
+ * @property Carbon|null $seen_at
+ * @property int $version
+ * @property Carbon|null $saved_at
+ * @property string|null $message_id
+ * @property string|null $subject
+ * @property Carbon|null $date
+ * @property array<string, mixed>|null $from
+ * @property array<string, mixed>|null $sender
+ * @property array<int, mixed>|null $to
+ * @property array<int, mixed>|null $cc
+ * @property array<int, mixed>|null $bcc
+ * @property array<int, mixed>|null $reply_to
+ * @property string|null $text
+ * @property string|null $html
+ * @property array<string, mixed>|null $headers
+ * @property array<int, mixed>|null $attachments
+ * @property string|null $raw
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class MailboxMessage extends Model
 {
     use HasFactory;

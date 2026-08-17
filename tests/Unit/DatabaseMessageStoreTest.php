@@ -156,6 +156,25 @@ describe(DatabaseMessageStore::class, function () {
         expect($store->findIdByMessageId('<unknown@example.com>'))->toBeNull();
     });
 
+    it('drops payload keys that have no column instead of failing the insert', function () {
+        $store = new DatabaseMessageStore;
+        $id = ulid();
+
+        $returned = $store->store([
+            'id' => $id,
+            'raw' => 'email content',
+            'timestamp' => time(),
+            'subject' => 'Test',
+            'not_a_column' => 'dropped',
+        ]);
+
+        $result = $store->find($returned);
+
+        expect($result)->not->toHaveKey('not_a_column')
+            ->and($result['subject'])->toBe('Test')
+            ->and($result['raw'])->toBe('email content');
+    });
+
     it('handles updateOrCreate when storing with existing id', function () {
         $store = new DatabaseMessageStore;
         $existingId = $store->store([
