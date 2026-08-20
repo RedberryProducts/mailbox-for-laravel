@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import axios from "axios";
 import {
     Message,
@@ -110,9 +110,15 @@ const handleRecipientChange = (recipient: string) => {
 };
 
 // Debounced server round-trip for search. Every keystroke updates the local
-// ref for controlled-input purposes, but the network request fires once the
-// user pauses typing so we don't hammer the backend.
+// ref, which is the single source of truth for the input's contents — the
+// server echo must never be written back into it, or characters typed while a
+// request is in flight get reverted under the user's cursor.
+//
+// `next` comes from the captured `query`, not from re-reading the ref at fire
+// time, and `searchRequestId` drops out-of-order responses so a slow earlier
+// request cannot overwrite the results of a later one.
 let searchDebounce: ReturnType<typeof setTimeout> | null = null;
+let searchRequestId = 0;
 
 const handleSearchChange = (query: string) => {
     searchQuery.value = query;
@@ -122,7 +128,7 @@ const handleSearchChange = (query: string) => {
     }
 
     searchDebounce = setTimeout(() => {
-        const next = searchQuery.value.trim();
+        const next = query.trim();
 
         if (next === (store.search ?? "").trim()) {
             return;
@@ -130,10 +136,15 @@ const handleSearchChange = (query: string) => {
 
         const params: Record<string, string | number> =
             next === "" ? { page: 1 } : { search: next, page: 1 };
+        const requestId = ++searchRequestId;
 
         axios
             .get<ListResponse>(mailboxUrl(), { params })
             .then(({ data }) => {
+                if (requestId !== searchRequestId) {
+                    return;
+                }
+
                 store.messages = [...data.messages];
                 store.pagination = data.pagination;
                 store.search = data.search;
@@ -152,17 +163,6 @@ const handleSearchChange = (query: string) => {
             });
     }, 300);
 };
-
-// Keep the input in sync if the store's search value is mutated externally
-// (e.g. after a full-page reload that seeded a fresh search).
-watch(
-    () => store.search,
-    (next) => {
-        if (next !== searchQuery.value) {
-            searchQuery.value = next;
-        }
-    },
-);
 
 const handleSelectMessage = (id: string) => {
     selectedMessageId.value = id;

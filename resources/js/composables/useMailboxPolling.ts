@@ -31,13 +31,22 @@ export function useMailboxPolling(config: PollingConfig) {
 
         isPolling.value = true
 
+        // The search this poll is scoped to. If it changes while the request is
+        // in flight the response describes a list the user is no longer looking
+        // at, and merging it would re-inject non-matching messages.
+        const polledSearch = store.search
+
         try {
             const query: Record<string, string | number> = {page: 1}
-            if (store.search) {
-                query.search = store.search
+            if (polledSearch) {
+                query.search = polledSearch
             }
 
             const {data} = await axios.get<PollingResponse>(mailboxUrl(), {params: query})
+
+            if (polledSearch !== store.search) {
+                return
+            }
 
             mergeIntoStore(data.messages)
             store.pagination.latest_timestamp = data.pagination.latest_timestamp

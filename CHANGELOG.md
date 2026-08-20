@@ -2,6 +2,16 @@
 
 All notable changes to `mailbox-for-laravel` will be documented in this file.
 
+## [2.3.1] - 2026-08-20
+
+Patch release. Fixes the dashboard search box losing characters while you type, and polling re-inserting non-matching messages into a filtered list. Frontend only — no PHP, config, routes, or public APIs changed. Rebuilt assets ship with this release, so run `php artisan vendor:publish --tag=mailbox-assets --force` after upgrading.
+
+### Fixed
+- **Search input no longer rewrites itself while you type.** The dashboard mirrored the server's echoed (and trimmed) query back into the controlled search field. Because the server trims the term, a trailing space was deleted from under the cursor on every search; and any characters typed while a request was in flight were reverted to the older query when that response landed. The typed value is now the single source of truth for the field — the response only updates the message list.
+- **Searches are no longer silently dropped.** The debounced handler re-read the input ref when the timer fired rather than the query it was scheduled for. Once the field had been reverted (above), the pending query matched the last committed search and the guard returned early, so the search the user actually typed never reached the server. The debounce now uses the query it was created with.
+- **Out-of-order search responses can no longer overwrite newer results.** Each search carries a request id; a slow earlier response is discarded if a later search has already been issued.
+- **Polling no longer pollutes a filtered list.** `useMailboxPolling` merges page 1 into the store on every tick. A poll issued before a search — or during the debounce window, using the previous term — landed afterwards and merged unfiltered messages into the filtered results, which the list renders as-is. Each poll is now scoped to the search it was issued for and its response is discarded if the active search changed while it was in flight.
+
 ## [2.3.0] - 2026-06-04
 
 ### Added
