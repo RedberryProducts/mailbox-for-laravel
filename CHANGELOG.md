@@ -2,6 +2,14 @@
 
 All notable changes to `mailbox-for-laravel` will be documented in this file.
 
+## [2.3.2] - 2026-08-24
+
+Patch release. Fixes the database message store crashing when a stored payload carries a key the messages table has no column for. PHP only — no config, routes, frontend assets, or public APIs changed, so no re-publish is needed after upgrading.
+
+### Fixed
+- **Unknown payload keys no longer crash the database driver.** `DatabaseMessageStore::store()` and `update()` mass-assigned the whole payload into an unguarded model, so any key without a matching column raised an SQLSTATE "no such column" error mid-send. Payloads are now filtered down to the columns the package migration creates — listed on `MailboxMessage::PERSISTABLE_COLUMNS` — and anything else is dropped. `FileStorage` is unaffected and still persists extra keys verbatim.
+- **PHPStan analysis on CI.** larastan >= 3.10 types `updateOrCreate()`'s `$values` as `array<model property of Model, mixed>`; with `checkModelProperties: true` enabled, the free-form payload array failed analysis. The filtered array carries the literal keys that type requires — no baseline entry or ignore comment was added.
+
 ## [2.3.1] - 2026-08-20
 
 Patch release. Fixes the dashboard search box losing characters while you type, and polling re-inserting non-matching messages into a filtered list. Frontend only — no PHP, config, routes, or public APIs changed. Rebuilt assets ship with this release, so run `php artisan vendor:publish --tag=mailbox-assets --force` after upgrading.
