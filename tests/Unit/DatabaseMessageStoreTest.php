@@ -174,4 +174,42 @@ describe(DatabaseMessageStore::class, function () {
         expect($result['raw'])->toBe('updated version')
             ->and($result['timestamp'])->toBe(2000);
     });
+
+    it('drops payload keys that have no column on store', function () {
+        $store = new DatabaseMessageStore;
+        $id = ulid();
+
+        $returned = $store->store([
+            'id' => $id,
+            'raw' => 'content',
+            'timestamp' => 1000,
+            'subject' => 'Kept',
+            'not_a_column' => 'dropped',
+        ]);
+
+        $result = $store->find($returned);
+
+        expect($result)->toBeArray()
+            ->and($result['subject'])->toBe('Kept')
+            ->and($result)->not->toHaveKey('not_a_column');
+    });
+
+    it('drops changes that have no column on update', function () {
+        $store = new DatabaseMessageStore;
+        $id = $store->store([
+            'id' => ulid(),
+            'raw' => 'content',
+            'timestamp' => 1000,
+            'subject' => 'Before',
+        ]);
+
+        $result = $store->update($id, [
+            'subject' => 'After',
+            'not_a_column' => 'dropped',
+        ]);
+
+        expect($result)->toBeArray()
+            ->and($result['subject'])->toBe('After')
+            ->and($result)->not->toHaveKey('not_a_column');
+    });
 });

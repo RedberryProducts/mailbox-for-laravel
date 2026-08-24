@@ -11,6 +11,33 @@ class MailboxMessage extends Model
 {
     use HasFactory;
 
+    /**
+     * Columns that may be written from a storage payload.
+     *
+     * @var list<string>
+     */
+    public const PERSISTABLE_COLUMNS = [
+        'id',
+        'timestamp',
+        'seen_at',
+        'version',
+        'saved_at',
+        'message_id',
+        'subject',
+        'date',
+        'from',
+        'sender',
+        'to',
+        'cc',
+        'bcc',
+        'reply_to',
+        'text',
+        'html',
+        'headers',
+        'attachments',
+        'raw',
+    ];
+
     protected $table = 'mailbox_messages';
 
     public $incrementing = false;
