@@ -4,14 +4,20 @@ All notable changes to `mailbox-for-laravel` will be documented in this file.
 
 ## [2.3.2] - 2026-08-24
 
-Patch release. Fixes the database message store crashing when a stored payload carries a key the messages table has no column for. PHP only — no config, routes, frontend assets, or public APIs changed, so no re-publish is needed after upgrading.
+Patch release. Fixes the database message store crashing when a stored payload carries a key the messages table has no column for, and picks up the outstanding npm security advisories that affect the dashboard bundle. No config, routes, or public APIs changed. **Rebuilt assets ship with this release**, so run `php artisan vendor:publish --tag=mailbox-assets --force` after upgrading.
 
 ### Fixed
 - **Unknown payload keys no longer crash the database driver.** `DatabaseMessageStore::store()` and `update()` mass-assigned the whole payload into an unguarded model, so any key without a matching column raised an SQLSTATE "no such column" error mid-send. Payloads are now filtered down to the columns the package migration creates — listed on `MailboxMessage::PERSISTABLE_COLUMNS` — and anything else is dropped. `FileStorage` is unaffected and still persists extra keys verbatim.
 - **PHPStan analysis on CI.** larastan >= 3.10 types `updateOrCreate()`'s `$values` as `array<model property of Model, mixed>`; with `checkModelProperties: true` enabled, the free-form payload array failed analysis. The filtered array carries the literal keys that type requires — no baseline entry or ignore comment was added.
 
+### Security
+- **Dashboard dependencies patched.** `axios` 1.15.2 → 1.19.0 closes a long list of advisories carried by the bundled HTTP client (ReDoS via cookie name injection, several prototype-pollution gadgets, `maxBodyLength` bypasses, `NO_PROXY` bypasses, proxy credential leaks on redirect). `form-data` 4.0.5 → 4.0.6 (CRLF injection in multipart field names) and `nanoid` → 3.3.18/5.1.16 (infinite loop on zero/negative size) come along as transitive fixes. The rebuilt bundle in `public/vendor/mailbox/` carries the patched axios — publish assets to pick it up.
+- **Build tooling patched.** `postcss` 8.5.6 → 8.5.26 fixes three `sourceMappingURL` path-traversal advisories. Maintainer-side only; postcss never ships to consumers.
+- Remaining advisories (`vite` and its `esbuild`, both dev-server-only on Windows) need the vite 8 major and are deliberately **not** in this patch release — see #77.
+
 ### Changed
 - **`MailboxMessage` now declares `$fillable` instead of `$guarded = []`.** Mass assignment is limited to `MailboxMessage::PERSISTABLE_COLUMNS`, so every write path — the storage driver, the factory, or host code touching the model directly — is held to the columns the table actually has. A test pins that list to the live schema, so adding a column to the migration without updating it fails CI.
+- **Dashboard assets rebuilt.** The CSS drops from 42.5 kB to 31.1 kB: Tailwind v4's automatic content detection had been scanning the previously built bundle in `public/vendor/mailbox/`, turning CSS keywords found in library code (`sticky`, `capitalize`, `inline-block`, …) into real utility classes and carrying them forward every release. None of the 85 removed classes is used by the dashboard; rendering is unchanged.
 
 ## [2.3.1] - 2026-08-20
 
