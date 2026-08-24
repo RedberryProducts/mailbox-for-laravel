@@ -11,6 +11,37 @@ class MailboxMessage extends Model
 {
     use HasFactory;
 
+    /**
+     * Every column a payload may write to, mirroring the package migration.
+     *
+     * Declared as a constant so both mass assignment and the storage drivers
+     * work from one list. `tests/Unit/Models/MailboxMessageTest.php` fails if
+     * it ever drifts from the actual table.
+     *
+     * @var list<string>
+     */
+    public const PERSISTABLE_COLUMNS = [
+        'id',
+        'timestamp',
+        'seen_at',
+        'version',
+        'saved_at',
+        'message_id',
+        'subject',
+        'date',
+        'from',
+        'sender',
+        'to',
+        'cc',
+        'bcc',
+        'reply_to',
+        'text',
+        'html',
+        'headers',
+        'attachments',
+        'raw',
+    ];
+
     protected $table = 'mailbox_messages';
 
     public $incrementing = false;
@@ -18,9 +49,9 @@ class MailboxMessage extends Model
     protected $keyType = 'string';
 
     /**
-     * Allow mass assignment
+     * Mass assignment is limited to the columns the table actually has.
      */
-    protected $guarded = [];
+    protected $fillable = self::PERSISTABLE_COLUMNS;
 
     /**
      * Cast fields into correct PHP types

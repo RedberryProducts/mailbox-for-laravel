@@ -37,7 +37,7 @@ class DatabaseMessageStore implements MessageStore
 
         MailboxMessage::query()->updateOrCreate(
             ['id' => $id],
-            $payload,
+            $this->persistableAttributes($payload),
         );
 
         return $id;
@@ -77,6 +77,20 @@ class DatabaseMessageStore implements MessageStore
     }
 
     /**
+     * Keep only the keys the messages table actually has columns for.
+     *
+     * Drivers receive a free-form payload, so anything the table doesn't
+     * know about is dropped instead of blowing up mass assignment.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<model-property<MailboxMessage>, mixed>
+     */
+    protected function persistableAttributes(array $payload): array
+    {
+        return array_intersect_key($payload, array_flip(MailboxMessage::PERSISTABLE_COLUMNS));
+    }
+
+    /**
      * @param  Builder<MailboxMessage>  $query
      * @return Builder<MailboxMessage>
      */
@@ -97,7 +111,7 @@ class DatabaseMessageStore implements MessageStore
             return null;
         }
 
-        $record->fill($changes);
+        $record->fill($this->persistableAttributes($changes));
         $record->save();
 
         return $record->fresh()->toArray();
