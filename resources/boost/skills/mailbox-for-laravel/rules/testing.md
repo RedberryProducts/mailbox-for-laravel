@@ -24,7 +24,7 @@ Assertions only see mail that went through the `mailbox` transport into a workin
 <env name="MAILBOX_STORE_FILE_PATH" value="storage/framework/testing/mailbox"/>
 ```
 
-Attachment contents go to the `mailbox` filesystem disk regardless of driver; call `Storage::fake('mailbox')` in tests that assert on attachments. To keep the `sqlite` or `database` driver in tests, run `php artisan mailbox:install` before the test command (in CI too) so the tables exist; `RefreshDatabase` does not create them because the package runs its own migrations rather than publishing them.
+Attachment contents go to the `mailbox` filesystem disk regardless of driver; call `Storage::fake('mailbox')` in tests that assert on attachments. To keep the `sqlite` or `database` driver in tests, run `php artisan mailbox:install` before the test command (in CI too) so the tables exist. It is a separate process that reads `.env`, not `phpunit.xml`, so pass any `MAILBOX_STORE_DATABASE_CONNECTION` or `MAILBOX_STORE_DATABASE_TABLE` override the tests use on the command line (`MAILBOX_STORE_DATABASE_CONNECTION=testing php artisan mailbox:install`). `RefreshDatabase` does not create the tables because the package runs its own migrations rather than publishing them.
 
 ## Collection-level assertions
 

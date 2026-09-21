@@ -101,7 +101,14 @@ The `InteractsWithMailbox` trait clears whatever store is configured before ever
 
 Attachment contents are written to the `mailbox` filesystem disk (`storage/app/mailbox` by default) regardless of the store driver. Call `Storage::fake('mailbox')` in tests that assert on attachments to keep them off the real disk.
 
-If you would rather keep the `sqlite` or `database` driver in tests, the tables have to exist before the first test runs. `php artisan mailbox:install` creates them on the configured mailbox connection, so add it as a step before your test command in CI. `RefreshDatabase` does not help here: the package runs its migrations itself rather than publishing them into your app.
+If you would rather keep the `sqlite` or `database` driver in tests, the tables have to exist before the first test runs. `php artisan mailbox:install` creates them on the configured mailbox connection, so add it as a step before your test command in CI. It runs in its own process and reads `.env`, not the `<env>` entries in `phpunit.xml`, so if your tests override `MAILBOX_STORE_DATABASE_CONNECTION` or `MAILBOX_STORE_DATABASE_TABLE` there, pass the same values to the install step or it will migrate a different connection:
+
+```bash
+MAILBOX_STORE_DATABASE_CONNECTION=testing php artisan mailbox:install
+vendor/bin/pest
+```
+
+`RefreshDatabase` does not help here: the package runs its migrations itself rather than publishing them into your app.
 
 ### Collection-level assertions
 
