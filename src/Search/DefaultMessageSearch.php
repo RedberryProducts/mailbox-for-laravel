@@ -68,16 +68,30 @@ class DefaultMessageSearch implements MessageSearch
             return $query;
         }
 
-        $like = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $needle).'%';
         $connection = $query->getConnection();
         $driver = $connection instanceof Connection ? $connection->getDriverName() : null;
         $grammar = $query->getGrammar();
+        $like = self::likePattern($driver, $needle);
 
         return $query->where(function (Builder $q) use ($like, $driver, $grammar): void {
             foreach (self::SEARCHABLE_FIELDS as $field) {
                 $q->orWhereRaw(self::likeClause($driver, $grammar->wrap($field)), [$like]);
             }
         });
+    }
+
+    /**
+     * Escape the needle for LIKE using "!" and wrap it in wildcards.
+     *
+     * SQL Server additionally treats "[" as the start of a character class,
+     * so it is escaped there as well.
+     */
+    private static function likePattern(?string $driver, string $needle): string
+    {
+        $special = $driver === 'sqlsrv' ? ['!', '%', '_', '['] : ['!', '%', '_'];
+        $escaped = $driver === 'sqlsrv' ? ['!!', '!%', '!_', '!['] : ['!!', '!%', '!_'];
+
+        return '%'.str_replace($special, $escaped, $needle).'%';
     }
 
     /**

@@ -182,12 +182,12 @@ describe('applyToQuery() SQL per driver', function () {
      * Builds the query on a connection of the given driver without opening it
      * or touching the mailbox config: toSql() and getBindings() never use PDO.
      */
-    function searchSqlOn(string $driver): array
+    function searchSqlOn(string $driver, string $needle = 'a_b'): array
     {
         config(["database.connections.grammar_{$driver}" => ['driver' => $driver, 'database' => ':memory:', 'host' => '127.0.0.1', 'username' => 'x', 'password' => 'x']]);
 
         $builder = (new Builder(DB::connection("grammar_{$driver}")->query()))->setModel(new MailboxMessage);
-        $query = (new DefaultMessageSearch)->applyToQuery($builder, 'a_b');
+        $query = (new DefaultMessageSearch)->applyToQuery($builder, $needle);
 
         return [$query->toSql(), $query->getBindings()];
     }
@@ -208,6 +208,19 @@ describe('applyToQuery() SQL per driver', function () {
             ->and($sql)->toContain('"subject"::text ilike ? escape \'!\'')
             ->and($sql)->not->toContain(' like ')
             ->and($bindings)->toBe(array_fill(0, 5, '%a!_b%'));
+    });
+
+    it('also escapes the bracket wildcard on sqlsrv, where [ opens a character class', function () {
+        [$sql, $bindings] = searchSqlOn('sqlsrv', 'a_[b]');
+
+        expect($sql)->toContain("[subject] like ? escape '!'")
+            ->and($bindings)->toBe(array_fill(0, 5, '%a!_![b]%'));
+    });
+
+    it('leaves brackets alone on drivers where they are literal', function () {
+        [, $bindings] = searchSqlOn('sqlite', 'a_[b]');
+
+        expect($bindings)->toBe(array_fill(0, 5, '%a!_[b]%'));
     });
 
     it('declares the escape character on mysql using its identifier quoting', function () {
