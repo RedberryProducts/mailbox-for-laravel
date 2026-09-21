@@ -43,6 +43,8 @@ class MailboxTransport extends AbstractTransport
      */
     protected function doSend(SentMessage $message): void
     {
+        $this->storedKey = null;
+
         if ($this->enabled) {
             try {
                 $this->capture($message);

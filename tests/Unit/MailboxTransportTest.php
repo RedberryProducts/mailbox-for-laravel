@@ -151,6 +151,24 @@ describe(MailboxTransport::class, function () {
             expect($t->getStoredKey())->toBe('key1');
         });
 
+        it('does not expose the previous message key when a later capture fails', function () {
+            $svc = Mockery::mock(CaptureService::class);
+            $svc->shouldReceive('store')->once()->ordered()->andReturn('first-key');
+            $svc->shouldReceive('store')->once()->ordered()->andThrow(new RuntimeException('database is locked'));
+            $decorated = Mockery::mock(TransportInterface::class);
+            $decorated->shouldReceive('send')->twice();
+            app()->instance(ExceptionHandler::class, Mockery::mock(ExceptionHandler::class)->shouldIgnoreMissing());
+
+            $t = transport($svc, decorated: $decorated);
+            $email = (new Email)->from('a@example.com')->to('b@example.com')->text('hi');
+
+            $t->send($email);
+            expect($t->getStoredKey())->toBe('first-key');
+
+            $t->send($email);
+            expect($t->getStoredKey())->toBeNull();
+        });
+
         it('rethrows a capture failure in capture-only mode since nothing else delivers the message', function () {
             $failure = new RuntimeException('database is locked');
             $svc = Mockery::mock(CaptureService::class);
