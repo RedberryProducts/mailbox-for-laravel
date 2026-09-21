@@ -103,7 +103,7 @@ final class MessageNormalizer
         return [
             'version' => 1,
             'saved_at' => (new \DateTimeImmutable)->format(DateTimeInterface::ATOM),
-            'message_id' => $messageId,
+            'message_id' => $messageId ?? self::messageIdFromRaw($raw ?? $rawMessage->toString()),
             'subject' => null,
             'from' => [],
             'to' => [],
@@ -231,6 +231,20 @@ final class MessageNormalizer
             'name' => $address->getName() ?: null,
             'email' => $address->getAddress(),
         ]);
+    }
+
+    /**
+     * Read the Message-ID header from the header block of a raw RFC 822 message.
+     */
+    private static function messageIdFromRaw(string $raw): ?string
+    {
+        $headerBlock = preg_split("/\r?\n\r?\n/", $raw, 2)[0] ?? '';
+
+        if (preg_match('/^Message-ID:[ \t]*(<[^>]+>)/mi', $headerBlock, $matches) !== 1) {
+            return null;
+        }
+
+        return $matches[1];
     }
 
     private static function firstHeader(Email $email, string $name): ?string
