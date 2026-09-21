@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
 use Redberry\MailboxForLaravel\Storage\FileStorage;
@@ -111,5 +112,76 @@ describe(MailboxTransport::class, function () {
         expect(fn () => $t->send($email))->toThrow(TransportException::class);
         // message stored despite failure
         expect($svc->find($t->getStoredKey())->text)->toBe('body');
+    });
+
+    describe('capture failures in decorate mode', function () {
+        it('still forwards to the decorated transport when storing the message fails', function () {
+            $failure = new RuntimeException('database is locked');
+            $svc = Mockery::mock(CaptureService::class);
+            $svc->shouldReceive('store')->once()->andThrow($failure);
+            $decorated = Mockery::mock(TransportInterface::class);
+            $decorated->shouldReceive('send')->once();
+            $handler = Mockery::mock(ExceptionHandler::class);
+            $handler->shouldReceive('report')->once()->with($failure);
+            app()->instance(ExceptionHandler::class, $handler);
+
+            $t = transport($svc, decorated: $decorated);
+            $t->send((new Email)->from('a@example.com')->to('b@example.com')->text('hi'));
+
+            expect($t->getStoredKey())->toBeNull();
+        });
+
+        it('still forwards to the decorated transport when storing an attachment fails', function () {
+            $failure = new RuntimeException('disk is not writable');
+            $svc = Mockery::mock(CaptureService::class);
+            $svc->shouldReceive('store')->once()->andReturn('key1');
+            $attachmentStore = Mockery::mock(AttachmentStore::class);
+            $attachmentStore->shouldReceive('store')->once()->andThrow($failure);
+            $decorated = Mockery::mock(TransportInterface::class);
+            $decorated->shouldReceive('send')->once();
+            $handler = Mockery::mock(ExceptionHandler::class);
+            $handler->shouldReceive('report')->once()->with($failure);
+            app()->instance(ExceptionHandler::class, $handler);
+
+            $t = transport($svc, $attachmentStore, $decorated);
+            $email = (new Email)->from('a@example.com')->to('b@example.com')->text('hi')
+                ->addPart(new DataPart('data', 'file.txt', 'text/plain'));
+            $t->send($email);
+
+            expect($t->getStoredKey())->toBe('key1');
+        });
+
+        it('does not expose the previous message key when a later capture fails', function () {
+            $svc = Mockery::mock(CaptureService::class);
+            $svc->shouldReceive('store')->once()->ordered()->andReturn('first-key');
+            $svc->shouldReceive('store')->once()->ordered()->andThrow(new RuntimeException('database is locked'));
+            $decorated = Mockery::mock(TransportInterface::class);
+            $decorated->shouldReceive('send')->twice();
+            app()->instance(ExceptionHandler::class, Mockery::mock(ExceptionHandler::class)->shouldIgnoreMissing());
+
+            $t = transport($svc, decorated: $decorated);
+            $email = (new Email)->from('a@example.com')->to('b@example.com')->text('hi');
+
+            $t->send($email);
+            expect($t->getStoredKey())->toBe('first-key');
+
+            $t->send($email);
+            expect($t->getStoredKey())->toBeNull();
+        });
+
+        it('rethrows a capture failure in capture-only mode since nothing else delivers the message', function () {
+            $failure = new RuntimeException('database is locked');
+            $svc = Mockery::mock(CaptureService::class);
+            $svc->shouldReceive('store')->once()->andThrow($failure);
+            $handler = Mockery::mock(ExceptionHandler::class);
+            $handler->shouldReceive('report')->never();
+            app()->instance(ExceptionHandler::class, $handler);
+
+            $attachmentStore = Mockery::mock(AttachmentStore::class)->shouldIgnoreMissing();
+            $t = new MailboxTransport($svc, $attachmentStore, null, true);
+
+            expect(fn () => $t->send((new Email)->from('a@example.com')->to('b@example.com')->text('hi')))
+                ->toThrow(RuntimeException::class, 'database is locked');
+        });
     });
 });

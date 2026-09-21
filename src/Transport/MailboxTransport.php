@@ -33,27 +33,53 @@ class MailboxTransport extends AbstractTransport
         return $this->storedKey;
     }
 
+    /**
+     * Capture the message, then forward it to the decorated transport.
+     *
+     * Capture is best-effort when a decorated transport is configured: a
+     * storage failure is reported and real delivery still happens. Without a
+     * decorated transport the failure is rethrown, since nothing else would
+     * deliver the message.
+     */
     protected function doSend(SentMessage $message): void
     {
-        $raw = $message->toString();
-        $original = $message->getOriginalMessage();
-        $envelope = $message->getEnvelope();
+        $this->storedKey = null;
 
         if ($this->enabled) {
-            $payload = MessageNormalizer::normalize($original, $envelope, $raw, false);
-
-            $this->storedKey = $this->mailbox->store($payload);
-
-            if (config('mailbox.attachments.enabled', true) && $original instanceof Email) {
-                $attachments = MessageNormalizer::extractAttachments($original);
-                foreach ($attachments as $attachment) {
-                    $this->attachmentStore->store($this->storedKey, $attachment);
+            try {
+                $this->capture($message);
+            } catch (\Throwable $e) {
+                if ($this->decorated === null) {
+                    throw $e;
                 }
+
+                report($e);
             }
         }
 
         if ($this->decorated) {
             $this->decorated->send($message->getOriginalMessage(), $message->getEnvelope());
+        }
+    }
+
+    /**
+     * Store the message and its attachments, recording the storage key.
+     */
+    protected function capture(SentMessage $message): void
+    {
+        $raw = $message->toString();
+        $original = $message->getOriginalMessage();
+        $envelope = $message->getEnvelope();
+
+        $payload = MessageNormalizer::normalize($original, $envelope, $raw, false);
+
+        $this->storedKey = $this->mailbox->store($payload);
+
+        if (config('mailbox.attachments.enabled', true) && $original instanceof Email) {
+            $attachments = MessageNormalizer::extractAttachments($original);
+            foreach ($attachments as $attachment) {
+                $this->attachmentStore->store($this->storedKey, $attachment);
+            }
         }
     }
 }
