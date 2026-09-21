@@ -164,6 +164,29 @@ describe(MessageNormalizer::class, function () {
             ->and(strtotime($payload['saved_at']))->toBeInt();
     });
 
+    it('uses the Message-ID header on the email when no override is given', function () {
+        $email = (new Email)->from('a@example.com')->to('b@example.com')->text('hi');
+        $email->getHeaders()->addIdHeader('Message-ID', 'header@example.com');
+
+        expect(MessageNormalizer::normalize($email)['message_id'])->toBe('<header@example.com>');
+    });
+
+    it('prefers an explicit message id over the header', function () {
+        $email = (new Email)->from('a@example.com')->to('b@example.com')->text('hi');
+        $email->getHeaders()->addIdHeader('Message-ID', 'header@example.com');
+
+        $payload = MessageNormalizer::normalize($email, messageId: '<override@example.com>');
+
+        expect($payload['message_id'])->toBe('<override@example.com>');
+    });
+
+    it('uses an explicit message id when the email has no Message-ID header', function () {
+        $email = (new Email)->from('a@example.com')->to('b@example.com')->text('hi');
+
+        expect(MessageNormalizer::normalize($email)['message_id'])->toBeNull()
+            ->and(MessageNormalizer::normalize($email, messageId: '<sent@example.com>')['message_id'])->toBe('<sent@example.com>');
+    });
+
     it('handles RawMessage fallback with minimal structure', function () {
         $rawMessage = new RawMessage('From: test@example.com\r\nSubject: Test\r\n\r\nBody');
 

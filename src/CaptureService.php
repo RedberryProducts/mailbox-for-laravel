@@ -51,6 +51,12 @@ class CaptureService
             $existingId = is_string($rfcMessageId) && $rfcMessageId !== ''
                 ? $this->storage->findIdByMessageId($rfcMessageId)
                 : null;
+
+            // A resend replaces the earlier capture wholesale: the message is
+            // upserted below, so its attachments must not accumulate either.
+            if ($existingId !== null) {
+                $this->attachments?->deleteByMessage($existingId);
+            }
         }
 
         $payload['id'] = is_string($existingId) && $existingId !== ''

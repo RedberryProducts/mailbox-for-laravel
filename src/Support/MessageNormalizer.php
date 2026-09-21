@@ -21,18 +21,24 @@ final class MessageNormalizer
      * @return array<string,mixed>
      */
     /** @return array<string,mixed> */
+    /**
+     * @param  string|null  $messageId  RFC 822 Message-ID to record, in angle-bracket form.
+     *                                  Overrides the header on $message, which is absent
+     *                                  when Symfony only added it to its own clone on send.
+     */
     public static function normalize(
         Email|RawMessage $message,
         ?Envelope $envelope = null,
         ?string $raw = null,
-        bool $storeAttachmentsInline = false
+        bool $storeAttachmentsInline = false,
+        ?string $messageId = null
     ): array {
         if ($message instanceof Email) {
 
-            return self::normalizeEmail($message, $envelope, $raw, $storeAttachmentsInline);
+            return self::normalizeEmail($message, $envelope, $raw, $storeAttachmentsInline, $messageId);
         }
 
-        return self::normalizeRaw($message, $envelope, $raw);
+        return self::normalizeRaw($message, $envelope, $raw, $messageId);
     }
 
     /**
@@ -95,11 +101,13 @@ final class MessageNormalizer
     private static function normalizeRaw(
         RawMessage $rawMessage,
         ?Envelope $envelope,
-        ?string $raw
+        ?string $raw,
+        ?string $messageId = null
     ): array {
         return [
             'version' => 1,
             'saved_at' => (new \DateTimeImmutable)->format(DateTimeInterface::ATOM),
+            'message_id' => $messageId,
             'subject' => null,
             'from' => [],
             'to' => [],
@@ -119,7 +127,8 @@ final class MessageNormalizer
         Email $email,
         ?Envelope $envelope,
         ?string $raw,
-        bool $storeAttachmentsInline
+        bool $storeAttachmentsInline,
+        ?string $messageId = null
     ): array {
         $headers = [];
         foreach ($email->getHeaders()->all() as $header) {
@@ -179,7 +188,7 @@ final class MessageNormalizer
             'version' => 1,
             'saved_at' => (new \DateTimeImmutable)->format(DateTimeInterface::ATOM),
 
-            'message_id' => self::firstHeader($email, 'Message-ID'),
+            'message_id' => $messageId ?? self::firstHeader($email, 'Message-ID'),
             'subject' => $email->getSubject(),
             'date' => self::firstHeader($email, 'Date'),
 
