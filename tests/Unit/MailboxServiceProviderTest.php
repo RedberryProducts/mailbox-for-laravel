@@ -292,5 +292,43 @@ describe(MailboxServiceProvider::class, function () {
             expect(fn () => app(MailManager::class)->mailer('mailbox')->getSymfonyTransport())
                 ->toThrow(InvalidArgumentException::class);
         });
+
+        it('treats a blank decorate value as capture-only instead of recursing', function (string $blank) {
+            config(['mailbox.decorate' => $blank]);
+
+            app()->forgetInstance(MailboxTransport::class);
+            app(MailManager::class)->purge('mailbox');
+
+            $transport = app(MailManager::class)->mailer('mailbox')->getSymfonyTransport();
+
+            $ref = new ReflectionProperty(MailboxTransport::class, 'decorated');
+            expect($ref->getValue($transport))->toBeNull();
+        })->with([
+            'empty string' => [''],
+            'whitespace' => ['   '],
+        ]);
+
+        it('throws on circular reference when decorate points to an alias of the mailbox transport', function () {
+            config([
+                'mailbox.decorate' => 'captured',
+                'mail.mailers.captured' => ['transport' => 'mailbox'],
+            ]);
+
+            app()->forgetInstance(MailboxTransport::class);
+            app(MailManager::class)->purge('mailbox');
+
+            expect(fn () => app(MailManager::class)->mailer('mailbox')->getSymfonyTransport())
+                ->toThrow(InvalidArgumentException::class, 'circular reference');
+        });
+
+        it('does not fall back to the default mailer for a falsy decorate name', function () {
+            config(['mailbox.decorate' => '0']);
+
+            app()->forgetInstance(MailboxTransport::class);
+            app(MailManager::class)->purge('mailbox');
+
+            expect(fn () => app(MailManager::class)->mailer('mailbox')->getSymfonyTransport())
+                ->toThrow(InvalidArgumentException::class, 'not defined');
+        });
     });
 });

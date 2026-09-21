@@ -2,6 +2,12 @@
 
 All notable changes to `mailbox-for-laravel` will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+- **Empty `MAILBOX_DECORATE` no longer recurses until the process dies.** `resolveDecoratedTransport()` only guarded against `null`, so `MAILBOX_DECORATE=` (which the README documents as a way back to capture-only mode) reached `MailManager::mailer('')`. The manager treats a falsy name as "use the default mailer"; with `MAIL_MAILER=mailbox` that is the mailbox transport itself, which resolved the decorated transport again, forever. Blank and whitespace-only values are now treated as `null`, the circular-reference check also rejects any mailer whose `transport` is `mailbox` (aliases), and the mailer is looked up by its exact name so no value can fall back to the default. Fixes #92.
+- **PHPStan analysis on CI under Laravel 13.** Larastan boots the package through Testbench to resolve `view-string` arguments, and Testbench 11 only reads the root `composer.json` providers when running under its own CLI, so `MailboxServiceProvider` was never registered and `view-string` rejected `mailbox::app`. A `testbench.yaml.dist` now lists the provider explicitly, which Larastan passes through when it boots the application.
+
 ## [2.3.2] - 2026-08-24
 
 Patch release. Fixes the database message store crashing when a stored payload carries a key the messages table has no column for, and picks up the outstanding npm security advisories that affect the dashboard bundle. No config, routes, or public APIs changed. **Rebuilt assets ship with this release**, so run `php artisan vendor:publish --tag=mailbox-assets --force` after upgrading.
