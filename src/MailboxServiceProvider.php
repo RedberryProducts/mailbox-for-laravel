@@ -198,8 +198,13 @@ class MailboxServiceProvider extends PackageServiceProvider
     /**
      * Resolve the Symfony transport for the mailer named in "mailbox.decorate".
      *
-     * Returns null when decoration is not configured, preserving capture-only
-     * mode. Throws on circular references (decorating "mailbox" itself).
+     * Returns null when decoration is not configured or blank, preserving
+     * capture-only mode. Throws on circular references: decorating "mailbox"
+     * itself, or any mailer whose transport is "mailbox".
+     *
+     * The mailer must be looked up by its exact name. MailManager::mailer()
+     * falls back to the default mailer for any falsy name, and with
+     * MAIL_MAILER=mailbox that default is this transport, which would recurse.
      *
      * @param  Application  $app
      */
@@ -207,14 +212,20 @@ class MailboxServiceProvider extends PackageServiceProvider
     {
         $name = config('mailbox.decorate');
 
-        if ($name === null) {
+        if ($name === null || trim((string) $name) === '') {
             return null;
         }
 
-        if ($name === 'mailbox') {
+        $name = (string) $name;
+
+        if ($name === 'mailbox' || config("mail.mailers.{$name}.transport") === 'mailbox') {
             throw new \InvalidArgumentException(
-                'The [mailbox.decorate] option must not reference the "mailbox" mailer (circular reference).'
+                "The [mailbox.decorate] option must not reference the \"mailbox\" transport (circular reference via mailer [{$name}])."
             );
+        }
+
+        if (config("mail.mailers.{$name}") === null) {
+            throw new \InvalidArgumentException("Mailer [{$name}] is not defined.");
         }
 
         /** @var MailManager $manager */
