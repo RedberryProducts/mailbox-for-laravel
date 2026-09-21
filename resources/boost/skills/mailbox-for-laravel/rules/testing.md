@@ -14,6 +14,18 @@ uses(InteractsWithMailbox::class);
 
 The trait auto-clears the mailbox between tests and exposes `$this->mailbox()` for collection-level assertions.
 
+## Test environment
+
+Assertions only see mail that went through the `mailbox` transport into a working store. Laravel's default `phpunit.xml` sets `MAIL_MAILER=array`, so nothing is captured, and the default `sqlite` store needs tables that do not exist on a fresh checkout. The trait also clears whatever store is configured before every test, so never point tests at the development inbox. Use the `file` driver at a dedicated path, which needs no migrations:
+
+```xml
+<env name="MAIL_MAILER" value="mailbox"/>
+<env name="MAILBOX_STORE_DRIVER" value="file"/>
+<env name="MAILBOX_STORE_FILE_PATH" value="storage/framework/testing/mailbox"/>
+```
+
+Attachment contents go to the `mailbox` filesystem disk regardless of driver; call `Storage::fake('mailbox')` in tests that assert on attachments. To keep the `sqlite` or `database` driver in tests, run `php artisan mailbox:install` before the test command (in CI too) so the tables exist; `RefreshDatabase` does not create them because the package runs its own migrations rather than publishing them.
+
 ## Collection-level assertions
 
 Available via `$this->mailbox()` or the `Mailbox` facade:
