@@ -1,8 +1,10 @@
 <?php
 
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Support\Facades\Storage;
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
+use Redberry\MailboxForLaravel\Storage\FileAttachmentStore;
 use Redberry\MailboxForLaravel\Storage\FileStorage;
 use Redberry\MailboxForLaravel\Transport\MailboxTransport;
 use Symfony\Component\Mailer\Exception\TransportException;
@@ -112,6 +114,48 @@ describe(MailboxTransport::class, function () {
         expect(fn () => $t->send($email))->toThrow(TransportException::class);
         // message stored despite failure
         expect($svc->find($t->getStoredKey())->text)->toBe('body');
+    });
+
+    describe('Message-ID capture and dedup', function () {
+        it('records the Message-ID that Symfony generates on send', function () {
+            $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/mailbox-transport-'.uniqid()));
+            $t = transport($svc);
+
+            $sent = $t->send((new Email)->from('a@example.com')->to('b@example.com')->text('hi'));
+
+            $stored = $svc->find($t->getStoredKey());
+            expect($stored->message_id)->toBe('<'.$sent->getMessageId().'>')
+                ->and($stored->raw)->toContain('Message-ID: '.$stored->message_id);
+        });
+
+        it('keeps an explicit Message-ID header set on the original message', function () {
+            $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/mailbox-transport-'.uniqid()));
+            $t = transport($svc);
+            $email = (new Email)->from('a@example.com')->to('b@example.com')->text('hi');
+            $email->getHeaders()->addIdHeader('Message-ID', 'fixed@example.com');
+
+            $t->send($email);
+
+            expect($svc->find($t->getStoredKey())->message_id)->toBe('<fixed@example.com>');
+        });
+
+        it('does not duplicate attachments when the same message is sent again', function () {
+            Storage::fake('mailbox');
+            $attachments = new FileAttachmentStore(sys_get_temp_dir().'/mailbox-transport-atts-'.uniqid(), 'mailbox', 'attachments');
+            $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/mailbox-transport-'.uniqid()), $attachments);
+            $t = transport($svc, $attachments);
+            $email = (new Email)->from('a@example.com')->to('b@example.com')->text('hi')
+                ->addPart(new DataPart('data', 'file.txt', 'text/plain'));
+            $email->getHeaders()->addIdHeader('Message-ID', 'resend@example.com');
+
+            $t->send($email);
+            $firstKey = $t->getStoredKey();
+            $t->send($email);
+
+            expect($t->getStoredKey())->toBe($firstKey)
+                ->and($svc->all())->toHaveCount(1)
+                ->and($attachments->findByMessage($firstKey))->toHaveCount(1);
+        });
     });
 
     describe('capture failures in decorate mode', function () {

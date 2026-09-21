@@ -44,11 +44,12 @@ class CaptureService
         $payload['saved_at'] ??= now()->toIso8601String();
 
         $existingId = $payload['id'] ?? null;
+        $dedupedId = null;
 
         if (! is_string($existingId) || $existingId === '') {
             $rfcMessageId = $payload['message_id'] ?? null;
 
-            $existingId = is_string($rfcMessageId) && $rfcMessageId !== ''
+            $existingId = $dedupedId = is_string($rfcMessageId) && $rfcMessageId !== ''
                 ? $this->storage->findIdByMessageId($rfcMessageId)
                 : null;
         }
@@ -57,7 +58,16 @@ class CaptureService
             ? $existingId
             : (string) Str::ulid();
 
-        return $this->storage->store($payload);
+        $id = $this->storage->store($payload);
+
+        // A resend replaces the earlier capture wholesale, so its attachments
+        // must not accumulate. Only clear them once the upsert has succeeded,
+        // otherwise a failed store would strip a message that still exists.
+        if ($dedupedId !== null) {
+            $this->attachments?->deleteByMessage($dedupedId);
+        }
+
+        return $id;
     }
 
     /**

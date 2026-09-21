@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Storage;
 use Redberry\MailboxForLaravel\CaptureService;
+use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
+use Redberry\MailboxForLaravel\Contracts\MessageStore;
 use Redberry\MailboxForLaravel\DTO\AttachmentData;
 use Redberry\MailboxForLaravel\DTO\MailboxMessageData;
 use Redberry\MailboxForLaravel\DTO\PaginatedMessages;
@@ -198,6 +200,31 @@ describe(CaptureService::class, function () {
 
             expect($returned)->toBe($customId);
             expect($svc->all())->toHaveCount(2);
+        });
+
+        it('keeps the earlier attachments when the deduped upsert fails', function () {
+            $storage = Mockery::mock(MessageStore::class);
+            $storage->shouldReceive('findIdByMessageId')->with('<dup@example.com>')->andReturn('existing-id');
+            $storage->shouldReceive('store')->once()->andThrow(new RuntimeException('database is locked'));
+            $attachments = Mockery::mock(AttachmentStore::class);
+            $attachments->shouldReceive('deleteByMessage')->never();
+
+            $svc = new CaptureService($storage, $attachments);
+
+            expect(fn () => $svc->store(['raw' => 'v2', 'message_id' => '<dup@example.com>']))
+                ->toThrow(RuntimeException::class);
+        });
+
+        it('clears the earlier attachments only after the deduped upsert succeeds', function () {
+            $storage = Mockery::mock(MessageStore::class);
+            $storage->shouldReceive('findIdByMessageId')->with('<dup@example.com>')->andReturn('existing-id');
+            $storage->shouldReceive('store')->once()->ordered()->andReturn('existing-id');
+            $attachments = Mockery::mock(AttachmentStore::class);
+            $attachments->shouldReceive('deleteByMessage')->once()->ordered()->with('existing-id');
+
+            $svc = new CaptureService($storage, $attachments);
+
+            expect($svc->store(['raw' => 'v2', 'message_id' => '<dup@example.com>']))->toBe('existing-id');
         });
 
         it('upserted message updates content', function () {

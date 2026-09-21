@@ -9,6 +9,7 @@ use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\AbstractTransport;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Mime\Message;
 
 class MailboxTransport extends AbstractTransport
 {
@@ -71,7 +72,11 @@ class MailboxTransport extends AbstractTransport
         $original = $message->getOriginalMessage();
         $envelope = $message->getEnvelope();
 
-        $payload = MessageNormalizer::normalize($original, $envelope, $raw, false);
+        // Symfony adds the Message-ID header to a clone of the message, so the
+        // original never carries it. The id is exposed on the SentMessage.
+        $messageId = $original instanceof Message ? '<'.$message->getMessageId().'>' : null;
+
+        $payload = MessageNormalizer::normalize($original, $envelope, $raw, false, $messageId);
 
         $this->storedKey = $this->mailbox->store($payload);
 
