@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Redberry\MailboxForLaravel\Search;
 
+use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Redberry\MailboxForLaravel\Contracts\MessageSearch;
@@ -67,12 +68,32 @@ class DefaultMessageSearch implements MessageSearch
             return $query;
         }
 
-        $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $needle).'%';
+        $like = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $needle).'%';
+        $connection = $query->getConnection();
+        $driver = $connection instanceof Connection ? $connection->getDriverName() : null;
+        $grammar = $query->getGrammar();
 
-        return $query->where(function (Builder $q) use ($like): void {
+        return $query->where(function (Builder $q) use ($like, $driver, $grammar): void {
             foreach (self::SEARCHABLE_FIELDS as $field) {
-                $q->orWhere($field, 'like', $like);
+                $q->orWhereRaw(self::likeClause($driver, $grammar->wrap($field)), [$like]);
             }
         });
+    }
+
+    /**
+     * Build a case-insensitive, wildcard-safe LIKE clause for the driver.
+     *
+     * The needle is escaped with "!" above, and the clause declares it
+     * explicitly: SQLite has no default escape character, and a backslash
+     * would need driver-specific quoting inside the literal. Postgres LIKE is
+     * case-sensitive and cannot be applied to json columns directly, so it
+     * uses ILIKE against a text cast.
+     */
+    private static function likeClause(?string $driver, string $column): string
+    {
+        return match ($driver) {
+            'pgsql' => "{$column}::text ilike ? escape '!'",
+            default => "{$column} like ? escape '!'",
+        };
     }
 }

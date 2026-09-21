@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Redberry\MailboxForLaravel\Models\MailboxMessage;
 use Redberry\MailboxForLaravel\Search\DefaultMessageSearch;
 
@@ -101,10 +103,10 @@ describe('applyToQuery()', function () {
 
     it('escapes percent and underscore wildcards in the needle', function () {
         $query = MailboxMessage::query();
-        $result = $this->search->applyToQuery($query, '100%_done');
+        $result = $this->search->applyToQuery($query, '100%_done!');
         $sql = $result->toRawSql();
 
-        expect($sql)->toContain('100\\%\\_done');
+        expect($sql)->toContain("'%100!%!_done!!%' escape '!'");
     });
 
     it('filters matching records from the database', function () {
@@ -131,6 +133,89 @@ describe('applyToQuery()', function () {
 
         expect($results)->toHaveCount(1)
             ->and($results->first()->id)->toBe('01HTESTMATCH00000000000001');
+    });
+});
+
+describe('applyToQuery() wildcard and case semantics', function () {
+    beforeEach(function () {
+        config(['mailbox.store.database.connection' => 'testing']);
+        $this->artisan('migrate', ['--database' => 'testing'])->run();
+
+        MailboxMessage::query()->create([
+            'id' => '01HTESTWILD000000000000001',
+            'subject' => 'Report 100% complete',
+            'from' => json_encode([['email' => 'john_doe@example.com', 'name' => 'John Doe']]),
+            'to' => json_encode([['email' => 'Sales-Team@Example.com']]),
+            'text' => 'Hello there',
+            'timestamp' => time(),
+        ]);
+
+        MailboxMessage::query()->create([
+            'id' => '01HTESTWILD000000000000002',
+            'subject' => 'Report 10 of 20 complete',
+            'from' => json_encode([['email' => 'johnxdoe@example.com']]),
+            'to' => json_encode([['email' => 'other@example.com']]),
+            'text' => 'Nothing here',
+            'timestamp' => time(),
+        ]);
+    });
+
+    it('matches the same records on the database driver as matches() does in memory', function (string $needle, array $expectedIds) {
+        $ids = $this->search->applyToQuery(MailboxMessage::query(), $needle)->orderBy('id')->pluck('id')->all();
+
+        expect($ids)->toBe($expectedIds);
+
+        $payloads = MailboxMessage::query()->orderBy('id')->get()->map(fn ($m) => $m->toArray());
+        $inMemoryIds = $payloads->filter(fn ($p) => $this->search->matches($p, $needle))->pluck('id')->values()->all();
+
+        expect($inMemoryIds)->toBe($expectedIds);
+    })->with([
+        'underscore is literal' => ['john_doe', ['01HTESTWILD000000000000001']],
+        'percent is literal' => ['100%', ['01HTESTWILD000000000000001']],
+        'mixed case matches case-insensitively' => ['sales-team@example', ['01HTESTWILD000000000000001']],
+        'plain term matches both' => ['complete', ['01HTESTWILD000000000000001', '01HTESTWILD000000000000002']],
+    ]);
+});
+
+describe('applyToQuery() SQL per driver', function () {
+    /**
+     * Builds the query on a connection of the given driver without opening it
+     * or touching the mailbox config: toSql() and getBindings() never use PDO.
+     */
+    function searchSqlOn(string $driver): array
+    {
+        config(["database.connections.grammar_{$driver}" => ['driver' => $driver, 'database' => ':memory:', 'host' => '127.0.0.1', 'username' => 'x', 'password' => 'x']]);
+
+        $builder = (new Builder(DB::connection("grammar_{$driver}")->query()))->setModel(new MailboxMessage);
+        $query = (new DefaultMessageSearch)->applyToQuery($builder, 'a_b');
+
+        return [$query->toSql(), $query->getBindings()];
+    }
+
+    it('declares the escape character explicitly on sqlite, which has no default', function () {
+        [$sql, $bindings] = searchSqlOn('sqlite');
+
+        expect($sql)->toContain('"subject" like ? escape \'!\'')
+            ->and($sql)->toContain('"from" like ? escape \'!\'')
+            ->and($bindings)->toBe(array_fill(0, 5, '%a!_b%'));
+    });
+
+    it('casts columns to text and uses ilike on pgsql', function () {
+        [$sql, $bindings] = searchSqlOn('pgsql');
+
+        expect($sql)->toContain('"from"::text ilike ? escape \'!\'')
+            ->and($sql)->toContain('"to"::text ilike ? escape \'!\'')
+            ->and($sql)->toContain('"subject"::text ilike ? escape \'!\'')
+            ->and($sql)->not->toContain(' like ')
+            ->and($bindings)->toBe(array_fill(0, 5, '%a!_b%'));
+    });
+
+    it('declares the escape character on mysql using its identifier quoting', function () {
+        [$sql, $bindings] = searchSqlOn('mysql');
+
+        expect($sql)->toContain('`subject` like ? escape \'!\'')
+            ->and($sql)->toContain('`from` like ? escape \'!\'')
+            ->and($bindings)->toBe(array_fill(0, 5, '%a!_b%'));
     });
 });
 
