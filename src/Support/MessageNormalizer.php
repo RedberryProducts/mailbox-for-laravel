@@ -17,14 +17,10 @@ final class MessageNormalizer
     /**
      * Build a structured array to store.
      *
-     *
-     * @return array<string,mixed>
-     */
-    /** @return array<string,mixed> */
-    /**
      * @param  string|null  $messageId  RFC 822 Message-ID to record, in angle-bracket form.
      *                                  Overrides the header on $message, which is absent
      *                                  when Symfony only added it to its own clone on send.
+     * @return array<string,mixed>
      */
     public static function normalize(
         Email|RawMessage $message,
