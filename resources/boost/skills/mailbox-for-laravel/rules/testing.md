@@ -16,15 +16,16 @@ The trait auto-clears the mailbox between tests and exposes `$this->mailbox()` f
 
 ## Test environment
 
-Assertions only see mail that went through the `mailbox` transport into a working store. Laravel's default `phpunit.xml` sets `MAIL_MAILER=array`, so nothing is captured, and the default `sqlite` store needs tables that do not exist on a fresh checkout. The trait also clears whatever store is configured before every test, so never point tests at the development inbox. Use the `file` driver at a dedicated path, which needs no migrations:
+Assertions only see mail that went through the `mailbox` transport into a working store. Laravel's default `phpunit.xml` sets `MAIL_MAILER=array`, so nothing is captured, and the default `sqlite` store needs tables that do not exist on a fresh checkout. The trait also clears whatever store is configured before every test, including the attachments directory on the `mailbox` disk, so never point tests at the development inbox. Add these inside the existing `<php>` element of `phpunit.xml` to use the `file` driver and a dedicated attachments path, which need no migrations:
 
 ```xml
 <env name="MAIL_MAILER" value="mailbox"/>
 <env name="MAILBOX_STORE_DRIVER" value="file"/>
 <env name="MAILBOX_STORE_FILE_PATH" value="storage/framework/testing/mailbox"/>
+<env name="MAILBOX_ATTACHMENTS_PATH" value="testing/attachments"/>
 ```
 
-Attachment contents go to the `mailbox` filesystem disk regardless of driver; call `Storage::fake('mailbox')` in tests that assert on attachments. To keep the `sqlite` or `database` driver in tests, run `php artisan mailbox:install` before the test command (in CI too) so the tables exist. It is a separate process that reads `.env`, not `phpunit.xml`, so pass any `MAILBOX_STORE_DATABASE_CONNECTION` or `MAILBOX_STORE_DATABASE_TABLE` override the tests use on the command line (`MAILBOX_STORE_DATABASE_CONNECTION=testing php artisan mailbox:install`). `RefreshDatabase` does not create the tables because the package runs its own migrations rather than publishing them.
+Attachment contents go to the `mailbox` disk regardless of driver, and the trait clears the attachments path when the test application boots, before `Storage::fake('mailbox')` in a test can take effect, so keep the path override even when faking the disk. To keep the `sqlite` or `database` driver in tests, run `php artisan mailbox:install` before the test command (in CI too) so the tables exist. It is a separate process, so the connection must be persistent (file-backed SQLite or a database server; an in-memory connection loses the schema when the command exits, so use the `file` driver instead), and it reads `.env`, not `phpunit.xml`, so pass any `MAILBOX_STORE_DATABASE_CONNECTION` or `MAILBOX_STORE_DATABASE_TABLE` override the tests use on the command line (`MAILBOX_STORE_DATABASE_CONNECTION=mailbox_testing php artisan mailbox:install`). `RefreshDatabase` does not create the tables because the package runs its own migrations rather than publishing them.
 
 ## Collection-level assertions
 

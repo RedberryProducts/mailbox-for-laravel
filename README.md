@@ -89,22 +89,24 @@ Two things must be true before any `Mailbox::assert*` call can pass:
 1. **Mail must go through the `mailbox` transport.** Laravel's default `phpunit.xml` sets `MAIL_MAILER=array`, which bypasses the transport entirely, so nothing is captured and every assertion fails with "No messages were captured".
 2. **The store must be ready.** The default `sqlite` driver expects `storage/app/mailbox/mailbox.sqlite` with its tables in place. On a fresh checkout or CI runner they do not exist, so the first test errors with "no such table" as soon as the trait tries to clear the store.
 
-The `InteractsWithMailbox` trait clears whatever store is configured before every test, so pointing tests at your development inbox wipes it. The simplest setup is the `file` driver at a dedicated path: it creates the directory on first use and needs no migrations. Add these to `phpunit.xml`:
+The `InteractsWithMailbox` trait clears whatever store is configured before every test, including the attachments directory on the `mailbox` filesystem disk, so pointing tests at your development inbox wipes both its messages and its attachments. The simplest setup is the `file` driver at a dedicated path plus a dedicated attachments path: it creates the directories on first use and needs no migrations. Add these entries inside the existing `<php>` element of your `phpunit.xml`:
 
 ```xml
-<php>
-    <env name="MAIL_MAILER" value="mailbox"/>
-    <env name="MAILBOX_STORE_DRIVER" value="file"/>
-    <env name="MAILBOX_STORE_FILE_PATH" value="storage/framework/testing/mailbox"/>
-</php>
+<env name="MAIL_MAILER" value="mailbox"/>
+<env name="MAILBOX_STORE_DRIVER" value="file"/>
+<env name="MAILBOX_STORE_FILE_PATH" value="storage/framework/testing/mailbox"/>
+<env name="MAILBOX_ATTACHMENTS_PATH" value="testing/attachments"/>
 ```
 
-Attachment contents are written to the `mailbox` filesystem disk (`storage/app/mailbox` by default) regardless of the store driver. Call `Storage::fake('mailbox')` in tests that assert on attachments to keep them off the real disk.
+`MAILBOX_ATTACHMENTS_PATH` is relative to the `mailbox` disk (`storage/app/mailbox` by default), and attachment contents are written there regardless of the store driver. The trait clears it as soon as the test application boots, before any `Storage::fake('mailbox')` call in a test can take effect, so set the path even if you also fake the disk.
 
-If you would rather keep the `sqlite` or `database` driver in tests, the tables have to exist before the first test runs. `php artisan mailbox:install` creates them on the configured mailbox connection, so add it as a step before your test command in CI. It runs in its own process and reads `.env`, not the `<env>` entries in `phpunit.xml`, so if your tests override `MAILBOX_STORE_DATABASE_CONNECTION` or `MAILBOX_STORE_DATABASE_TABLE` there, pass the same values to the install step or it will migrate a different connection:
+If you would rather keep the `sqlite` or `database` driver in tests, the tables have to exist before the first test runs. `php artisan mailbox:install` creates them on the configured mailbox connection, so add it as a step before your test command in CI. It runs in its own process, which has two consequences:
+
+- The connection must be persistent: a file-backed SQLite database or a database server. An in-memory (`:memory:`) connection loses its schema when the install command exits, so the tests still see no tables. Use the `file` driver above if your test database is in-memory.
+- It reads `.env`, not the `<env>` entries in `phpunit.xml`. If your tests override `MAILBOX_STORE_DATABASE_CONNECTION` or `MAILBOX_STORE_DATABASE_TABLE` there, pass the same values to the install step or it will migrate a different connection:
 
 ```bash
-MAILBOX_STORE_DATABASE_CONNECTION=testing php artisan mailbox:install
+MAILBOX_STORE_DATABASE_CONNECTION=mailbox_testing php artisan mailbox:install
 vendor/bin/pest
 ```
 
