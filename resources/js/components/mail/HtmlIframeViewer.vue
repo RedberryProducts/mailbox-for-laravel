@@ -23,7 +23,9 @@ const props = defineProps<{
 const frame = ref<HTMLIFrameElement | null>(null)
 let resizeObserver: ResizeObserver | null = null
 
-// NOTE: you currently allow scripts; if you want them disabled, remove `allow-scripts`
+// Scripts in captured mail must never run: `allow-scripts` is deliberately
+// absent, and must stay absent while `allow-same-origin` is set, since the
+// two together would let a message script reach the dashboard's origin.
 const sandbox =
     'allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation'
 

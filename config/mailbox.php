@@ -80,8 +80,9 @@ return [
     | Unauthorized Redirect
     |--------------------------------------------------------------------------
     |
-    | When the gate denies access, unauthenticated users are redirected
-    | here. Leave null to render a 403 response instead of redirecting.
+    | When the gate denies a guest, they are redirected here (typically your
+    | login URL). Authenticated users the gate denies always get a 403.
+    | Leave null to answer every denied request with a 403.
     |
     */
 

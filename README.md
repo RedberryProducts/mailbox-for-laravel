@@ -228,7 +228,7 @@ The keys you're most likely to touch:
 | `MAILBOX_DECORATE` | `null` | Mailer name to decorate — capture + forward for real delivery (e.g. `smtp`, `ses`) |
 | `MAILBOX_PATH` | `mailbox` | URL prefix for the dashboard |
 | `MAILBOX_GATE` | `viewMailbox` | Gate ability checked by the authorize middleware |
-| `MAILBOX_UNAUTHORIZED_REDIRECT` | `null` | Redirect target on gate denial (null = 403 response) |
+| `MAILBOX_UNAUTHORIZED_REDIRECT` | `null` | Where to send guests the gate denies, e.g. a login URL (null = 403; signed-in users always get 403) |
 | `MAILBOX_STORE_DRIVER` | `sqlite` | `sqlite`, `database`, or `file` |
 | `MAILBOX_STORE_DATABASE_CONNECTION` | `mailbox` | Connection name for the DB driver |
 | `MAILBOX_STORE_DATABASE_TABLE` | `mailbox_messages` | Messages table name |

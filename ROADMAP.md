@@ -39,7 +39,7 @@ Working order for the open GitHub issues as of 2026-10-06. Priorities were check
 - [x] #98 (rest) README env vars, dev-link caveat (dev-link now works everywhere, see #102)
 - [ ] #98 Dashboard screenshot — needs demo mail and a human-picked shot; left for a maintainer
 - [x] #99 Packagist / npm metadata is placeholder text (low)
-- [ ] #100 `unauthorized_redirect` and iframe sandbox comments (low)
+- [x] #100 `unauthorized_redirect` and iframe sandbox comments (low)
 
 ## 7. Next minor release (contract changes)
 
