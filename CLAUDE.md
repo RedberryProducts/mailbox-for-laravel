@@ -179,3 +179,17 @@ The package provides Laravel-idiomatic assertion helpers for verifying captured 
 4. No new `env()` usage outside `config/`
 5. README/CHANGELOG updated for user-facing changes
 6. Conventional Commits format used
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues (RedberryProducts/mailbox-for-laravel) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one root `CONTEXT.md` plus `docs/adr/`. See `docs/agents/domain.md`.
