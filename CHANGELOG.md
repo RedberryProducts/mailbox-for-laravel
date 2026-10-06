@@ -4,6 +4,10 @@ All notable changes to `mailbox-for-laravel` will be documented in this file.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-06
+
+Major release. The default `viewMailbox` gate now only allows `APP_ENV=local`, Laravel 10 support is dropped, `Contracts\AttachmentStore` gains `findByMessages()`, `AttachmentData::$content` is always raw bytes, and the deprecated `Storage\AttachmentStore` shim is removed. See [UPGRADE.md](UPGRADE.md) before updating. **Rebuilt assets ship with this release**, so run `php artisan vendor:publish --tag=mailbox-assets --force` after upgrading.
+
 ### Security
 - **Email previews are sanitized on a parsed DOM instead of with regexes.** `HtmlIframeViewer` stripped `<script>` blocks, double-quoted `on*` handlers and quoted `javascript:` URLs with regular expressions, which miss variants such as `</script >`, single-quoted or unquoted handlers, obfuscated schemes, `data:text/html` links, `<meta http-equiv="refresh">` and `<base>`. Captured HTML is now parsed with `DOMParser` (which never runs scripts) and cleaned on the tree: active elements are dropped, every `on*` attribute is removed, and unsafe URL schemes are stripped from `href`, `src`, `action`, `formaction` and similar attributes. `target` and `formtarget` are removed everywhere, and links and image-map areas open in a new tab, so no link or form can navigate the dashboard tab. The iframe sandbox, which never allows scripts, is still the main barrier. The message list snippet is extracted the same way. Resolves the CodeQL `js/bad-tag-filter` and `js/incomplete-multi-character-sanitization` alerts.
 - **CI workflows run with a read-only token.** `run-tests`, `PHPStan` and `frontend` now declare `permissions: contents: read` instead of inheriting the repository default. Resolves the CodeQL `actions/missing-workflow-permissions` alerts.
@@ -96,7 +100,7 @@ Patch release. Documentation-only fixes to the Laravel Boost skill that shipped 
 ### Changed
 - **`SKILL.md`** — activation description now mentions the 10/8 method counts, the resolvers-not-extend mechanism, the no-Inertia stance, `mailbox:upgrade`, and `CidRewriter`. Quick-reference indexes the two new rule files. Storage-driver section gained the `sqlite` (auto-configured) vs. `database` (bring-your-own-connection) distinction.
 
-## [Unreleased]
+## [2.0.0] - 2026-04-16
 
 ### v2.0.0-dev — Inertia Removal
 
