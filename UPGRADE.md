@@ -15,6 +15,10 @@ public function boot(): void
 
 Without it those environments now answer with a 403 (or redirect to `mailbox.unauthorized_redirect`). Local development is unaffected.
 
+### `Storage\AttachmentStore` is removed
+
+The deprecated `Redberry\MailboxForLaravel\Storage\AttachmentStore` shim is gone. Type-hint `Contracts\AttachmentStore`, or use `Storage\DatabaseAttachmentStore` if you need the database implementation itself.
+
 ### Laravel 10 is no longer supported
 
 v2.4.0 requires Laravel 11, 12 or 13. Stay on 2.3.x if you are still on Laravel 10.
@@ -126,7 +130,7 @@ The `store()` return type narrowed from `string|int` to `string`. All IDs are no
 
 ### AttachmentStore contract (new)
 
-v2 introduced `Contracts\AttachmentStore` — a driver-agnostic interface for attachment persistence. If you had code that depended on the old `Storage\AttachmentStore` class directly, switch to type-hinting `Contracts\AttachmentStore`. The old class is a deprecated shim and will be removed in v2.1.
+v2 introduced `Contracts\AttachmentStore` — a driver-agnostic interface for attachment persistence. If you had code that depended on the old `Storage\AttachmentStore` class directly, switch to type-hinting `Contracts\AttachmentStore`. The old class was kept as a deprecated shim through 2.3.x and is removed in 2.4.0.
 
 Attachment store methods now return `DTO\StoredAttachment` value objects instead of `MailboxAttachment` Eloquent models. Property access uses camelCase (`->mimeType`, `->isInline`).
 

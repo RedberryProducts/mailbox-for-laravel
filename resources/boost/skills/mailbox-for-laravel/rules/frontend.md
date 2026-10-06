@@ -41,7 +41,7 @@ const url = mailboxUrl(`messages/${id}`); // respects custom path prefix
 - `components/ui/` — reusable primitives (button, input, tabs, select, …).
 - `composables/useMailboxPolling.ts` — auto-refresh polling.
 - `composables/useAttachmentIcon.ts` — file-type icon resolution.
-- `lib/mailboxStore.ts`, `lib/mail-data.ts`, `lib/utils.ts`.
+- `lib/mailboxStore.ts`, `lib/utils.ts`.
 
 ## Things to avoid
 

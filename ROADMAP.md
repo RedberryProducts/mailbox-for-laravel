@@ -43,7 +43,7 @@ Working order for the open GitHub issues as of 2026-10-06. Priorities were check
 
 ## 7. Next minor release (contract changes)
 
-- [ ] #113 Remove dead code (`PublicAssetController`, `dist/`, `mail-data.ts`, `Storage\AttachmentStore` shim) (low)
+- [x] #113 Remove dead code (`PublicAssetController`, `dist/`, `mail-data.ts`, `Storage\AttachmentStore` shim) (low)
 - [ ] #111 Batch attachment lookups per page (`findByMessages`) (low)
 - [ ] #112 Make `AttachmentData::$content` explicit instead of detecting base64 by heuristic (low)
 - [ ] #110 Send test email through the real capture pipeline (label: medium → low)

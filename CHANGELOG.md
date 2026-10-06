@@ -30,6 +30,7 @@ All notable changes to `mailbox-for-laravel` will be documented in this file.
 - **README and the Boost testing rule now document the test environment.** Laravel's default `phpunit.xml` sets `MAIL_MAILER=array`, so the transport never runs and every `Mailbox::assert*` fails, and the default `sqlite` store needs tables that a fresh checkout does not have. Both docs now carry `phpunit.xml` entries that use the `file` driver and a dedicated attachments path, note that the trait clears both the configured store and the attachments directory on the `mailbox` disk, and explain that keeping the `sqlite` or `database` driver requires `mailbox:install` on a persistent connection before the test run. Fixes #95.
 
 ### Removed
+- **Dead code.** `Storage\AttachmentStore`, the `@deprecated` shim slated for removal in 2.1, is gone; type-hint `Contracts\AttachmentStore` or use `Storage\DatabaseAttachmentStore` (see UPGRADE.md). `Http\Controllers\PublicAssetController` served files from an empty `dist/` directory and was never routed; assets are served from `public/vendor/mailbox` by Vite. `resources/js/lib/mail-data.ts` was an unused mock fixture from the original UI scaffold. Fixes #113.
 - **Laravel 10 support.** `composer.json` allowed `illuminate/contracts ^10` and Testbench 8, but CI never ran Laravel 10, so those installs were untested; Laravel 10 has also been out of security support since February 2025. The constraints and the README now list Laravel 11, 12 and 13, and CI adds PHP 8.5 for Laravel 12 and 13. Part of #98.
 
 ## [2.3.2] - 2026-08-24

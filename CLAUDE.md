@@ -44,7 +44,6 @@ src/
     FileStorage.php                 # JSON-on-disk message driver
     DatabaseAttachmentStore.php     # DB-backed attachment driver (paired with database message driver)
     FileAttachmentStore.php         # JSON-sidecar attachment driver (paired with file message driver)
-    AttachmentStore.php             # @deprecated shim — extends DatabaseAttachmentStore (scheduled for removal in v2.1)
   DTO/StoredAttachment.php          # Driver-agnostic attachment value object
   Transport/MailboxTransport.php    # Symfony AbstractTransport — captures outgoing mail
   Support/
@@ -54,7 +53,7 @@ src/
     MailboxAssertions.php           # Collection-level assertions (assertSent, assertSentTo, etc.)
     PendingMailboxMessageAssertion.php  # Per-message fluent assertions (assertHasSubject, assertSeeInHtml, etc.)
     InteractsWithMailbox.php        # Trait for test classes — auto-clear, provides $this->mailbox()
-  Http/Controllers/                 # 7 thin controllers, return Blade views or JSON responses
+  Http/Controllers/                 # 6 thin controllers, return Blade views or JSON responses
   Http/Middleware/                  # AuthorizeMailboxMiddleware
   DTO/                              # MailboxMessageData, AttachmentData (plain PHP DTOs with constructor property promotion)
   Models/                           # MailboxMessage, MailboxAttachment (Eloquent)
@@ -68,7 +67,7 @@ resources/js/
   components/ui/                    # Reusable UI primitives (button, input, tabs, select, etc.)
   composables/useMailboxPolling.ts  # Auto-refresh polling logic
   types/mailbox.ts                  # TypeScript interfaces
-  lib/                              # Utilities (utils.ts, mail-data.ts)
+  lib/                              # Shared store and utilities (mailboxStore.ts, utils.ts)
 
 config/mailbox.php                  # All package configuration
 routes/mailbox.php                  # Route definitions (prefixed, middlewared)
