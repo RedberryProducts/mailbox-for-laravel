@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Redberry\MailboxForLaravel\Transport;
 
 use Redberry\MailboxForLaravel\CaptureService;

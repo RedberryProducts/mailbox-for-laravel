@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Redberry\MailboxForLaravel\Commands;
 
 use Illuminate\Console\Command;

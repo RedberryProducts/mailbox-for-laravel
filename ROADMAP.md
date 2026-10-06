@@ -31,7 +31,7 @@ Working order for the open GitHub issues as of 2026-10-06. Priorities were check
 
 ## 5. Architecture tests
 
-- [ ] #107 31 stub architecture tests that assert nothing (medium). Done before group 7 so the refactors are guarded.
+- [x] #107 31 stub architecture tests that assert nothing (medium). Done before group 7 so the refactors are guarded.
 
 ## 6. Docs sweep
 

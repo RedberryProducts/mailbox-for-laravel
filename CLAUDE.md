@@ -103,7 +103,7 @@ Uses **Pest** with Orchestra Testbench. Base `TestCase` sets up in-memory SQLite
 
 ```
 tests/
-├── Architecture/    # Arch rules (currently 31 stub rules — see ArchitectureTest.php; bodies are placeholders)
+├── Architecture/    # Pest arch() rules: layer boundaries, naming, strict types, hygiene
 ├── Commands/        # Artisan command tests
 ├── Feature/         # HTTP/integration + InteractsWithMailbox tests
 └── Unit/            # Unit tests (services, storage, testing assertions)

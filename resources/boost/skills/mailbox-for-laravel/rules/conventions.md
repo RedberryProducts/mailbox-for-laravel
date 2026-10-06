@@ -28,7 +28,7 @@
 - Every new class or feature MUST have tests
 - **Unit** for services, contracts, drivers, DTOs
 - **Feature** for HTTP routes, middleware, commands
-- **Architecture** tests for dependency boundaries — `tests/Architecture/ArchitectureTest.php` declares 31 rules, all currently stubs (`expect(true)->toBeTrue()`); fill them in rather than adding more stubs
+- **Architecture** tests for dependency boundaries — `tests/Architecture/ArchitectureTest.php` enforces layer boundaries, naming, strict types and code hygiene with Pest `arch()` rules; add a real rule for any new boundary, never a placeholder
 - Coverage target: **90%+ lines, 80%+ branches**
 - Pest `describe()` blocks and dataset-driven cases preferred
 
