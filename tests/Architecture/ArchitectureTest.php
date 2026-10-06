@@ -80,9 +80,9 @@ describe('layer boundaries', function () {
 });
 
 describe('who may use what', function () {
-    arch('the transport is only wired up by the service provider')
+    arch('the transport is only used by the service provider and the test-email button')
         ->expect(PACKAGE.'\Transport')
-        ->toOnlyBeUsedIn(PACKAGE.'\MailboxServiceProvider');
+        ->toOnlyBeUsedIn([PACKAGE.'\MailboxServiceProvider', PACKAGE.'\Http\Controllers\SendTestMailController']);
 
     arch('middleware is only registered by the service provider')
         ->expect(PACKAGE.'\Http\Middleware')

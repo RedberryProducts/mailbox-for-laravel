@@ -4,63 +4,30 @@ declare(strict_types=1);
 
 namespace Redberry\MailboxForLaravel\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
-use Redberry\MailboxForLaravel\CaptureService;
+use Illuminate\Http\JsonResponse;
+use Redberry\MailboxForLaravel\Transport\MailboxTransport;
+use Symfony\Component\Mime\Address;
+use Symfony\Component\Mime\Email;
 
-class SendTestMailController extends Controller
+class SendTestMailController
 {
-    public function __invoke(Request $request, CaptureService $service)
+    /**
+     * Capture a sample email through the real transport pipeline.
+     *
+     * The message goes through MailboxTransport (normalizer, storage and
+     * attachments) but is never forwarded to a decorated mailer, so the
+     * button works in decorate mode without delivering anything.
+     */
+    public function __invoke(MailboxTransport $transport): JsonResponse
     {
-        $now = now()->toRfc3339String();
+        $email = (new Email)
+            ->from(new Address('hello@example.com', 'Laravel'))
+            ->to('recipient@example.com')
+            ->subject('Test Mailbox for Laravel')
+            ->text('Hello from Mailbox for Laravel. This is a test email.')
+            ->html('<h1>Hello from Mailbox for Laravel</h1><p>This is a test email.</p>');
 
-        $payload = [
-            'version' => 1,
-            'saved_at' => $now,
-            'message_id' => null,
-            'subject' => 'Test Mailbox for Laravel',
-            'date' => null,
-            'from' => [
-                [
-                    'email' => 'hello@example.com',
-                    'name' => 'Laravel',
-                ],
-            ],
-            'sender' => [
-                'name' => 'Laravel',
-                'email' => 'hello@example.com',
-            ],
-            'to' => [
-                [
-                    'email' => 'recipient@example.com',
-                ],
-            ],
-            'cc' => [],
-            'bcc' => [],
-            'reply_to' => [],
-            'text' => null,
-            'html' => '<h1>Hello from Mailbox for Laravel</h1><p>This is a test email.</p>',
-            'headers' => [
-                'MIME-Version' => '1.0',
-                'Content-Type' => 'text/html; charset=utf-8',
-                'Content-Transfer-Encoding' => 'quoted-printable',
-            ],
-            'attachments' => [],
-            'raw' => <<<EOT
-                From: Laravel <hello@example.com>
-                To: recipient@example.com
-                Subject: Test Mailbox for Laravel
-                Message-ID: <9b1aef48dd4860ce51ee13539eb29205@example.com>
-                MIME-Version: 1.0
-                Date: {$now}
-                Content-Type: text/html; charset=utf-8
-                Content-Transfer-Encoding: quoted-printable
-
-                <h1>Hello from Mailbox for Laravel</h1><p>This is a test email.</p>
-                EOT,
-        ];
-
-        $key = $service->store($payload);
+        $key = $transport->captureOnly($email);
 
         return response()->json([
             'status' => 'stored',

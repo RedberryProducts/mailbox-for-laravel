@@ -42,7 +42,7 @@ Everything your app sends through Laravel's `Mail` facade is intercepted by the 
 - Attachment preview and download
 - Read/unread tracking, single-message delete, and clear-all
 - Recipient filtering and search
-- A "Send test email" button for smoke tests
+- A "Send test email" button that runs a sample message through the real capture pipeline (never delivered, even in decorate mode)
 
 Internally, the pipeline is: transport → normalizer → `CaptureService` → paired message/attachment store. The architectural details are in [ARCHITECTURE.md](ARCHITECTURE.md).
 

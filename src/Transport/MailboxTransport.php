@@ -7,11 +7,13 @@ namespace Redberry\MailboxForLaravel\Transport;
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
 use Redberry\MailboxForLaravel\Support\MessageNormalizer;
+use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\AbstractTransport;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Message;
+use Symfony\Component\Mime\RawMessage;
 
 class MailboxTransport extends AbstractTransport
 {
@@ -34,6 +36,22 @@ class MailboxTransport extends AbstractTransport
     public function getStoredKey(): ?string
     {
         return $this->storedKey;
+    }
+
+    /**
+     * Capture a message without forwarding it to the decorated transport.
+     *
+     * Runs the same normalization and attachment extraction as a real send,
+     * so it exercises the whole capture pipeline, but never delivers mail.
+     * Failures are always rethrown. Returns the stored message key.
+     */
+    public function captureOnly(RawMessage $message, ?Envelope $envelope = null): string
+    {
+        $this->storedKey = null;
+
+        $this->capture(new SentMessage($message, $envelope ?? Envelope::create($message)));
+
+        return (string) $this->storedKey;
     }
 
     /**

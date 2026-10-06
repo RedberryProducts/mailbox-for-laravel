@@ -69,6 +69,23 @@ describe(MailboxTransport::class, function () {
             ->and($stored->message_id)->toBe('<raw@example.com>');
     });
 
+    it('captures without forwarding when using captureOnly', function () {
+        $decorated = Mockery::mock(TransportInterface::class);
+        $decorated->shouldNotReceive('send');
+        $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/mailbox-transport-'.uniqid()));
+
+        $key = transport($svc, decorated: $decorated)->captureOnly((new Email)->from('a@example.com')->to('b@example.com')->subject('Only')->text('hi'));
+
+        expect($svc->find($key)?->subject)->toBe('Only');
+    });
+
+    it('rethrows capture failures from captureOnly even with a decorated transport', function () {
+        $svc = Mockery::mock(CaptureService::class);
+        $svc->shouldReceive('store')->andThrow(new RuntimeException('disk full'));
+
+        transport($svc)->captureOnly((new Email)->from('a@example.com')->to('b@example.com')->text('hi'));
+    })->throws(RuntimeException::class, 'disk full');
+
     it('does not call CaptureService when disabled via config', function () {
         $svc = Mockery::mock(CaptureService::class);
         $svc->shouldReceive('store')->never();
