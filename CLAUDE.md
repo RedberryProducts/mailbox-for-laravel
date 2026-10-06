@@ -95,7 +95,7 @@ The package ships a **completely isolated** Vue 3 dashboard that does not interf
 
 ### HTTP Layer
 
-Routes under `config('mailbox.path', 'mailbox')` prefix with middleware: `web`, `mailbox.authorize`. Authorization via `viewMailbox` gate (allows all in non-production by default). `MailboxController` returns a Blade view for browser requests and a JSON payload when `$request->wantsJson()` is true.
+Routes under `config('mailbox.path', 'mailbox')` prefix with middleware: `web`, `mailbox.authorize`. Authorization via `viewMailbox` gate (default gate allows only the `local` environment). `MailboxController` returns a Blade view for browser requests and a JSON payload when `$request->wantsJson()` is true.
 
 ## Testing
 

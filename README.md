@@ -306,7 +306,7 @@ Drivers are always resolved as a pair — if you ship a custom `MessageStore`, a
 
 ## Authorization
 
-Dashboard access is gated through Laravel's `Gate::allows()` using the `viewMailbox` ability. The package defines a default gate that allows access in local environments or whenever `mailbox.enabled` is true; if you define your own `viewMailbox` gate, the package will not overwrite it.
+Dashboard access is gated through Laravel's `Gate::allows()` using the `viewMailbox` ability. The package defines a default gate that only allows access when `APP_ENV=local`. In every other environment (staging, review apps, production) the dashboard is denied until you define your own `viewMailbox` gate; the package never overwrites one you have defined.
 
 ```php
 use Illuminate\Support\Facades\Gate;

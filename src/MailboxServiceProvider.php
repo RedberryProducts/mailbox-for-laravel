@@ -309,7 +309,8 @@ class MailboxServiceProvider extends PackageServiceProvider
     /**
      * Gate that controls access to the mailbox dashboard.
      *
-     * Default behavior: allow everything except production.
+     * The default gate only allows the "local" environment. Every other
+     * environment, staging included, must define its own gate.
      */
     protected function registerGate(): void
     {
@@ -320,7 +321,7 @@ class MailboxServiceProvider extends PackageServiceProvider
         }
 
         Gate::define($ability, static function ($user = null): bool {
-            return app()->isLocal() || config('mailbox.enabled', false);
+            return app()->isLocal();
         });
     }
 

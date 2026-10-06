@@ -64,10 +64,12 @@ return [
     | Authorization Gate
     |--------------------------------------------------------------------------
     |
-    | The ability name checked by the AuthorizeMailbox middleware. Define a
-    | corresponding Gate::define('viewMailbox', ...) in your app if you
-    | want to restrict dashboard access; the default gate in the service
-    | provider allows every request in non-production environments.
+    | The ability name checked by the AuthorizeMailbox middleware. The
+    | default gate in the service provider only allows the "local"
+    | environment. Anywhere else (staging, review apps, production) every
+    | request is denied until you define Gate::define('viewMailbox', ...)
+    | in your app. Captured mail contains password reset links and tokens,
+    | so make that gate strict.
     |
     */
 

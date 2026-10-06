@@ -1,3 +1,20 @@
+# Upgrading to v2.4.0
+
+### Default gate only allows `APP_ENV=local`
+
+The built-in `viewMailbox` gate used to allow every request whenever the package was enabled, which by default is every environment except `production`. It now only allows `local`. If you open the dashboard on staging, a review app, or any other non-local environment, define your own gate in a service provider:
+
+```php
+use Illuminate\Support\Facades\Gate;
+
+public function boot(): void
+{
+    Gate::define('viewMailbox', fn ($user) => $user?->isAdmin());
+}
+```
+
+Without it those environments now answer with a 403 (or redirect to `mailbox.unauthorized_redirect`). Local development is unaffected.
+
 # Upgrading from v1.x to v2.0.0
 
 This guide covers every breaking change in v2.0.0 and what you need to do about each one. The package captures ephemeral development mail, so the recommended upgrade path is fast and non-destructive to your application code.
