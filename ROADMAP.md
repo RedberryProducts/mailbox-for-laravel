@@ -26,7 +26,7 @@ Working order for the open GitHub issues as of 2026-10-06. Priorities were check
 
 ## 4. CI
 
-- [ ] #108 CI does not type-check, build or verify the frontend bundle (label: medium → high)
+- [x] #108 CI does not type-check, build or verify the frontend bundle (label: medium → high)
 - [ ] #98 (part) Laravel 10 is allowed by `composer.json` but never tested
 
 ## 5. Architecture tests

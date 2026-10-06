@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AcceptableValue } from 'reka-ui'
 import {
     Select,
     SelectContent,
@@ -16,8 +17,8 @@ const emit = defineEmits<{
     (e: 'change', value: string): void
 }>()
 
-const handleChange = (value: string) => {
-    emit('change', value)
+const handleChange = (value: AcceptableValue) => {
+    emit('change', typeof value === 'string' ? value : 'all')
 }
 </script>
 
