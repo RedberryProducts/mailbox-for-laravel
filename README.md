@@ -237,6 +237,10 @@ The keys you're most likely to touch:
 | `MAILBOX_RETENTION_SCHEDULE` | `false` | Auto-register a daily `mailbox:clear --outdated` on the scheduler |
 | `MAILBOX_PER_PAGE` | `20` | Messages per dashboard page |
 | `MAILBOX_ATTACHMENTS_DISK` | `mailbox` | Disk for attachment content |
+| `MAILBOX_ATTACHMENTS_ENABLED` | `true` | Store attachments of captured mail (set `false` to keep only the message) |
+| `MAILBOX_ATTACHMENTS_PATH` | `attachments` | Directory on the attachments disk for attachment content |
+| `MAILBOX_POLLING_ENABLED` | `true` | Auto-refresh the dashboard |
+| `MAILBOX_POLLING_INTERVAL` | `5000` | Dashboard refresh interval in milliseconds |
 
 ## Storage
 
