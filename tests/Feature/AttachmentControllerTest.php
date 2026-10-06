@@ -39,7 +39,7 @@ describe('AttachmentController', function () {
         $response = $this->get(route('mailbox.attachments.download', ['id' => 'att123']));
 
         $response->assertStatus(200)
-            ->assertHeader('Content-Disposition', 'attachment; filename="document.txt"')
+            ->assertHeader('Content-Disposition', 'attachment; filename=document.txt')
             ->assertHeader('Content-Length', '12');
 
         // Check that Content-Type starts with expected mime type (may include charset)
@@ -69,12 +69,40 @@ describe('AttachmentController', function () {
         $response = $this->get(route('mailbox.attachments.inline', ['id' => 'att456']));
 
         $response->assertStatus(200)
-            ->assertHeader('Content-Disposition', 'inline; filename="photo.png"');
+            ->assertHeader('Content-Disposition', 'inline; filename=photo.png');
 
         // Check Content-Type starts with expected mime type
         expect($response->headers->get('Content-Type'))->toStartWith('image/png')
             ->and($response->getContent())->toBe('image data');
     });
+
+    it('escapes the filename in the Content-Disposition header', function (string $route, string $filename, string $expected) {
+        MailboxMessage::query()->create(['id' => 1, 'timestamp' => time()]);
+
+        Storage::disk('mailbox')->put('attachments/file.bin', 'data');
+
+        MailboxAttachment::query()->create([
+            'id' => 'att-escape',
+            'message_id' => 1,
+            'filename' => $filename,
+            'mime_type' => 'application/octet-stream',
+            'size' => 4,
+            'disk' => 'mailbox',
+            'path' => 'attachments/file.bin',
+            'is_inline' => false,
+        ]);
+
+        $this->get(route($route, ['id' => 'att-escape']))
+            ->assertOk()
+            ->assertHeader('Content-Disposition', $expected);
+    })->with([
+        'quotes' => ['mailbox.attachments.download', 'report "final".pdf', 'attachment; filename="report \\"final\\".pdf"'],
+        'semicolon' => ['mailbox.attachments.download', 'a;b.txt', 'attachment; filename="a;b.txt"'],
+        'utf-8' => ['mailbox.attachments.download', 'ანგარიში.pdf', "attachment; filename=angarishi.pdf; filename*=utf-8''%E1%83%90%E1%83%9C%E1%83%92%E1%83%90%E1%83%A0%E1%83%98%E1%83%A8%E1%83%98.pdf"],
+        'newline' => ['mailbox.attachments.inline', "evil\r\nSet-Cookie: x=1.txt", 'inline; filename="evilSet-Cookie: x=1.txt"'],
+        'path separators' => ['mailbox.attachments.inline', '../etc\\passwd', 'inline; filename=.._etc_passwd'],
+        'percent' => ['mailbox.attachments.download', '100%.txt', "attachment; filename=100_.txt; filename*=utf-8''100%25.txt"],
+    ]);
 
     it('returns 404 for non-existent attachment', function () {
         $response = $this->get(route('mailbox.attachments.download', ['id' => 'non-existent']));

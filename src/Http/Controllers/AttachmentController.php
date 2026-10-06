@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Redberry\MailboxForLaravel\Http\Controllers;
 
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttachmentController
@@ -33,7 +35,7 @@ class AttachmentController
 
         return response($content, 200, [
             'Content-Type' => $attachment->mimeType,
-            'Content-Disposition' => 'attachment; filename="'.$attachment->filename.'"',
+            'Content-Disposition' => $this->contentDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $attachment->filename),
             'Content-Length' => (string) $attachment->size,
         ]);
     }
@@ -57,7 +59,7 @@ class AttachmentController
 
         return response($content, 200, [
             'Content-Type' => $attachment->mimeType,
-            'Content-Disposition' => 'inline; filename="'.$attachment->filename.'"',
+            'Content-Disposition' => $this->contentDisposition(HeaderUtils::DISPOSITION_INLINE, $attachment->filename),
             'Content-Length' => (string) $attachment->size,
         ]);
     }
@@ -86,5 +88,25 @@ class AttachmentController
                 $attachments
             ),
         ];
+    }
+
+    /**
+     * Build a Content-Disposition header that survives any captured filename.
+     *
+     * Control characters are stripped and path separators replaced (Symfony rejects
+     * them), the original name is sent as RFC 5987 filename*, and an ASCII
+     * fallback is provided for clients that only read filename.
+     */
+    protected function contentDisposition(string $disposition, string $filename): string
+    {
+        $filename = trim((string) preg_replace('/[\x00-\x1F\x7F]/u', '', str_replace(['/', '\\'], '_', $filename)));
+
+        if ($filename === '') {
+            $filename = 'attachment';
+        }
+
+        $fallback = (string) preg_replace('/[^\x20-\x7E]|%/', '_', Str::ascii($filename));
+
+        return HeaderUtils::makeDisposition($disposition, $filename, $fallback);
     }
 }
