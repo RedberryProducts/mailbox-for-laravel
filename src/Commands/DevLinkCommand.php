@@ -53,7 +53,8 @@ class DevLinkCommand extends Command
     protected function cleanup(string $path): void
     {
         if (is_link($path)) {
-            unlink($path);
+            // Windows removes directory symlinks with rmdir(); unlink() fails there.
+            PHP_OS_FAMILY === 'Windows' && is_dir($path) ? rmdir($path) : unlink($path);
 
             return;
         }

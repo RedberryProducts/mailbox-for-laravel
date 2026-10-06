@@ -31,7 +31,7 @@ describe(DevLinkCommand::class, function () {
         $link = public_path('vendor/mailbox');
 
         if (is_link($link)) {
-            unlink($link);
+            PHP_OS_FAMILY === 'Windows' && is_dir($link) ? rmdir($link) : unlink($link);
         } elseif (is_dir($link)) {
             File::deleteDirectory($link);
         }
@@ -61,7 +61,7 @@ describe(DevLinkCommand::class, function () {
         $link = public_path('vendor/mailbox');
 
         expect(is_link($link))->toBeTrue()
-            ->and(readlink($link))->toBe($this->assetsPath);
+            ->and(realpath($link))->toBe(realpath($this->assetsPath));
     });
 
     it('fails without creating a dangling link when the assets are missing', function () {

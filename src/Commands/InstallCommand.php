@@ -110,7 +110,8 @@ class InstallCommand extends Command
     protected function cleanPath(string $path): void
     {
         if (is_link($path)) {
-            unlink($path);
+            // Windows removes directory symlinks with rmdir(); unlink() fails there.
+            PHP_OS_FAMILY === 'Windows' && is_dir($path) ? rmdir($path) : unlink($path);
 
             return;
         }

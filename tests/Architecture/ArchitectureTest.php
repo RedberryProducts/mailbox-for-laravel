@@ -17,7 +17,7 @@ const PACKAGE = 'Redberry\MailboxForLaravel';
  */
 function packageFiles(string $directory): array
 {
-    $root = dirname(__DIR__, 2);
+    $root = str_replace('\\', '/', dirname(__DIR__, 2));
     $files = [];
 
     if (is_file($root.'/'.$directory)) {
