@@ -54,14 +54,17 @@ describe(DevLinkCommand::class, function () {
 
     it('links public/vendor/mailbox to the package assets', function () {
         File::makeDirectory($this->assetsPath, 0755, true);
+        file_put_contents($this->assetsPath.'/manifest.json', '{"linked":true}');
         useAssetsPath($this->assetsPath);
 
         $this->artisan('mailbox:dev-link')->assertExitCode(Command::SUCCESS);
 
         $link = public_path('vendor/mailbox');
 
+        // Compare through the link rather than by path: Windows can report
+        // the same directory under its 8.3 short name and its long name.
         expect(is_link($link))->toBeTrue()
-            ->and(realpath($link))->toBe(realpath($this->assetsPath));
+            ->and(file_get_contents($link.'/manifest.json'))->toBe('{"linked":true}');
     });
 
     it('fails without creating a dangling link when the assets are missing', function () {
