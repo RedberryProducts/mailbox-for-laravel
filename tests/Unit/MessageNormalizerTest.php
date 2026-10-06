@@ -228,4 +228,18 @@ describe(MessageNormalizer::class, function () {
         expect($payload['raw'])->toBe("Subject: sent\r\n\r\nbody")
             ->and(json_encode($payload, JSON_THROW_ON_ERROR))->toBeString();
     });
+
+    it('matches the payload example documented in ARCHITECTURE.md', function () {
+        $markdown = (string) file_get_contents(__DIR__.'/../../ARCHITECTURE.md');
+
+        preg_match('/```json\n(\{\n    "version".*?)\n```/s', $markdown, $match);
+
+        $documented = json_decode($match[1] ?? '', true, flags: JSON_THROW_ON_ERROR);
+
+        $payload = MessageNormalizer::normalize(
+            (new Email)->from('sender@example.com')->to('recipient@example.com')->text('Plain text body'),
+        );
+
+        expect(array_keys($documented))->toBe(array_keys($payload));
+    });
 });

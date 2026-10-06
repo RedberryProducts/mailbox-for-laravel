@@ -153,7 +153,7 @@ Capture is split into two driver-shaped interfaces that are always resolved as a
 | ---------------------- | ------------------------ | --------------------------- | --------------------------------------------------------- |
 | `sqlite` (default)     | `DatabaseMessageStore`   | `DatabaseAttachmentStore`   | `mailbox_messages` + `mailbox_attachments` (cascade FK)   |
 | `database`             | `DatabaseMessageStore`   | `DatabaseAttachmentStore`   | Same as `sqlite` — alias for bring-your-own-connection    |
-| `file`                 | `FileStorage`            | `FileAttachmentStore`       | `storage/app/mail-inbox/{id}.json` + per-message sidecars |
+| `file`                 | `FileStorage`            | `FileAttachmentStore`       | `storage/app/mailbox/{id}.json` + sidecars in `attachments-index/` (`MAILBOX_STORE_FILE_PATH`) |
 
 In both cases the attachment **content bytes** live on the configured `mailbox.attachments.disk`, so download/inline URLs are identical regardless of driver.
 
@@ -167,33 +167,46 @@ Outbound mail flows through the custom `mailbox` transport before any network dr
 
 ```
 Mail::send(...)
-  → MailboxTransport::doSend($message, $envelope)
-  → MessageNormalizer::normalize($original, $envelope, $raw, true)
-  → CaptureService::store($payload)
-  → MessageStore + AttachmentStore (paired driver)
+  → MailboxTransport::doSend($sentMessage)
+  → MessageNormalizer::normalize($original, $envelope, $raw, false, $messageId)
+  → CaptureService::store($payload)                      → MessageStore
+  → MessageNormalizer::extractAttachments($original)     → AttachmentStore (paired driver)
+  → decorated transport, if MAILBOX_DECORATE is set
 ```
 
-The normalized payload is a flat associative array keyed by the fields the dashboard and testing assertions read back:
+The normalizer is called with `$storeAttachmentsInline = false`: attachment bytes never go into the message payload. The transport extracts them separately as `AttachmentData` DTOs and hands each one to the `AttachmentStore`. `$messageId` comes from `SentMessage::getMessageId()`, because Symfony only adds the `Message-ID` header to its own clone of the message.
+
+The normalized payload is an associative array keyed by the fields the dashboard and testing assertions read back. Addresses are always lists of `{email, name?}` objects; `sender` is a single object, taken from the envelope when there is one:
 
 ```json
 {
-    "from": "sender@example.com",
-    "to": ["recipient@example.com"],
+    "version": 1,
+    "saved_at": "2025-11-19T10:30:00+00:00",
+    "message_id": "<abc123@example.com>",
+    "subject": "Test Email",
+    "date": null,
+    "from": [{ "email": "sender@example.com", "name": "Sender" }],
+    "sender": { "email": "sender@example.com", "name": "Sender" },
+    "to": [{ "email": "recipient@example.com" }],
     "cc": [],
     "bcc": [],
-    "subject": "Test Email",
-    "date": "2025-11-19T10:30:00+00:00",
+    "reply_to": [{ "email": "support@example.com" }],
     "text": "Plain text body",
-    "html": "<html>HTML body</html>",
+    "html": "<p>HTML body</p>",
+    "headers": {
+        "From": ["Sender <sender@example.com>"],
+        "To": ["recipient@example.com"],
+        "Reply-To": ["support@example.com"],
+        "Subject": ["Test Email"]
+    },
     "attachments": [],
-    "raw": "Full RFC 822 message",
-    "timestamp": 1732017000,
-    "saved_at": "2025-11-19T10:30:00.000000Z",
-    "seen_at": null
+    "raw": "Full RFC 822 message"
 }
 ```
 
-The transport is stateless — if a previous transport is chained (via `mail.mailers.mailbox.transport`), it is invoked after capture, so capture is always best-effort and never blocks real delivery.
+`CaptureService::store()` then adds `id` (a ULID, or the id of an earlier capture with the same `message_id`) and `timestamp` before handing the payload to the `MessageStore`. `seen_at` is only set later by the dashboard. `MessageNormalizerTest` checks that this example keeps the normalizer's exact key set, so update both together.
+
+To deliver mail for real as well as capturing it, set `mailbox.decorate` (`MAILBOX_DECORATE`) to another mailer's name. The transport forwards to that mailer after capture. Capture is best-effort in that mode: a storage failure is passed to `report()` and delivery still happens. In capture-only mode the failure is rethrown, since nothing else would deliver the message.
 
 ## Summary
 
