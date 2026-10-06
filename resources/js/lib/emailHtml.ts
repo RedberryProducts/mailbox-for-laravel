@@ -29,6 +29,15 @@ const BLOCKED_ELEMENTS = [
 /** Attributes that carry a URL a browser may navigate to or load. */
 const URL_ATTRIBUTES = ['href', 'src', 'action', 'formaction', 'xlink:href', 'background', 'poster']
 
+/**
+ * Attributes that pick a browsing context. Removed everywhere so no link,
+ * image map or form can navigate the dashboard tab via _top or _parent.
+ */
+const TARGET_ATTRIBUTES = ['target', 'formtarget']
+
+/** Link elements that open in a new tab instead. */
+const LINK_ELEMENTS = ['a', 'area']
+
 /** Elements whose text is not part of the readable message. */
 const NON_CONTENT_ELEMENTS = ['head', 'style', 'script', 'noscript', 'template', 'title']
 
@@ -62,6 +71,7 @@ function sanitizeTree(doc: Document): void {
             const name = attribute.name.toLowerCase()
 
             if (name.startsWith('on')
+                || TARGET_ATTRIBUTES.includes(name)
                 || (URL_ATTRIBUTES.includes(name) && isUnsafeUrl(attribute.value))) {
                 element.removeAttribute(attribute.name)
             }
@@ -69,7 +79,7 @@ function sanitizeTree(doc: Document): void {
 
         // Open links outside the sandboxed preview, never in the dashboard tab.
         // localName, not tagName: SVG links report a lowercase tagName.
-        if (element.localName === 'a') {
+        if (LINK_ELEMENTS.includes(element.localName)) {
             element.setAttribute('target', '_blank')
             element.setAttribute('rel', 'noopener noreferrer nofollow ugc')
         }
@@ -99,12 +109,15 @@ export function buildEmailDocument(html: string, shellCss: string): string {
         output.head.append(output.importNode(node, true))
     }
 
+    // Import the parsed Attr nodes rather than calling setAttribute(): the
+    // HTML parser accepts names (e.g. `@click`) that setAttribute() rejects
+    // in some browsers, which would stop the preview from rendering.
     for (const attribute of Array.from(source.documentElement.attributes)) {
-        output.documentElement.setAttribute(attribute.name, attribute.value)
+        output.documentElement.setAttributeNode(output.importNode(attribute, true))
     }
 
     for (const attribute of Array.from(source.body.attributes)) {
-        output.body.setAttribute(attribute.name, attribute.value)
+        output.body.setAttributeNode(output.importNode(attribute, true))
     }
 
     for (const node of Array.from(source.body.childNodes)) {
