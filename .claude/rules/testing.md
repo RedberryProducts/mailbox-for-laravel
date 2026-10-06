@@ -16,7 +16,7 @@ globs: tests/**/*.php
 - JSON assertions for axios/AJAX requests: `$this->getJson(route('mailbox.index'))->assertJsonPath('messages.0.subject', '...')`
 - Use Pest datasets for data-driven test cases with realistic data
 - For storage tests, go through the `MessageStore` contract — never manipulate file paths directly
-- Architecture tests in `tests/Architecture/ArchitectureTest.php` enforce layer boundaries, naming, strict types and code hygiene with Pest `arch()` rules. Add a real rule when you introduce a new boundary; never add placeholder tests. Give each target its own `arch()` call — Pest silently passes an `expect([...])` array that mixes a class with a namespace
+- Architecture tests in `tests/Architecture/ArchitectureTest.php` enforce layer boundaries, naming, strict types and code hygiene with Pest `arch()` rules. Add a real rule when you introduce a new boundary; never add placeholder tests. Give each target its own `arch()` call — Pest silently passes an `expect([...])` array that mixes a class with a namespace. Only use `arch()` for the package's own namespaces: for vendor namespaces use the `filesReferencing()` source scan, because Pest autoloads every class in a vendor namespace it is given and some of them fatal on `prefer-lowest` installs
 - Run a single test: `vendor/bin/pest --filter="test name"`
 - Run a directory: `vendor/bin/pest tests/Unit/`
 - Coverage target: **90%+ lines, 80%+ branches**

@@ -20,6 +20,10 @@ function packageFiles(string $directory): array
     $root = dirname(__DIR__, 2);
     $files = [];
 
+    if (is_file($root.'/'.$directory)) {
+        return [$directory => (string) file_get_contents($root.'/'.$directory)];
+    }
+
     $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root.'/'.$directory, FilesystemIterator::SKIP_DOTS));
 
     foreach ($iterator as $file) {
@@ -33,18 +37,57 @@ function packageFiles(string $directory): array
     return $files;
 }
 
+/**
+ * Source files under $path that reference any of the given vendor namespaces,
+ * through an import or a fully qualified name.
+ *
+ * Vendor namespaces are checked by scanning source instead of with
+ * arch()->not->toUse(): Pest autoloads every class in a vendor namespace it
+ * is given, and some (e.g. Illuminate\Http\Client\Promises\FluentPromise
+ * next to guzzlehttp/promises 1.x) fatal on prefer-lowest installs.
+ *
+ * @param  array<int, string>  $namespaces
+ * @return array<int, string>
+ */
+function filesReferencing(string $path, array $namespaces): array
+{
+    $alternatives = implode('|', array_map(static fn (string $namespace): string => preg_quote($namespace, '/'), $namespaces));
+    $pattern = '/(?<![\\w\\\\])\\\\?(?:'.$alternatives.')(?:\\\\|;|::|\\b)/';
+
+    return array_keys(array_filter(
+        packageFiles($path),
+        static fn (string $code): bool => (bool) preg_match($pattern, $code),
+    ));
+}
+
+/**
+ * Source paths for the package's layers, relative to the package root.
+ */
+const LAYERS = [
+    'CaptureService' => 'src/CaptureService.php',
+    'Contracts' => 'src/Contracts',
+    'DTO' => 'src/DTO',
+    'Http' => 'src/Http',
+    'Storage' => 'src/Storage',
+    'Support' => 'src/Support',
+    'Testing' => 'src/Testing',
+    'Transport' => 'src/Transport',
+];
+
 describe('layer boundaries', function () {
     arch('the HTTP layer does not depend on storage implementations or models')
         ->expect(PACKAGE.'\Http')
         ->not->toUse([PACKAGE.'\Storage', PACKAGE.'\Models', PACKAGE.'\StoreManager']);
 
-    arch('storage does not depend on the HTTP layer')
-        ->expect(PACKAGE.'\Storage')
-        ->not->toUse([PACKAGE.'\Http', 'Illuminate\Http', 'Illuminate\Routing', 'Symfony\Component\HttpFoundation']);
+    foreach (['Storage', 'Support'] as $layer) {
+        arch("{$layer} does not depend on the package HTTP layer")
+            ->expect(PACKAGE.'\\'.$layer)
+            ->not->toUse(PACKAGE.'\Http');
 
-    arch('support classes do not depend on the HTTP layer')
-        ->expect(PACKAGE.'\Support')
-        ->not->toUse([PACKAGE.'\Http', 'Illuminate\Http', 'Illuminate\Routing']);
+        it("keeps {$layer} free of framework HTTP classes", function () use ($layer) {
+            expect(filesReferencing(LAYERS[$layer], ['Illuminate\Http', 'Illuminate\Routing', 'Symfony\Component\HttpFoundation']))->toBe([]);
+        });
+    }
 
     /*
      * One arch() per target: Pest silently passes an expect() array that
@@ -56,10 +99,10 @@ describe('layer boundaries', function () {
             ->not->toUse([PACKAGE.'\Storage', PACKAGE.'\Models', PACKAGE.'\StoreManager']);
     }
 
-    foreach ([PACKAGE.'\CaptureService', PACKAGE.'\Support', PACKAGE.'\Transport', PACKAGE.'\Contracts', PACKAGE.'\DTO'] as $target) {
-        arch("{$target} does not use facades")
-            ->expect($target)
-            ->not->toUse('Illuminate\Support\Facades');
+    foreach (['CaptureService', 'Support', 'Transport', 'Contracts', 'DTO'] as $layer) {
+        it("keeps {$layer} free of facades", function () use ($layer) {
+            expect(filesReferencing(LAYERS[$layer], ['Illuminate\Support\Facades']))->toBe([]);
+        });
     }
 
     foreach ([PACKAGE.'\CaptureService', PACKAGE.'\Support', PACKAGE.'\Contracts', PACKAGE.'\DTO'] as $target) {
@@ -68,15 +111,15 @@ describe('layer boundaries', function () {
             ->not->toUse('config');
     }
 
-    foreach ([PACKAGE.'\Contracts', PACKAGE.'\DTO', PACKAGE.'\CaptureService', PACKAGE.'\Support', PACKAGE.'\Storage', PACKAGE.'\Transport'] as $target) {
-        arch("{$target} does not depend on views or routing")
-            ->expect($target)
-            ->not->toUse(['Illuminate\View', 'Illuminate\Contracts\View', 'Illuminate\Routing']);
+    foreach (['Contracts', 'DTO', 'CaptureService', 'Support', 'Storage', 'Transport'] as $layer) {
+        it("keeps {$layer} free of views and routing", function () use ($layer) {
+            expect(filesReferencing(LAYERS[$layer], ['Illuminate\View', 'Illuminate\Contracts\View', 'Illuminate\Routing']))->toBe([]);
+        });
     }
 
-    arch('controllers do not depend on the mailer')
-        ->expect(PACKAGE.'\Http')
-        ->not->toUse(['Illuminate\Mail', 'Illuminate\Support\Facades\Mail', 'Symfony\Component\Mailer']);
+    it('keeps controllers away from the mailer', function () {
+        expect(filesReferencing(LAYERS['Http'], ['Illuminate\Mail', 'Illuminate\Support\Facades\Mail', 'Symfony\Component\Mailer']))->toBe([]);
+    });
 });
 
 describe('who may use what', function () {
@@ -153,24 +196,24 @@ describe('code hygiene', function () {
         ->expect(PACKAGE)
         ->not->toUse(['dd', 'dump', 'ray', 'var_dump', 'print_r', 'var_export', 'die']);
 
-    /*
-     * A file scan rather than arch()->not->toUse(): naming GuzzleHttp or
-     * Illuminate\Http\Client as targets makes Pest autoload them, which
-     * fatals on prefer-lowest installs with mismatched Guzzle versions.
-     */
     it('does not make network calls', function () {
         $offenders = array_keys(array_filter(
             packageFiles('src'),
-            static fn (string $code): bool => (bool) preg_match('/GuzzleHttp\\\\|Illuminate\\\\Http\\\\Client|Facades\\\\Http\b|\bcurl_init\(|\bfsockopen\(/', $code),
+            static fn (string $code): bool => (bool) preg_match('/\bcurl_init\(|\bfsockopen\(/', $code),
         ));
+
+        expect(filesReferencing('src', ['GuzzleHttp', 'Illuminate\Http\Client', 'Illuminate\Support\Facades\Http']))->toBe([])
+            ->and($offenders)->toBe([]);
+    });
+
+    it('keeps test frameworks out of the public API outside Testing', function () {
+        $offenders = array_filter(
+            filesReferencing('src', ['PHPUnit', 'Pest', 'Mockery', 'Orchestra\Testbench']),
+            static fn (string $path): bool => ! str_starts_with($path, 'src/Testing/'),
+        );
 
         expect($offenders)->toBe([]);
     });
-
-    arch('public API does not depend on test frameworks outside Testing')
-        ->expect(PACKAGE)
-        ->not->toUse(['PHPUnit', 'Pest', 'Orchestra\Testbench'])
-        ->ignoring(PACKAGE.'\Testing');
 
     it('has no hard-coded absolute paths in source', function () {
         $offenders = array_keys(array_filter(
