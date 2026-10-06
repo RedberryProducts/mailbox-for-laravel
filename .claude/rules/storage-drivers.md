@@ -22,7 +22,7 @@ When adding or modifying a storage driver:
 
 Every `MessageStore` driver should be paired with a matching `Contracts\AttachmentStore` implementation so users get consistent behavior across the storage stack.
 
-11. Implement `Contracts\AttachmentStore` (8 methods: `store`, `find`, `findByMessage`, `findByCid`, `delete`, `deleteByMessage`, `getContent`, `clear`) and return `DTO\StoredAttachment` from every read.
+11. Implement `Contracts\AttachmentStore` (9 methods: `store`, `find`, `findByMessage`, `findByMessages`, `findByCid`, `delete`, `deleteByMessage`, `getContent`, `clear`) and return `DTO\StoredAttachment` from every read. `findByMessages` is the batched lookup the dashboard uses once per page; the `Storage\Concerns\FindsAttachmentsByMessages` trait provides a per-message fallback.
 12. When registering a custom `MessageStore` driver via `mailbox.store.resolvers`, also bind the matching `Contracts\AttachmentStore` in the same service provider — otherwise the package falls back to `DatabaseAttachmentStore`, which forces a DB dependency you may not want.
 13. Both halves of the pair share the same content disk (`mailbox.attachments.disk` + `mailbox.attachments.path`); only the metadata storage differs (DB rows vs. JSON sidecars vs. your custom backend).
 14. `CaptureService` cascades attachment cleanup automatically — never duplicate that logic inside a `MessageStore` implementation.

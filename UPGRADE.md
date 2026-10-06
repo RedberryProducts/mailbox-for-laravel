@@ -15,6 +15,26 @@ public function boot(): void
 
 Without it those environments now answer with a 403 (or redirect to `mailbox.unauthorized_redirect`). Local development is unaffected.
 
+### `Contracts\AttachmentStore` has a new `findByMessages()` method
+
+Only relevant if you wrote a custom attachment driver. The dashboard now loads a whole page of attachments with one call:
+
+```php
+/** @return array<string, array<int, StoredAttachment>> keyed by message id */
+public function findByMessages(array $messageIds): array;
+```
+
+The quickest way to satisfy it is the bundled fallback trait, which calls your `findByMessage()` once per id:
+
+```php
+use Redberry\MailboxForLaravel\Storage\Concerns\FindsAttachmentsByMessages;
+
+class RedisAttachmentStore implements AttachmentStore
+{
+    use FindsAttachmentsByMessages;
+}
+```
+
 ### `Storage\AttachmentStore` is removed
 
 The deprecated `Redberry\MailboxForLaravel\Storage\AttachmentStore` shim is gone. Type-hint `Contracts\AttachmentStore`, or use `Storage\DatabaseAttachmentStore` if you need the database implementation itself.

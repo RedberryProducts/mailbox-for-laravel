@@ -37,7 +37,7 @@ src/
   StoreManager.php                  # Laravel Manager — resolves storage drivers
   Contracts/
     MessageStore.php                # Message storage driver interface (10 methods incl. idsOlderThan, findIdByMessageId)
-    AttachmentStore.php             # Attachment storage driver interface (8 methods)
+    AttachmentStore.php             # Attachment storage driver interface (9 methods incl. findByMessages)
     MessageSearch.php               # Pluggable search strategy (consumed by the storage drivers)
   Storage/
     DatabaseMessageStore.php        # Default message driver (Eloquent, dedicated SQLite)

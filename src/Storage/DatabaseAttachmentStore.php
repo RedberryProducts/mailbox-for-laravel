@@ -71,6 +71,29 @@ class DatabaseAttachmentStore implements AttachmentStoreContract
             ->all();
     }
 
+    /**
+     * @param  array<int, int|string>  $messageIds
+     * @return array<string, array<int, StoredAttachment>>
+     */
+    public function findByMessages(array $messageIds): array
+    {
+        $attachments = array_fill_keys(array_map('strval', $messageIds), []);
+
+        if ($attachments === []) {
+            return [];
+        }
+
+        MailboxAttachment::query()
+            ->whereIn('message_id', array_keys($attachments))
+            ->orderBy('created_at')
+            ->get()
+            ->each(function (MailboxAttachment $record) use (&$attachments): void {
+                $attachments[(string) $record->message_id][] = $this->toDto($record);
+            });
+
+        return $attachments;
+    }
+
     public function findByCid(int|string $messageId, string $cid): ?StoredAttachment
     {
         $record = MailboxAttachment::query()

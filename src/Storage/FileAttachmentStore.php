@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use Redberry\MailboxForLaravel\Contracts\AttachmentStore as AttachmentStoreContract;
 use Redberry\MailboxForLaravel\DTO\AttachmentData;
 use Redberry\MailboxForLaravel\DTO\StoredAttachment;
+use Redberry\MailboxForLaravel\Storage\Concerns\FindsAttachmentsByMessages;
 
 use function array_filter;
 use function array_values;
@@ -37,6 +38,8 @@ use function unlink;
  */
 class FileAttachmentStore implements AttachmentStoreContract
 {
+    use FindsAttachmentsByMessages;
+
     protected string $basePath;
 
     protected string $disk;

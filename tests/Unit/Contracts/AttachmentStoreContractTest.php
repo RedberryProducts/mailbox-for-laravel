@@ -75,6 +75,25 @@ describe('AttachmentStore contract', function () {
         expect($records)->toHaveCount(2);
     })->with('attachment_stores');
 
+    it('finds attachments for several messages at once, keyed by message id', function (Closure $factory) {
+        $store = $factory();
+
+        MailboxMessage::query()->updateOrCreate(['id' => 2], ['id' => 2, 'timestamp' => time()]);
+        MailboxMessage::query()->updateOrCreate(['id' => 3], ['id' => 3, 'timestamp' => time()]);
+
+        $store->store(1, new AttachmentData('a.txt', 'text/plain', 1, 'a', null, false));
+        $store->store(1, new AttachmentData('b.txt', 'text/plain', 1, 'b', null, false));
+        $store->store(2, new AttachmentData('c.txt', 'text/plain', 1, 'c', null, false));
+
+        $records = $store->findByMessages([1, 2, 3]);
+
+        expect($records)->toHaveCount(3)
+            ->and(array_map(static fn (StoredAttachment $a): string => $a->filename, $records['1']))->toBe(['a.txt', 'b.txt'])
+            ->and(array_map(static fn (StoredAttachment $a): string => $a->filename, $records['2']))->toBe(['c.txt'])
+            ->and($records['3'])->toBe([])
+            ->and($store->findByMessages([]))->toBe([]);
+    })->with('attachment_stores');
+
     it('finds an inline attachment by cid', function (Closure $factory) {
         $store = $factory();
 
