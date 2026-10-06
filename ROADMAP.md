@@ -17,7 +17,7 @@ Working order for the open GitHub issues as of 2026-10-06. Priorities were check
 
 - [x] #104 `Content-Disposition` built by string concatenation (label: low → medium; UTF-8 filenames are common)
 - [x] #105 `bin/check` installed into every consumer's `vendor/bin` (label: low → medium)
-- [ ] #103 `normalizeRaw()` stores the `RawMessage` object (label: medium → low; only reachable with a bare `RawMessage`, `message_id` part already fixed)
+- [x] #103 `normalizeRaw()` stores the `RawMessage` object (label: medium → low; only reachable with a bare `RawMessage`, `message_id` part already fixed)
 
 ## 3. Install commands
 

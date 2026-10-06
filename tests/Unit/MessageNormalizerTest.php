@@ -219,6 +219,13 @@ describe(MessageNormalizer::class, function () {
             ->and($payload['html'])->toBeNull()
             ->and($payload['headers'])->toBe([])
             ->and($payload['attachments'])->toBe([])
-            ->and($payload['raw'])->toBeInstanceOf(RawMessage::class);
+            ->and($payload['raw'])->toBe($rawMessage->toString());
+    });
+
+    it('stores the raw string the transport computed for a RawMessage', function () {
+        $payload = MessageNormalizer::normalize(new RawMessage("Subject: hi\r\n\r\nbody"), raw: "Subject: sent\r\n\r\nbody");
+
+        expect($payload['raw'])->toBe("Subject: sent\r\n\r\nbody")
+            ->and(json_encode($payload, JSON_THROW_ON_ERROR))->toBeString();
     });
 });

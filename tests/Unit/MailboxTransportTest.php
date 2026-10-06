@@ -7,10 +7,13 @@ use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
 use Redberry\MailboxForLaravel\Storage\FileAttachmentStore;
 use Redberry\MailboxForLaravel\Storage\FileStorage;
 use Redberry\MailboxForLaravel\Transport\MailboxTransport;
+use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\Transport\TransportInterface;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Part\DataPart;
+use Symfony\Component\Mime\RawMessage;
 
 describe(MailboxTransport::class, function () {
     function transport(?CaptureService $svc = null, ?AttachmentStore $attachmentStore = null, ?TransportInterface $decorated = null, bool $enabled = true): MailboxTransport
@@ -50,6 +53,20 @@ describe(MailboxTransport::class, function () {
         $t = transport($svc);
         $t->send((new Email)->from('a@example.com')->to('b@example.com')->text('hi'));
         expect($t->getStoredKey())->not->toBeNull();
+    });
+
+    it('captures a bare RawMessage as its raw string', function () {
+        $svc = new CaptureService(new FileStorage(sys_get_temp_dir().'/mailbox-transport-'.uniqid()));
+        $t = transport($svc);
+        $raw = "From: a@example.com\r\nTo: b@example.com\r\nMessage-ID: <raw@example.com>\r\nSubject: Raw\r\n\r\nBody";
+
+        $t->send(new RawMessage($raw), new Envelope(new Address('a@example.com'), [new Address('b@example.com')]));
+
+        $stored = $svc->find($t->getStoredKey());
+
+        expect($stored)->not->toBeNull()
+            ->and($stored->raw)->toBe($raw)
+            ->and($stored->message_id)->toBe('<raw@example.com>');
     });
 
     it('does not call CaptureService when disabled via config', function () {

@@ -100,10 +100,12 @@ final class MessageNormalizer
         ?string $raw,
         ?string $messageId = null
     ): array {
+        $raw ??= $rawMessage->toString();
+
         return [
             'version' => 1,
             'saved_at' => (new \DateTimeImmutable)->format(DateTimeInterface::ATOM),
-            'message_id' => $messageId ?? self::messageIdFromRaw($raw ?? $rawMessage->toString()),
+            'message_id' => $messageId ?? self::messageIdFromRaw($raw),
             'subject' => null,
             'from' => [],
             'to' => [],
@@ -114,7 +116,7 @@ final class MessageNormalizer
             'html' => null,
             'headers' => [],
             'attachments' => [],
-            'raw' => $rawMessage,
+            'raw' => $raw,
         ];
     }
 
