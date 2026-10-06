@@ -51,6 +51,12 @@ function isUnsafeUrl(value: string): boolean {
 function sanitizeTree(doc: Document): void {
     doc.querySelectorAll(BLOCKED_ELEMENTS.join(',')).forEach((node) => node.remove())
 
+    // A frameset document uses the <frameset> as its body; once removed the
+    // document has none, so give it an empty one to render instead.
+    if (!doc.body) {
+        doc.documentElement.append(doc.createElement('body'))
+    }
+
     doc.querySelectorAll('*').forEach((element) => {
         for (const attribute of Array.from(element.attributes)) {
             const name = attribute.name.toLowerCase()
@@ -62,7 +68,8 @@ function sanitizeTree(doc: Document): void {
         }
 
         // Open links outside the sandboxed preview, never in the dashboard tab.
-        if (element.tagName === 'A') {
+        // localName, not tagName: SVG links report a lowercase tagName.
+        if (element.localName === 'a') {
             element.setAttribute('target', '_blank')
             element.setAttribute('rel', 'noopener noreferrer nofollow ugc')
         }
@@ -71,8 +78,8 @@ function sanitizeTree(doc: Document): void {
 
 /**
  * Build the srcdoc for the preview iframe: the shell styles first, then the
- * email's own head styles, with the email's body attributes and content
- * carried over after sanitizing.
+ * email's own head styles, with the email's root and body attributes (dir,
+ * lang, classes, background…) and content carried over after sanitizing.
  */
 export function buildEmailDocument(html: string, shellCss: string): string {
     const source = parse(html)
@@ -90,6 +97,10 @@ export function buildEmailDocument(html: string, shellCss: string): string {
 
     for (const node of Array.from(source.head.childNodes)) {
         output.head.append(output.importNode(node, true))
+    }
+
+    for (const attribute of Array.from(source.documentElement.attributes)) {
+        output.documentElement.setAttribute(attribute.name, attribute.value)
     }
 
     for (const attribute of Array.from(source.body.attributes)) {
@@ -110,6 +121,10 @@ export function buildEmailDocument(html: string, shellCss: string): string {
 export function htmlToText(html: string): string {
     const doc = parse(html)
     doc.querySelectorAll(NON_CONTENT_ELEMENTS.join(',')).forEach((node) => node.remove())
+
+    if (!doc.body) {
+        return ''
+    }
 
     const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT)
     const parts: string[] = []
