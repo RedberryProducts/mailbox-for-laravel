@@ -80,6 +80,7 @@
             "/phpunit.xml.dist",
             "/.editorconfig",
             "/bin",
+            "/art",
             "/ROADMAP.md"
         ]
     },
