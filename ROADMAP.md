@@ -11,7 +11,7 @@ Working order for the open GitHub issues as of 2026-10-06. Priorities were check
 ## 1. Security
 
 - [x] #106 Default gate opens the dashboard to everyone wherever the package is enabled (label: high, confirmed; root cause is code, not only docs)
-- [ ] #96 Boost `commands.md` says `--refresh` is harmless and `mailbox:upgrade` rewrites config (medium)
+- [x] #96 Boost `commands.md` says `--refresh` is harmless and `mailbox:upgrade` rewrites config (medium)
 
 ## 2. Quick bug fixes (patch release)
 
