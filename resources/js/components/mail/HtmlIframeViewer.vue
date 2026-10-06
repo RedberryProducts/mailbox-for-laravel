@@ -10,6 +10,7 @@
 
 <script setup lang="ts">
 import {ref, computed, onBeforeUnmount} from 'vue'
+import {buildEmailDocument} from '@/lib/emailHtml'
 
 const props = defineProps<{
     html: string | null | undefined
@@ -47,24 +48,6 @@ const SHELL_CSS = `
   pre, code { white-space: pre-wrap; word-wrap: break-word; }
 `
 
-function rewriteLinksToRealAnchors(html: string): string {
-    const aTag = /<a\b([^>]*)>/gi
-    return html.replace(aTag, (m, attrs) => {
-        let newAttrs = attrs
-            .replace(/\starget="[^"]*"/gi, '')
-            .replace(/\srel="[^"]*"/gi, '')
-        newAttrs += ' target="_blank" rel="noopener noreferrer nofollow ugc"'
-        return `<a ${newAttrs}>`
-    })
-}
-
-function sanitizeHtml(html: string): string {
-    return String(html)
-        .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
-        .replace(/\son\w+="[^"]*"/gi, '')
-        .replace(/\s(href|src)=["']javascript:[^"']*["']/gi, '$1="#"')
-}
-
 function escapeHtml(s: string): string {
     return s
         .replace(/&/g, '&amp;')
@@ -85,16 +68,12 @@ const srcdoc = computed(() => {
     const text = props.textFallback ?? ''
 
     const body = html.trim() !== ''
-        ? rewriteLinksToRealAnchors(sanitizeHtml(html))
+        ? html
         : text.trim() !== ''
             ? textToHtml(text)
             : '<p style="padding:24px;color:#888;font:14px/1.5 system-ui,sans-serif;">This message has no body.</p>'
 
-    return `<!doctype html>
-<html>
-<head><meta charset="utf-8"><style>${SHELL_CSS}</style></head>
-<body>${body}</body>
-</html>`
+    return buildEmailDocument(body, SHELL_CSS)
 })
 
 function resize() {

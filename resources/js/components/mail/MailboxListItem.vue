@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { formatDistanceToNow } from 'date-fns'
 import { Paperclip } from 'lucide-vue-next'
 import { Message } from '@/types/mailbox'
+import { htmlToText } from '@/lib/emailHtml'
 
 const props = defineProps<{
     message: Message
@@ -51,14 +52,7 @@ const snippet = computed(() => {
     const html = props.message.html_body || ''
     if (!html) return ''
 
-    const withoutNonContent = html
-        .replace(/<head\b[\s\S]*?<\/head>/gi, ' ')
-        .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
-        .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
-        .replace(/<!--([\s\S]*?)-->/g, ' ')
-
-    const stripped = collapseWhitespace(withoutNonContent.replace(/<[^>]*>/g, ' '))
-    return truncate(stripped)
+    return truncate(collapseWhitespace(htmlToText(html)))
 })
 
 const hasAttachments = computed(() => (props.message.attachments?.length ?? 0) > 0)
