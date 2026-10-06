@@ -12,6 +12,9 @@ on:
       - 'phpstan.neon.dist'
       - '.github/workflows/phpstan.yml'
 
+permissions:
+  contents: read
+
 jobs:
   phpstan:
     name: phpstan

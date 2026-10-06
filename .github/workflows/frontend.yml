@@ -32,6 +32,9 @@ on:
       - 'components.json'
       - '.github/workflows/frontend.yml'
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
