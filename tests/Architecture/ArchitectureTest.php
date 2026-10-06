@@ -153,9 +153,19 @@ describe('code hygiene', function () {
         ->expect(PACKAGE)
         ->not->toUse(['dd', 'dump', 'ray', 'var_dump', 'print_r', 'var_export', 'die']);
 
-    arch('the package does not make network calls')
-        ->expect(PACKAGE)
-        ->not->toUse(['GuzzleHttp', 'Illuminate\Http\Client', 'Illuminate\Support\Facades\Http', 'curl_init', 'fsockopen']);
+    /*
+     * A file scan rather than arch()->not->toUse(): naming GuzzleHttp or
+     * Illuminate\Http\Client as targets makes Pest autoload them, which
+     * fatals on prefer-lowest installs with mismatched Guzzle versions.
+     */
+    it('does not make network calls', function () {
+        $offenders = array_keys(array_filter(
+            packageFiles('src'),
+            static fn (string $code): bool => (bool) preg_match('/GuzzleHttp\\\\|Illuminate\\\\Http\\\\Client|Facades\\\\Http\b|\bcurl_init\(|\bfsockopen\(/', $code),
+        ));
+
+        expect($offenders)->toBe([]);
+    });
 
     arch('public API does not depend on test frameworks outside Testing')
         ->expect(PACKAGE)
