@@ -7,7 +7,7 @@
 
 Mailbox for Laravel captures your application's outgoing mail and serves it through a local, self-hosted dashboard — like Mailtrap or Mailhog, but without an external service or a second process to run. It ships with a fluent testing API that, unlike `Mail::fake()`, asserts against the fully rendered message: real HTML, real recipients, real attachments.
 
-<!-- TODO: dashboard screenshot -->
+![Mailbox for Laravel dashboard: the captured inbox on the left and a weekly report email with three attachments open on the right](art/dashboard.png)
 
 ## Installation
 

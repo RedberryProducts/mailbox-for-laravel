@@ -37,7 +37,7 @@ Working order for the open GitHub issues as of 2026-10-06. Priorities were check
 
 - [x] #97 `ARCHITECTURE.md` is stale (label: medium → low; the best-effort bullet was fixed by #101)
 - [x] #98 (rest) README env vars, dev-link caveat (dev-link now works everywhere, see #102)
-- [ ] #98 Dashboard screenshot — needs demo mail and a human-picked shot; left for a maintainer
+- [x] #98 Dashboard screenshot (`art/dashboard.png`)
 - [x] #99 Packagist / npm metadata is placeholder text (low)
 - [x] #100 `unauthorized_redirect` and iframe sandbox comments (low)
 
