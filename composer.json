@@ -51,7 +51,8 @@
         "analyse": "vendor/bin/phpstan analyse",
         "test": "vendor/bin/pest",
         "test-coverage": "vendor/bin/pest --coverage",
-        "format": "vendor/bin/pint"
+        "format": "vendor/bin/pint",
+        "check": "bin/check"
     },
     "archive": {
         "exclude": [
@@ -72,7 +73,9 @@
             "/phpstan.neon.dist",
             "/phpstan-baseline.neon",
             "/phpunit.xml.dist",
-            "/.editorconfig"
+            "/.editorconfig",
+            "/bin",
+            "/ROADMAP.md"
         ]
     },
     "config": {
@@ -89,9 +92,6 @@
             ]
         }
     },
-    "bin": [
-        "bin/check"
-    ],
     "minimum-stability": "dev",
     "prefer-stable": true
 }

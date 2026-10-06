@@ -14,7 +14,7 @@ composer test                    # Run Pest tests
 composer test-coverage           # Tests with coverage report
 composer analyse                 # PHPStan (level 5)
 composer format                  # Laravel Pint (PSR-12)
-bin/check                        # Run Pint + PHPStan + Pest in sequence
+composer check                   # Run Pint + PHPStan + Pest in sequence (bin/check)
 vendor/bin/pest --filter="test name"  # Run a single test
 vendor/bin/pest tests/Unit/      # Run a test directory
 
