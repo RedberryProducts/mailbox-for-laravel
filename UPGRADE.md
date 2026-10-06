@@ -1,4 +1,4 @@
-# Upgrading to v2.4.0
+# Upgrading from v2.x to v3.0.0
 
 ### Default gate only allows `APP_ENV=local`
 
@@ -49,7 +49,7 @@ The deprecated `Redberry\MailboxForLaravel\Storage\AttachmentStore` shim is gone
 
 ### Laravel 10 is no longer supported
 
-v2.4.0 requires Laravel 11, 12 or 13. Stay on 2.3.x if you are still on Laravel 10.
+v3.0.0 requires Laravel 11, 12 or 13. Stay on 2.x if you are still on Laravel 10.
 
 # Upgrading from v1.x to v2.0.0
 
@@ -158,7 +158,7 @@ The `store()` return type narrowed from `string|int` to `string`. All IDs are no
 
 ### AttachmentStore contract (new)
 
-v2 introduced `Contracts\AttachmentStore` — a driver-agnostic interface for attachment persistence. If you had code that depended on the old `Storage\AttachmentStore` class directly, switch to type-hinting `Contracts\AttachmentStore`. The old class was kept as a deprecated shim through 2.3.x and is removed in 2.4.0.
+v2 introduced `Contracts\AttachmentStore` — a driver-agnostic interface for attachment persistence. If you had code that depended on the old `Storage\AttachmentStore` class directly, switch to type-hinting `Contracts\AttachmentStore`. The old class was kept as a deprecated shim through 2.3.x and is removed in 3.0.0.
 
 Attachment store methods now return `DTO\StoredAttachment` value objects instead of `MailboxAttachment` Eloquent models. Property access uses camelCase (`->mimeType`, `->isInline`).
 

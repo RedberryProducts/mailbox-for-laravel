@@ -1,6 +1,6 @@
 {
     "name": "mailbox-for-laravel",
-    "version": "2.3.2",
+    "version": "3.0.0",
     "private": true,
     "description": "Build tooling for the Mailbox for Laravel dashboard (Vue 3). Not published to npm.",
     "type": "module",

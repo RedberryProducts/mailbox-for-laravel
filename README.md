@@ -352,7 +352,17 @@ php artisan mailbox:dev-link
 
 ## Upgrading
 
-See [UPGRADE.md](UPGRADE.md) for the full v1.x → v2.0.0 migration guide. The quickest path:
+[UPGRADE.md](UPGRADE.md) covers both major upgrades.
+
+**From v2.x to v3.0.0:** the default gate now only allows `APP_ENV=local`, so define your own `viewMailbox` gate if you open the dashboard anywhere else; Laravel 10 is no longer supported; custom attachment drivers need the new `findByMessages()` method. Then update and re-publish the assets:
+
+```bash
+# Drop --dev if you installed the package as a regular dependency.
+composer require --dev redberry/mailbox-for-laravel:^3.0
+php artisan vendor:publish --tag=mailbox-assets --force
+```
+
+**From v1.x to v2.0.0:** the quickest path is
 
 ```bash
 composer update redberry/mailbox-for-laravel
