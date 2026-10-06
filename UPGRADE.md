@@ -35,6 +35,14 @@ class RedisAttachmentStore implements AttachmentStore
 }
 ```
 
+### `AttachmentData::$content` is always raw bytes
+
+Only relevant if you build `AttachmentData` yourself. The stores used to guess whether `content` was base64 and decode it, which corrupted raw attachments that happened to look like base64. They now store `content` exactly as given. If you were passing base64, switch to the named constructor:
+
+```php
+AttachmentData::fromBase64('report.pdf', 'application/pdf', $size, $base64);
+```
+
 ### `Storage\AttachmentStore` is removed
 
 The deprecated `Redberry\MailboxForLaravel\Storage\AttachmentStore` shim is gone. Type-hint `Contracts\AttachmentStore`, or use `Storage\DatabaseAttachmentStore` if you need the database implementation itself.

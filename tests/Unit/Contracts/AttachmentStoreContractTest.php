@@ -122,6 +122,18 @@ describe('AttachmentStore contract', function () {
         expect($store->getContent($stored))->toBe('hello');
     })->with('attachment_stores');
 
+    it('stores raw content verbatim even when it happens to be valid base64', function (Closure $factory, string $content) {
+        $store = $factory();
+
+        $stored = $store->store(1, new AttachmentData('token.txt', 'text/plain', strlen($content), $content, null, false));
+
+        expect($store->getContent($stored))->toBe($content);
+    })->with('attachment_stores')->with([
+        'base64-looking text' => 'SGVsbG8=',
+        'short token' => 'abcd',
+        'pem body' => "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A\r\nMIIBCgKCAQEAu1SU1LfVLPHCozMxH2Mo",
+    ]);
+
     it('deletes a single attachment without affecting siblings', function (Closure $factory) {
         $store = $factory();
 

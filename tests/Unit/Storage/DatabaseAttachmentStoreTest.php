@@ -33,7 +33,7 @@ describe(DatabaseAttachmentStore::class, function () {
             filename: 'test.txt',
             mimeType: 'text/plain',
             size: 11,
-            content: base64_encode('hello world'),
+            content: 'hello world',
             cid: null,
             isInline: false,
         ));

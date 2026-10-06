@@ -77,14 +77,11 @@ final class MessageNormalizer
                 $body = stream_get_contents($body) ?: '';
             }
 
-            $size = strlen($body);
-            $content = base64_encode($body);
-
             $attachments[] = new AttachmentData(
                 filename: $filename,
                 mimeType: $mimeType,
-                size: $size,
-                content: $content,
+                size: strlen($body),
+                content: $body,
                 cid: $contentId,
                 isInline: $isInline,
             );

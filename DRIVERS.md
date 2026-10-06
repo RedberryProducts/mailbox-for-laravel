@@ -86,7 +86,7 @@ interface AttachmentStore
 
 ### Key points
 
-- `store()` receives an `AttachmentData` DTO (filename, mimeType, size, base64 content, cid, isInline) and returns a `StoredAttachment` value object.
+- `store()` receives an `AttachmentData` DTO (filename, mimeType, size, content, cid, isInline) and returns a `StoredAttachment` value object. `content` is always the raw bytes: write it as-is and never try to detect an encoding. Callers holding base64 build the DTO with `AttachmentData::fromBase64()`.
 - Attachment **content bytes** are written to the configured filesystem disk (`mailbox.attachments.disk`). Your driver stores the metadata; the disk stores the binary.
 - `findByMessages()` returns the attachments of several messages keyed by message id, with every requested id present. The dashboard calls it once per page. If your backend has no batched lookup, `use Redberry\MailboxForLaravel\Storage\Concerns\FindsAttachmentsByMessages;` to fall back to one `findByMessage()` per id.
 - `findByCid()` resolves inline images by Content-ID — the `CidRewriter` uses this to rewrite `cid:` references in HTML bodies to downloadable routes.
