@@ -1,6 +1,10 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Redberry\MailboxForLaravel\CaptureService;
+use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
+use Redberry\MailboxForLaravel\DTO\AttachmentData;
 use Redberry\MailboxForLaravel\Http\Controllers\MailboxController;
 
 describe(MailboxController::class, function () {
@@ -269,5 +273,38 @@ describe(MailboxController::class, function () {
             $response->assertStatus(200);
             $response->assertJsonPath('mailboxPrefix', 'custom-inbox');
         });
+    });
+
+    it('loads the attachments of a whole page with one query', function () {
+        Storage::fake('mailbox');
+
+        $service = app(CaptureService::class);
+        $attachments = app(AttachmentStore::class);
+
+        foreach (range(1, 5) as $i) {
+            $id = $service->store([
+                'subject' => "Email {$i}",
+                'timestamp' => 1000 + $i,
+                'html' => '<img src="cid:logo@x"><img src="cid:banner@x">',
+                'raw' => "Email {$i}",
+            ]);
+
+            $attachments->store($id, new AttachmentData('logo.png', 'image/png', 4, 'logo', 'logo@x', true));
+            $attachments->store($id, new AttachmentData('banner.png', 'image/png', 6, 'banner', 'banner@x', true));
+        }
+
+        DB::connection('testing')->enableQueryLog();
+
+        $response = $this->getJson(route('mailbox.index'))->assertOk();
+
+        $attachmentQueries = array_filter(
+            DB::connection('testing')->getQueryLog(),
+            static fn (array $query): bool => str_contains($query['query'], 'mailbox_attachments'),
+        );
+
+        expect($attachmentQueries)->toHaveCount(1)
+            ->and($response->json('messages'))->toHaveCount(5)
+            ->and($response->json('messages.0.attachments'))->toHaveCount(2)
+            ->and($response->json('messages.0.html_body'))->not->toContain('cid:');
     });
 });

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\View as ViewFactory;
 use Redberry\MailboxForLaravel\CaptureService;
 use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
 use Redberry\MailboxForLaravel\DTO\MailboxMessageData;
+use Redberry\MailboxForLaravel\DTO\StoredAttachment;
 use Redberry\MailboxForLaravel\Support\CidRewriter;
 
 class MailboxController
@@ -30,9 +31,13 @@ class MailboxController
 
         $result = $service->list($page, $perPage, $search);
 
+        $attachmentsByMessage = $this->attachmentStore->findByMessages(
+            array_map(static fn (MailboxMessageData $m): string => (string) $m->id, $result->data),
+        );
+
         $data = [
             'messages' => array_map(
-                fn (MailboxMessageData $m) => $this->formatMessage($m),
+                fn (MailboxMessageData $m) => $this->formatMessage($m, $attachmentsByMessage[(string) $m->id] ?? []),
                 $result->data,
             ),
             'pagination' => [
@@ -63,13 +68,12 @@ class MailboxController
     /**
      * Format message with attachments and rewritten CID references.
      *
+     * @param  array<int, StoredAttachment>  $attachments
      * @return array<string, mixed>
      */
-    protected function formatMessage(MailboxMessageData $message): array
+    protected function formatMessage(MailboxMessageData $message, array $attachments): array
     {
         $formatted = $message->toFrontendArray();
-
-        $attachments = $this->attachmentStore->findByMessage($message->id);
 
         $formatted['attachments'] = array_map(
             static fn ($attachment) => [
@@ -87,7 +91,8 @@ class MailboxController
         if ($formatted['html_body']) {
             $formatted['html_body'] = $this->cidRewriter->rewrite(
                 $formatted['html_body'],
-                $message->id
+                $message->id,
+                $attachments,
             );
         }
 

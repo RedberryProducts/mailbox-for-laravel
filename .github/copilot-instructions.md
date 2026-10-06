@@ -37,11 +37,11 @@
 
     * `CaptureService` is the high-level API: store/list/find/update/delete/purge. Owns cascading attachment cleanup. Mints canonical ULIDs and provides write-path idempotency via the RFC 822 `message_id` header.
     * `MessageStore` contract (10 methods) — default driver is `sqlite` (`DatabaseMessageStore` against a dedicated SQLite file at `storage/app/mailbox/mailbox.sqlite`). `database` is an alias for bring-your-own-connection users. `file` driver writes JSON on disk.
-    * `AttachmentStore` contract (8 methods) — paired with the active `MessageStore` driver. `DatabaseAttachmentStore` for sqlite/database; `FileAttachmentStore` for the file driver. Both return `DTO\StoredAttachment` value objects.
+    * `AttachmentStore` contract (9 methods) — paired with the active `MessageStore` driver. `DatabaseAttachmentStore` for sqlite/database; `FileAttachmentStore` for the file driver. Both return `DTO\StoredAttachment` value objects.
     * `MessageSearch` contract — pluggable search strategy (`DefaultMessageSearch` searches `subject`, `from`, `to`, `html`, `text`).
     * `StoreManager` resolves drivers via config & custom resolvers.
 * **DTOs**: `MailboxMessageData`, `AttachmentData`, `StoredAttachment`, `PaginatedMessages` — typed value objects under `src/DTO/`.
-* **HTTP**: `MailboxController`, `SendTestMailController`, `ClearMailboxController`, `DeleteMailboxMessageController`, `SeenController`, `PublicAssetController`, `AttachmentController`, `AuthorizeMailboxMiddleware` (route gating).
+* **HTTP**: `MailboxController`, `SendTestMailController`, `ClearMailboxController`, `DeleteMailboxMessageController`, `SeenController`, `AttachmentController`, `AuthorizeMailboxMiddleware` (route gating).
 * **Retention**: `MailboxServiceProvider` registers a daily `mailbox:clear --outdated` via `callAfterResolving(Schedule::class, …)`, triple-guarded by `mailbox.enabled`, `mailbox.retention > 0`, and `mailbox.retention_schedule`.
 * **Support**: `MessageNormalizer` (canonical payload + attachment extraction), `CidRewriter` (rewrites inline `cid:` references), `MailboxServiceProvider`, `InstallCommand`, `UpgradeCommand`, `ClearInboxCommand`, `config/mailbox.php`.
 * **Testing API**: `src/Testing/` — `InteractsWithMailbox` trait, `MailboxAssertions`, `PendingMailboxMessageAssertion`, plus facade-level `Mailbox::assertSent()` etc.
@@ -146,7 +146,6 @@ When writing tests that verify email sending, prefer these helpers over manual `
     * `DeleteMailboxMessageController` deletes a single message on `DELETE /mailbox/messages/{id}`
     * `SeenController` toggles `seen_at` and returns updated entity
     * `AttachmentController` streams attachment content from the active `AttachmentStore`
-    * `PublicAssetController` serves versioned assets with correct headers
 * **Middleware (Feature)**
 
     * `AuthorizeMailboxMiddleware` denies/permits based on config/closure/gate

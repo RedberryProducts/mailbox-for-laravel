@@ -1,20 +1,22 @@
 {
     "name": "mailbox-for-laravel",
     "version": "2.3.2",
-    "description": "[![Latest Version on Packagist](https://img.shields.io/packagist/v/redberry/mailbox-for-laravel.svg?style=flat-square)](https://packagist.org/packages/redberry/mailbox-for-laravel) [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/redberry/mailbox-for-laravel/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/redberry/mailbox-for-laravel/actions?query=workflow%3Arun-tests+branch%3Amain) [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/redberry/mailbox-for-laravel/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/redberry/mailbox-for-laravel/actions?query=workflow%3A\"Fix+PHP+code+style+issues\"+branch%3Amain) [![Total Downloads](https://img.shields.io/packagist/dt/redberry/mailbox-for-laravel.svg?style=flat-square)](https://packagist.org/packages/redberry/mailbox-for-laravel)",
-    "main": "index.js",
+    "private": true,
+    "description": "Build tooling for the Mailbox for Laravel dashboard (Vue 3). Not published to npm.",
     "type": "module",
-    "directories": {
-        "test": "tests"
-    },
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
         "dev": "vite build --watch",
-        "build": "vite build"
+        "build": "vite build",
+        "typecheck": "vue-tsc --noEmit"
     },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
+    "keywords": [
+        "laravel",
+        "mail",
+        "dashboard",
+        "vue"
+    ],
+    "author": "Redberry",
+    "license": "MIT",
     "devDependencies": {
         "@tailwindcss/postcss": "^4.1.12",
         "@vitejs/plugin-vue": "^6.0.1",
@@ -23,7 +25,8 @@
         "postcss": "^8.5.26",
         "tailwindcss": "^4.1.11",
         "typescript": "^5.9.3",
-        "vite": "^7.1.7"
+        "vite": "^7.1.7",
+        "vue-tsc": "^3.3.12"
     },
     "dependencies": {
         "@vueuse/core": "^14.0.0",

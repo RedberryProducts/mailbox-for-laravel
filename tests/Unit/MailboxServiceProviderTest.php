@@ -136,30 +136,35 @@ describe(MailboxServiceProvider::class, function () {
         expect(Gate::allows('viewMailbox'))->toBeTrue();
     });
 
-    it('default gate allows access when mailbox is enabled', function () {
-        $gate = Gate::getFacadeRoot();
-        (new ReflectionProperty($gate, 'abilities'))->setValue($gate, []);
+    describe('default gate', function () {
+        beforeEach(function () {
+            $gate = Gate::getFacadeRoot();
+            (new ReflectionProperty($gate, 'abilities'))->setValue($gate, []);
+        });
 
-        config(['mailbox.enabled' => true]);
+        afterEach(function () {
+            // Teardown rolls back migrations, which prompts in production.
+            app()['env'] = 'testing';
+        });
 
-        $provider = app()->getProvider(MailboxServiceProvider::class);
-        (new ReflectionMethod($provider, 'registerGate'))->invoke($provider);
+        it('allows access in the local environment', function () {
+            app()['env'] = 'local';
 
-        // Testing env is not local, but mailbox.enabled=true grants access
-        expect(Gate::allows('viewMailbox'))->toBeTrue();
-    });
+            $provider = app()->getProvider(MailboxServiceProvider::class);
+            (new ReflectionMethod($provider, 'registerGate'))->invoke($provider);
 
-    it('default gate denies access when mailbox is disabled and not local', function () {
-        $gate = Gate::getFacadeRoot();
-        (new ReflectionProperty($gate, 'abilities'))->setValue($gate, []);
+            expect(Gate::allows('viewMailbox'))->toBeTrue();
+        });
 
-        config(['mailbox.enabled' => false]);
-        // Testing env is not local, and mailbox.enabled=false, so gate denies
+        it('denies access outside the local environment even when mailbox is enabled', function (string $environment) {
+            app()['env'] = $environment;
+            config(['mailbox.enabled' => true]);
 
-        $provider = app()->getProvider(MailboxServiceProvider::class);
-        (new ReflectionMethod($provider, 'registerGate'))->invoke($provider);
+            $provider = app()->getProvider(MailboxServiceProvider::class);
+            (new ReflectionMethod($provider, 'registerGate'))->invoke($provider);
 
-        expect(Gate::allows('viewMailbox'))->toBeFalse();
+            expect(Gate::allows('viewMailbox'))->toBeFalse();
+        })->with(['staging', 'production', 'testing', 'development']);
     });
 
     describe('retention schedule', function () {

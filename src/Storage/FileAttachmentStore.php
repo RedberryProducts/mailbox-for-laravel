@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use Redberry\MailboxForLaravel\Contracts\AttachmentStore as AttachmentStoreContract;
 use Redberry\MailboxForLaravel\DTO\AttachmentData;
 use Redberry\MailboxForLaravel\DTO\StoredAttachment;
+use Redberry\MailboxForLaravel\Storage\Concerns\FindsAttachmentsByMessages;
 
 use function array_filter;
 use function array_values;
@@ -37,6 +38,8 @@ use function unlink;
  */
 class FileAttachmentStore implements AttachmentStoreContract
 {
+    use FindsAttachmentsByMessages;
+
     protected string $basePath;
 
     protected string $disk;
@@ -61,12 +64,7 @@ class FileAttachmentStore implements AttachmentStoreContract
         $storedFilename = $id.($extension ? '.'.$extension : '');
         $path = $this->contentBasePath.'/'.$storedFilename;
 
-        $content = $attachment->content;
-        if ($this->isBase64($content)) {
-            $content = base64_decode($content, true) ?: $content;
-        }
-
-        Storage::disk($this->disk)->put($path, $content);
+        Storage::disk($this->disk)->put($path, $attachment->content);
 
         $record = new StoredAttachment(
             id: $id,
@@ -253,16 +251,5 @@ class FileAttachmentStore implements AttachmentStoreContract
         );
 
         file_put_contents($path, json_encode($rows, JSON_THROW_ON_ERROR));
-    }
-
-    private function isBase64(string $string): bool
-    {
-        if (preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $string) && strlen($string) % 4 === 0) {
-            $decoded = base64_decode($string, true);
-
-            return $decoded !== false && base64_encode($decoded) === $string;
-        }
-
-        return false;
     }
 }

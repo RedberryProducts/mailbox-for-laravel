@@ -3,6 +3,7 @@
 namespace Redberry\MailboxForLaravel\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Testing\TestResponse;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Redberry\MailboxForLaravel\MailboxServiceProvider;
@@ -21,6 +22,10 @@ class TestCase extends Orchestra
         Factory::guessFactoryNamesUsing(
             fn (string $modelName) => 'Redberry\\MailboxForLaravel\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
+
+        // The default gate only allows the local environment; tests run as
+        // "testing", so grant dashboard access explicitly.
+        Gate::define('viewMailbox', static fn ($user = null): bool => true);
 
         $manifestPath = base_path('public/vendor/mailbox');
         if (! file_exists($manifestPath)) {

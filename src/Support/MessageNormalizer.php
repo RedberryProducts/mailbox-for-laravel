@@ -77,14 +77,11 @@ final class MessageNormalizer
                 $body = stream_get_contents($body) ?: '';
             }
 
-            $size = strlen($body);
-            $content = base64_encode($body);
-
             $attachments[] = new AttachmentData(
                 filename: $filename,
                 mimeType: $mimeType,
-                size: $size,
-                content: $content,
+                size: strlen($body),
+                content: $body,
                 cid: $contentId,
                 isInline: $isInline,
             );
@@ -100,10 +97,12 @@ final class MessageNormalizer
         ?string $raw,
         ?string $messageId = null
     ): array {
+        $raw ??= $rawMessage->toString();
+
         return [
             'version' => 1,
             'saved_at' => (new \DateTimeImmutable)->format(DateTimeInterface::ATOM),
-            'message_id' => $messageId ?? self::messageIdFromRaw($raw ?? $rawMessage->toString()),
+            'message_id' => $messageId ?? self::messageIdFromRaw($raw),
             'subject' => null,
             'from' => [],
             'to' => [],
@@ -114,7 +113,7 @@ final class MessageNormalizer
             'html' => null,
             'headers' => [],
             'attachments' => [],
-            'raw' => $rawMessage,
+            'raw' => $raw,
         ];
     }
 

@@ -31,12 +31,7 @@ class DatabaseAttachmentStore implements AttachmentStoreContract
         $storedFilename = $id.($extension ? '.'.$extension : '');
         $path = $basePath.'/'.$storedFilename;
 
-        $content = $attachment->content;
-        if ($this->isBase64($content)) {
-            $content = base64_decode($content, true) ?: $content;
-        }
-
-        Storage::disk($disk)->put($path, $content);
+        Storage::disk($disk)->put($path, $attachment->content);
 
         $record = MailboxAttachment::query()->create([
             'id' => $id,
@@ -69,6 +64,29 @@ class DatabaseAttachmentStore implements AttachmentStoreContract
             ->map(fn (MailboxAttachment $record): StoredAttachment => $this->toDto($record))
             ->values()
             ->all();
+    }
+
+    /**
+     * @param  array<int, int|string>  $messageIds
+     * @return array<string, array<int, StoredAttachment>>
+     */
+    public function findByMessages(array $messageIds): array
+    {
+        $attachments = array_fill_keys(array_map('strval', $messageIds), []);
+
+        if ($attachments === []) {
+            return [];
+        }
+
+        MailboxAttachment::query()
+            ->whereIn('message_id', array_keys($attachments))
+            ->orderBy('created_at')
+            ->get()
+            ->each(function (MailboxAttachment $record) use (&$attachments): void {
+                $attachments[(string) $record->message_id][] = $this->toDto($record);
+            });
+
+        return $attachments;
     }
 
     public function findByCid(int|string $messageId, string $cid): ?StoredAttachment
@@ -123,16 +141,5 @@ class DatabaseAttachmentStore implements AttachmentStoreContract
             cid: $record->cid,
             isInline: (bool) $record->is_inline,
         );
-    }
-
-    private function isBase64(string $string): bool
-    {
-        if (preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $string) && strlen($string) % 4 === 0) {
-            $decoded = base64_decode($string, true);
-
-            return $decoded !== false && base64_encode($decoded) === $string;
-        }
-
-        return false;
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use Redberry\MailboxForLaravel\Support\MessageNormalizer;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Part\DataPart;
 use Symfony\Component\Mime\RawMessage;
@@ -219,6 +220,42 @@ describe(MessageNormalizer::class, function () {
             ->and($payload['html'])->toBeNull()
             ->and($payload['headers'])->toBe([])
             ->and($payload['attachments'])->toBe([])
-            ->and($payload['raw'])->toBeInstanceOf(RawMessage::class);
+            ->and($payload['raw'])->toBe($rawMessage->toString());
+    });
+
+    it('stores the raw string the transport computed for a RawMessage', function () {
+        $payload = MessageNormalizer::normalize(new RawMessage("Subject: hi\r\n\r\nbody"), raw: "Subject: sent\r\n\r\nbody");
+
+        expect($payload['raw'])->toBe("Subject: sent\r\n\r\nbody")
+            ->and(json_encode($payload, JSON_THROW_ON_ERROR))->toBeString();
+    });
+
+    it('matches the payload example documented in ARCHITECTURE.md', function () {
+        // Windows checkouts convert Markdown to CRLF, so normalize first.
+        $markdown = str_replace("\r\n", "\n", (string) file_get_contents(__DIR__.'/../../ARCHITECTURE.md'));
+
+        preg_match('/```json\n(\{\n    "version".*?)\n```/s', $markdown, $match);
+
+        expect($match)->not->toBeEmpty('ARCHITECTURE.md no longer contains the payload example.');
+
+        $documented = json_decode($match[1], true, flags: JSON_THROW_ON_ERROR);
+
+        $payload = MessageNormalizer::normalize(
+            (new Email)
+                ->from(new Address('sender@example.com', 'Sender'))
+                ->to('recipient@example.com')
+                ->replyTo('support@example.com')
+                ->subject('Test Email')
+                ->text('Plain text body')
+                ->html('<p>HTML body</p>'),
+            raw: 'Full RFC 822 message',
+            messageId: '<abc123@example.com>',
+        );
+
+        // saved_at is the capture time; everything else must match exactly.
+        expect($payload['saved_at'])->toBeString();
+        unset($documented['saved_at'], $payload['saved_at']);
+
+        expect($documented)->toBe($payload);
     });
 });

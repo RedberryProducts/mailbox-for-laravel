@@ -1,3 +1,56 @@
+# Upgrading to v2.4.0
+
+### Default gate only allows `APP_ENV=local`
+
+The built-in `viewMailbox` gate used to allow every request whenever the package was enabled, which by default is every environment except `production`. It now only allows `local`. If you open the dashboard on staging, a review app, or any other non-local environment, define your own gate in a service provider:
+
+```php
+use Illuminate\Support\Facades\Gate;
+
+public function boot(): void
+{
+    Gate::define('viewMailbox', fn ($user) => $user?->isAdmin());
+}
+```
+
+Without it those environments now answer with a 403 (or redirect to `mailbox.unauthorized_redirect`). Local development is unaffected.
+
+### `Contracts\AttachmentStore` has a new `findByMessages()` method
+
+Only relevant if you wrote a custom attachment driver. The dashboard now loads a whole page of attachments with one call:
+
+```php
+/** @return array<string, array<int, StoredAttachment>> keyed by message id */
+public function findByMessages(array $messageIds): array;
+```
+
+The quickest way to satisfy it is the bundled fallback trait, which calls your `findByMessage()` once per id:
+
+```php
+use Redberry\MailboxForLaravel\Storage\Concerns\FindsAttachmentsByMessages;
+
+class RedisAttachmentStore implements AttachmentStore
+{
+    use FindsAttachmentsByMessages;
+}
+```
+
+### `AttachmentData::$content` is always raw bytes
+
+Only relevant if you build `AttachmentData` yourself. The stores used to guess whether `content` was base64 and decode it, which corrupted raw attachments that happened to look like base64. They now store `content` exactly as given. If you were passing base64, switch to the named constructor:
+
+```php
+AttachmentData::fromBase64('report.pdf', 'application/pdf', $size, $base64);
+```
+
+### `Storage\AttachmentStore` is removed
+
+The deprecated `Redberry\MailboxForLaravel\Storage\AttachmentStore` shim is gone. Type-hint `Contracts\AttachmentStore`, or use `Storage\DatabaseAttachmentStore` if you need the database implementation itself.
+
+### Laravel 10 is no longer supported
+
+v2.4.0 requires Laravel 11, 12 or 13. Stay on 2.3.x if you are still on Laravel 10.
+
 # Upgrading from v1.x to v2.0.0
 
 This guide covers every breaking change in v2.0.0 and what you need to do about each one. The package captures ephemeral development mail, so the recommended upgrade path is fast and non-destructive to your application code.
@@ -105,7 +158,7 @@ The `store()` return type narrowed from `string|int` to `string`. All IDs are no
 
 ### AttachmentStore contract (new)
 
-v2 introduced `Contracts\AttachmentStore` — a driver-agnostic interface for attachment persistence. If you had code that depended on the old `Storage\AttachmentStore` class directly, switch to type-hinting `Contracts\AttachmentStore`. The old class is a deprecated shim and will be removed in v2.1.
+v2 introduced `Contracts\AttachmentStore` — a driver-agnostic interface for attachment persistence. If you had code that depended on the old `Storage\AttachmentStore` class directly, switch to type-hinting `Contracts\AttachmentStore`. The old class was kept as a deprecated shim through 2.3.x and is removed in 2.4.0.
 
 Attachment store methods now return `DTO\StoredAttachment` value objects instead of `MailboxAttachment` Eloquent models. Property access uses camelCase (`->mimeType`, `->isInline`).
 

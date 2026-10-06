@@ -64,10 +64,12 @@ return [
     | Authorization Gate
     |--------------------------------------------------------------------------
     |
-    | The ability name checked by the AuthorizeMailbox middleware. Define a
-    | corresponding Gate::define('viewMailbox', ...) in your app if you
-    | want to restrict dashboard access; the default gate in the service
-    | provider allows every request in non-production environments.
+    | The ability name checked by the AuthorizeMailbox middleware. The
+    | default gate in the service provider only allows the "local"
+    | environment. Anywhere else (staging, review apps, production) every
+    | request is denied until you define Gate::define('viewMailbox', ...)
+    | in your app. Captured mail contains password reset links and tokens,
+    | so make that gate strict.
     |
     */
 
@@ -78,8 +80,9 @@ return [
     | Unauthorized Redirect
     |--------------------------------------------------------------------------
     |
-    | When the gate denies access, unauthenticated users are redirected
-    | here. Leave null to render a 403 response instead of redirecting.
+    | When the gate denies a guest, they are redirected here (typically your
+    | login URL). Authenticated users the gate denies always get a 403.
+    | Leave null to answer every denied request with a 403.
     |
     */
 

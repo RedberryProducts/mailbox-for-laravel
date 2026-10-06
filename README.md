@@ -31,7 +31,7 @@ MAIL_MAILER=mailbox
 
 The dashboard is then available at `/mailbox` (or whatever path you configure). The package is auto-discovered — no manual provider registration needed.
 
-**Requirements:** PHP 8.3+, Laravel 10 / 11 / 12 / 13.
+**Requirements:** PHP 8.3+, Laravel 11 / 12 / 13.
 
 ## Capturing Mail
 
@@ -42,7 +42,7 @@ Everything your app sends through Laravel's `Mail` facade is intercepted by the 
 - Attachment preview and download
 - Read/unread tracking, single-message delete, and clear-all
 - Recipient filtering and search
-- A "Send test email" button for smoke tests
+- A "Send test email" button that runs a sample message through the real capture pipeline (never delivered, even in decorate mode)
 
 Internally, the pipeline is: transport → normalizer → `CaptureService` → paired message/attachment store. The architectural details are in [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -228,7 +228,7 @@ The keys you're most likely to touch:
 | `MAILBOX_DECORATE` | `null` | Mailer name to decorate — capture + forward for real delivery (e.g. `smtp`, `ses`) |
 | `MAILBOX_PATH` | `mailbox` | URL prefix for the dashboard |
 | `MAILBOX_GATE` | `viewMailbox` | Gate ability checked by the authorize middleware |
-| `MAILBOX_UNAUTHORIZED_REDIRECT` | `null` | Redirect target on gate denial (null = 403 response) |
+| `MAILBOX_UNAUTHORIZED_REDIRECT` | `null` | Where to send guests the gate denies, e.g. a login URL (null = 403; signed-in users always get 403) |
 | `MAILBOX_STORE_DRIVER` | `sqlite` | `sqlite`, `database`, or `file` |
 | `MAILBOX_STORE_DATABASE_CONNECTION` | `mailbox` | Connection name for the DB driver |
 | `MAILBOX_STORE_DATABASE_TABLE` | `mailbox_messages` | Messages table name |
@@ -237,6 +237,10 @@ The keys you're most likely to touch:
 | `MAILBOX_RETENTION_SCHEDULE` | `false` | Auto-register a daily `mailbox:clear --outdated` on the scheduler |
 | `MAILBOX_PER_PAGE` | `20` | Messages per dashboard page |
 | `MAILBOX_ATTACHMENTS_DISK` | `mailbox` | Disk for attachment content |
+| `MAILBOX_ATTACHMENTS_ENABLED` | `true` | Store attachments of captured mail (set `false` to keep only the message) |
+| `MAILBOX_ATTACHMENTS_PATH` | `attachments` | Directory on the attachments disk for attachment content |
+| `MAILBOX_POLLING_ENABLED` | `true` | Auto-refresh the dashboard |
+| `MAILBOX_POLLING_INTERVAL` | `5000` | Dashboard refresh interval in milliseconds |
 
 ## Storage
 
@@ -306,7 +310,7 @@ Drivers are always resolved as a pair — if you ship a custom `MessageStore`, a
 
 ## Authorization
 
-Dashboard access is gated through Laravel's `Gate::allows()` using the `viewMailbox` ability. The package defines a default gate that allows access in local environments or whenever `mailbox.enabled` is true; if you define your own `viewMailbox` gate, the package will not overwrite it.
+Dashboard access is gated through Laravel's `Gate::allows()` using the `viewMailbox` ability. The package defines a default gate that only allows access when `APP_ENV=local`. In every other environment (staging, review apps, production) the dashboard is denied until you define your own `viewMailbox` gate; the package never overwrites one you have defined.
 
 ```php
 use Illuminate\Support\Facades\Gate;
@@ -326,7 +330,9 @@ Captured messages can include passwords, tokens, and personal data, so leave `MA
 ```bash
 # Publish assets + config, then run package migrations.
 # Flags: --force (overwrite published files), --refresh (drop and rebuild tables),
-#        --dev (symlink assets for hot reload).
+#        --dev (symlink public/vendor/mailbox to the package's own built assets
+#        instead of copying them, so `composer update` or a package rebuild
+#        is picked up without re-publishing).
 php artisan mailbox:install
 
 # Clear captured mail. With --outdated, only remove messages older than `retention`.
@@ -340,6 +346,7 @@ php artisan mailbox:clear --outdated
 php artisan mailbox:upgrade
 
 # Recreate the dev-mode asset symlink (rarely needed directly; --dev on install uses it).
+# Fails without touching public/ if the package has no built assets.
 php artisan mailbox:dev-link
 ```
 

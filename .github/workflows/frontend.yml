@@ -1,0 +1,70 @@
+name: frontend
+
+on:
+  push:
+    paths:
+      - 'resources/js/**'
+      - 'resources/css/**'
+      - 'resources/images/**'
+      - 'resources/views/**'
+      - 'public/vendor/mailbox/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
+      - 'tsconfig.json'
+      - 'tailwind.config.js'
+      - 'postcss.config.js'
+      - 'components.json'
+      - '.github/workflows/frontend.yml'
+  pull_request:
+    paths:
+      - 'resources/js/**'
+      - 'resources/css/**'
+      - 'resources/images/**'
+      - 'resources/views/**'
+      - 'public/vendor/mailbox/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
+      - 'tsconfig.json'
+      - 'tailwind.config.js'
+      - 'postcss.config.js'
+      - 'components.json'
+      - '.github/workflows/frontend.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Type-check, build and verify bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify committed bundle matches the sources
+        run: |
+          if [ -n "$(git status --porcelain -- public/vendor/mailbox)" ]; then
+            echo "::error::public/vendor/mailbox is out of date. Run 'npm run build' and commit the result."
+            git status --short -- public/vendor/mailbox
+            exit 1
+          fi

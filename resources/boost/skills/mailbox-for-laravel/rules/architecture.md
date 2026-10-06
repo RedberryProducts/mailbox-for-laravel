@@ -34,7 +34,7 @@ Message store and attachment store are paired — registering one without the ot
   - `findIdByMessageId` powers write-path idempotency (dedup by RFC 822 Message-ID header).
   - `idsOlderThan` is what `CaptureService` calls to cascade attachment cleanup before purging messages — never collapse it into `purgeOlderThan`.
   - `paginate()` must return newest-first.
-- **`Contracts\AttachmentStore` — 8 methods**: `store`, `find`, `findByMessage`, `findByCid`, `delete`, `deleteByMessage`, `getContent`, `clear`. Every read must return a `DTO\StoredAttachment`.
+- **`Contracts\AttachmentStore` — 9 methods**: `store`, `find`, `findByMessage`, `findByMessages`, `findByCid`, `delete`, `deleteByMessage`, `getContent`, `clear`. Every read must return a `DTO\StoredAttachment`. `findByMessages` returns lists keyed by message id; drivers without a batched lookup can `use Storage\Concerns\FindsAttachmentsByMessages`.
 
 Both halves of the pair share the same content disk (`mailbox.attachments.disk` + `mailbox.attachments.path`); only metadata storage differs.
 

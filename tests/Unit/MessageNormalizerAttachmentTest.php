@@ -24,7 +24,7 @@ describe('MessageNormalizer::extractAttachments', function () {
             ->and($attachments[0]->size)->toBe(strlen('file-content-here'))
             ->and($attachments[0]->isInline)->toBeFalse()
             ->and($attachments[0]->cid)->toBeNull()
-            ->and($attachments[0]->content)->toBe(base64_encode('file-content-here'));
+            ->and($attachments[0]->content)->toBe('file-content-here');
     });
 
     it('extracts inline attachments with CID', function () {
@@ -45,7 +45,7 @@ describe('MessageNormalizer::extractAttachments', function () {
             ->and($attachments[0]->mimeType)->toBe('image/png')
             ->and($attachments[0]->isInline)->toBeTrue()
             ->and($attachments[0]->cid)->toBe('img123@example.com')
-            ->and($attachments[0]->content)->toBe(base64_encode('image-data'));
+            ->and($attachments[0]->content)->toBe('image-data');
     });
 
     it('extracts multiple attachments', function () {

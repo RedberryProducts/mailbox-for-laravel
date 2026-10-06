@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Redberry\MailboxForLaravel;
 
 use Illuminate\Console\Scheduling\Schedule;
@@ -7,7 +9,6 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Mail\MailManager;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Gate;
-use Redberry\MailboxForLaravel\Commands\DevLinkCommand;
 use Redberry\MailboxForLaravel\Contracts\AttachmentStore as AttachmentStoreContract;
 use Redberry\MailboxForLaravel\Contracts\MessageSearch;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
@@ -34,6 +35,7 @@ class MailboxServiceProvider extends PackageServiceProvider
                 Commands\InstallCommand::class,
                 Commands\ClearInboxCommand::class,
                 Commands\UpgradeCommand::class,
+                Commands\DevLinkCommand::class,
             ]);
     }
 
@@ -44,7 +46,6 @@ class MailboxServiceProvider extends PackageServiceProvider
         $this->registerAttachmentStore();
         $this->registerCaptureService();
         $this->registerTransport();
-        $this->registerDevCommands();
     }
 
     public function packageBooted(): void
@@ -235,22 +236,6 @@ class MailboxServiceProvider extends PackageServiceProvider
     }
 
     /**
-     * Register additional dev-only commands (e.g. DevLinkCommand) in local env.
-     */
-    protected function registerDevCommands(): void
-    {
-        if (! $this->app->runningInConsole()) {
-            return;
-        }
-
-        if ($this->app->environment('local')) {
-            $this->commands([
-                DevLinkCommand::class,
-            ]);
-        }
-    }
-
-    /**
      * Configure the dedicated "mailbox" SQLite connection.
      *
      * This keeps the test inbox DB completely isolated.
@@ -309,7 +294,8 @@ class MailboxServiceProvider extends PackageServiceProvider
     /**
      * Gate that controls access to the mailbox dashboard.
      *
-     * Default behavior: allow everything except production.
+     * The default gate only allows the "local" environment. Every other
+     * environment, staging included, must define its own gate.
      */
     protected function registerGate(): void
     {
@@ -320,7 +306,7 @@ class MailboxServiceProvider extends PackageServiceProvider
         }
 
         Gate::define($ability, static function ($user = null): bool {
-            return app()->isLocal() || config('mailbox.enabled', false);
+            return app()->isLocal();
         });
     }
 

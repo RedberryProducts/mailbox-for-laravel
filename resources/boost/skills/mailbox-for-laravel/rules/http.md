@@ -24,7 +24,7 @@ There is no per-message `show` route — single-message views are rendered clien
 
 ## Authorization
 
-The `viewMailbox` gate ships with a default closure that allows all access in non-production environments. Override it in your `AuthServiceProvider` before exposing the dashboard publicly:
+The `viewMailbox` gate ships with a default closure that only allows the `local` environment (`app()->isLocal()`). In every other environment — staging, review apps, production — every request gets a 403 (or the `unauthorized_redirect`) until the app defines its own gate. Captured mail contains password reset links and tokens, so keep that gate strict. Define it in a service provider's `boot()`; the package never overwrites an existing definition:
 
 ```php
 Gate::define('viewMailbox', function (?User $user) {

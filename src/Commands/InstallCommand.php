@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Redberry\MailboxForLaravel\Commands;
 
 use Illuminate\Console\Command;
@@ -16,8 +18,9 @@ class InstallCommand extends Command
         if ($this->option('dev')) {
             $this->info('Dev mode: linking assets (reusing mailbox:dev-link)...');
 
-            $this->call('mailbox:dev-link');
-
+            if ($this->call('mailbox:dev-link') !== self::SUCCESS) {
+                return self::FAILURE;
+            }
         } else {
             $this->publishAssets();
             $this->info('Mailbox assets published.');
@@ -79,7 +82,8 @@ class InstallCommand extends Command
         }
 
         $this->call($command, [
-            '--path' => 'vendor/redberry/mailbox-for-laravel/database/migrations',
+            '--path' => dirname(__DIR__, 2).DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations',
+            '--realpath' => true,
             '--database' => $connectionName,
             '--force' => true,
         ]);
@@ -106,7 +110,8 @@ class InstallCommand extends Command
     protected function cleanPath(string $path): void
     {
         if (is_link($path)) {
-            unlink($path);
+            // Windows removes directory symlinks with rmdir(); unlink() fails there.
+            PHP_OS_FAMILY === 'Windows' && is_dir($path) ? rmdir($path) : unlink($path);
 
             return;
         }

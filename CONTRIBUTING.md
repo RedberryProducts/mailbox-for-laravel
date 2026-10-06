@@ -18,7 +18,7 @@ The package runs against Orchestra Testbench for HTTP and database integration, 
 The full QA sweep (Pint → PHPStan → Pest) runs via:
 
 ```bash
-bin/check
+composer check
 ```
 
 Individually:
@@ -44,9 +44,12 @@ Coverage target: **90%+ lines, 80%+ branches.** CI will fail a PR that drops bel
 The dashboard is a scoped Vue 3 app that bootstraps from a JSON payload embedded in the Blade layout and talks to the package's own JSON endpoints via axios — no Inertia, no shared frontend runtime with the host. See [ARCHITECTURE.md](ARCHITECTURE.md) for the deep-dive.
 
 ```bash
-npm run dev    # Vite watch mode with HMR
-npm run build  # Production build into public/vendor/mailbox/
+npm run dev        # Vite watch mode with HMR
+npm run build      # Production build into public/vendor/mailbox/
+npm run typecheck  # vue-tsc type check of the Vue/TS sources
 ```
+
+The built bundle in `public/vendor/mailbox/` is committed. CI type-checks, rebuilds it and fails the PR if the committed files differ from a fresh build, so run `npm run build` and commit the output whenever you touch `resources/`, `package*.json` or the Vite/Tailwind config.
 
 When you consume the package via a local path repository and want hot reload without re-copying assets on every change, use:
 

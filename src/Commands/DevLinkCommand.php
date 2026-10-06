@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Redberry\MailboxForLaravel\Commands;
 
 use Illuminate\Console\Command;
@@ -13,8 +15,14 @@ class DevLinkCommand extends Command
 
     public function handle(): int
     {
-        $target = base_path('packages/redberry/mailbox-for-laravel/public/vendor/mailbox');
+        $target = $this->assetsPath();
         $link = public_path('vendor/mailbox');
+
+        if (! is_dir($target)) {
+            $this->error("Mailbox assets not found at [{$target}]. Run `npm run build` in the package first.");
+
+            return Command::FAILURE;
+        }
 
         $parentDir = dirname($link);
         if (! File::exists($parentDir)) {
@@ -32,12 +40,21 @@ class DevLinkCommand extends Command
     }
 
     /**
+     * The package's own built assets, wherever the package is installed.
+     */
+    protected function assetsPath(): string
+    {
+        return dirname(__DIR__, 2).DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'mailbox';
+    }
+
+    /**
      * Clean an existing path: file, directory, or broken symlink.
      */
     protected function cleanup(string $path): void
     {
         if (is_link($path)) {
-            unlink($path);
+            // Windows removes directory symlinks with rmdir(); unlink() fails there.
+            PHP_OS_FAMILY === 'Windows' && is_dir($path) ? rmdir($path) : unlink($path);
 
             return;
         }

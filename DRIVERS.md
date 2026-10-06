@@ -67,17 +67,18 @@ class RedisMessageStore implements MessageStore
 
 ## AttachmentStore contract
 
-Implement `Redberry\MailboxForLaravel\Contracts\AttachmentStore`. The interface has 8 methods:
+Implement `Redberry\MailboxForLaravel\Contracts\AttachmentStore`. The interface has 9 methods:
 
 ```php
 interface AttachmentStore
 {
-    public function store(string $messageId, AttachmentData $data): StoredAttachment;
+    public function store(int|string $messageId, AttachmentData $attachment): StoredAttachment;
     public function find(string $id): ?StoredAttachment;
-    public function findByMessage(string $messageId): array;
-    public function findByCid(string $messageId, string $cid): ?StoredAttachment;
-    public function delete(string $id): void;
-    public function deleteByMessage(string $messageId): void;
+    public function findByMessage(int|string $messageId): array;
+    public function findByMessages(array $messageIds): array;
+    public function findByCid(int|string $messageId, string $cid): ?StoredAttachment;
+    public function delete(StoredAttachment $attachment): void;
+    public function deleteByMessage(int|string $messageId): void;
     public function getContent(StoredAttachment $attachment): ?string;
     public function clear(): void;
 }
@@ -85,11 +86,12 @@ interface AttachmentStore
 
 ### Key points
 
-- `store()` receives an `AttachmentData` DTO (filename, mimeType, size, base64 content, cid, isInline) and returns a `StoredAttachment` value object.
+- `store()` receives an `AttachmentData` DTO (filename, mimeType, size, content, cid, isInline) and returns a `StoredAttachment` value object. `content` is always the raw bytes: write it as-is and never try to detect an encoding. Callers holding base64 build the DTO with `AttachmentData::fromBase64()`.
 - Attachment **content bytes** are written to the configured filesystem disk (`mailbox.attachments.disk`). Your driver stores the metadata; the disk stores the binary.
+- `findByMessages()` returns the attachments of several messages keyed by message id, with every requested id present. The dashboard calls it once per page. If your backend has no batched lookup, `use Redberry\MailboxForLaravel\Storage\Concerns\FindsAttachmentsByMessages;` to fall back to one `findByMessage()` per id.
 - `findByCid()` resolves inline images by Content-ID — the `CidRewriter` uses this to rewrite `cid:` references in HTML bodies to downloadable routes.
 - `deleteByMessage()` removes all attachments for a given message. Called by `CaptureService` during cascade cleanup.
-- `getContent()` reads the base64-encoded content from the disk. Return `null` if the file is missing.
+- `getContent()` returns the attachment's raw bytes from the disk. Return `null` if the file is missing.
 - All read methods return `StoredAttachment` DTOs — never expose your internal model.
 
 ## Registering a custom driver

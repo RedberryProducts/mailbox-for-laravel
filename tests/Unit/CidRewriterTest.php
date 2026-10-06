@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Storage;
+use Redberry\MailboxForLaravel\Contracts\AttachmentStore;
+use Redberry\MailboxForLaravel\DTO\StoredAttachment;
 use Redberry\MailboxForLaravel\Models\MailboxAttachment;
 use Redberry\MailboxForLaravel\Models\MailboxMessage;
 use Redberry\MailboxForLaravel\Storage\DatabaseAttachmentStore;
@@ -187,5 +189,17 @@ describe(CidRewriter::class, function () {
         expect($inlineAttachments)->toHaveCount(1)
             ->and($inlineAttachments[0]->isInline)->toBeTrue()
             ->and($inlineAttachments[0]->filename)->toBe('inline.png');
+    });
+
+    it('resolves cids from preloaded attachments without querying the store', function () {
+        $store = Mockery::mock(AttachmentStore::class);
+        $store->shouldNotReceive('findByCid');
+
+        $logo = new StoredAttachment('att-logo', 1, 'logo.png', 'image/png', 10, 'mailbox', 'attachments/logo.png', 'logo@x', true);
+
+        $html = (new CidRewriter($store))->rewrite('<img src="cid:logo@x"><img src="cid:missing@x">', 1, [$logo]);
+
+        expect($html)->toContain(route('mailbox.attachments.inline', ['id' => 'att-logo']))
+            ->and($html)->toContain('cid:missing@x');
     });
 });

@@ -14,7 +14,7 @@ composer test                    # Run Pest tests
 composer test-coverage           # Tests with coverage report
 composer analyse                 # PHPStan (level 5)
 composer format                  # Laravel Pint (PSR-12)
-bin/check                        # Run Pint + PHPStan + Pest in sequence
+composer check                   # Run Pint + PHPStan + Pest in sequence (bin/check)
 vendor/bin/pest --filter="test name"  # Run a single test
 vendor/bin/pest tests/Unit/      # Run a test directory
 
@@ -37,14 +37,13 @@ src/
   StoreManager.php                  # Laravel Manager — resolves storage drivers
   Contracts/
     MessageStore.php                # Message storage driver interface (10 methods incl. idsOlderThan, findIdByMessageId)
-    AttachmentStore.php             # Attachment storage driver interface (8 methods)
+    AttachmentStore.php             # Attachment storage driver interface (9 methods incl. findByMessages)
     MessageSearch.php               # Pluggable search strategy (consumed by the storage drivers)
   Storage/
     DatabaseMessageStore.php        # Default message driver (Eloquent, dedicated SQLite)
     FileStorage.php                 # JSON-on-disk message driver
     DatabaseAttachmentStore.php     # DB-backed attachment driver (paired with database message driver)
     FileAttachmentStore.php         # JSON-sidecar attachment driver (paired with file message driver)
-    AttachmentStore.php             # @deprecated shim — extends DatabaseAttachmentStore (scheduled for removal in v2.1)
   DTO/StoredAttachment.php          # Driver-agnostic attachment value object
   Transport/MailboxTransport.php    # Symfony AbstractTransport — captures outgoing mail
   Support/
@@ -54,7 +53,7 @@ src/
     MailboxAssertions.php           # Collection-level assertions (assertSent, assertSentTo, etc.)
     PendingMailboxMessageAssertion.php  # Per-message fluent assertions (assertHasSubject, assertSeeInHtml, etc.)
     InteractsWithMailbox.php        # Trait for test classes — auto-clear, provides $this->mailbox()
-  Http/Controllers/                 # 7 thin controllers, return Blade views or JSON responses
+  Http/Controllers/                 # 6 thin controllers, return Blade views or JSON responses
   Http/Middleware/                  # AuthorizeMailboxMiddleware
   DTO/                              # MailboxMessageData, AttachmentData (plain PHP DTOs with constructor property promotion)
   Models/                           # MailboxMessage, MailboxAttachment (Eloquent)
@@ -68,7 +67,7 @@ resources/js/
   components/ui/                    # Reusable UI primitives (button, input, tabs, select, etc.)
   composables/useMailboxPolling.ts  # Auto-refresh polling logic
   types/mailbox.ts                  # TypeScript interfaces
-  lib/                              # Utilities (utils.ts, mail-data.ts)
+  lib/                              # Shared store and utilities (mailboxStore.ts, utils.ts)
 
 config/mailbox.php                  # All package configuration
 routes/mailbox.php                  # Route definitions (prefixed, middlewared)
@@ -95,7 +94,7 @@ The package ships a **completely isolated** Vue 3 dashboard that does not interf
 
 ### HTTP Layer
 
-Routes under `config('mailbox.path', 'mailbox')` prefix with middleware: `web`, `mailbox.authorize`. Authorization via `viewMailbox` gate (allows all in non-production by default). `MailboxController` returns a Blade view for browser requests and a JSON payload when `$request->wantsJson()` is true.
+Routes under `config('mailbox.path', 'mailbox')` prefix with middleware: `web`, `mailbox.authorize`. Authorization via `viewMailbox` gate (default gate allows only the `local` environment). `MailboxController` returns a Blade view for browser requests and a JSON payload when `$request->wantsJson()` is true.
 
 ## Testing
 
@@ -103,7 +102,7 @@ Uses **Pest** with Orchestra Testbench. Base `TestCase` sets up in-memory SQLite
 
 ```
 tests/
-├── Architecture/    # Arch rules (currently 31 stub rules — see ArchitectureTest.php; bodies are placeholders)
+├── Architecture/    # Pest arch() rules: layer boundaries, naming, strict types, hygiene
 ├── Commands/        # Artisan command tests
 ├── Feature/         # HTTP/integration + InteractsWithMailbox tests
 └── Unit/            # Unit tests (services, storage, testing assertions)

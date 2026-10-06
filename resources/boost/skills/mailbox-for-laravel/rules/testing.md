@@ -85,4 +85,4 @@ it('sends the welcome email', function () {
 
 - For queued mailables, prefer Laravel's `Mail::assertQueued()` — Mailbox captures only what actually goes through the transport.
 - Run a single test: `vendor/bin/pest --filter="sends the welcome email"`.
-- Run the package's own test suite: `composer test` (or `bin/check` for Pint + PHPStan + Pest).
+- Run the package's own test suite: `composer test` (or `composer check` for Pint + PHPStan + Pest).

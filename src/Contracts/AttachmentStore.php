@@ -34,6 +34,17 @@ interface AttachmentStore
     public function findByMessage(int|string $messageId): array;
 
     /**
+     * Retrieve the attachments of several messages at once, keyed by message
+     * id. Every requested id is present, with an empty list when the message
+     * has no attachments. Use Storage\Concerns\FindsAttachmentsByMessages
+     * for a per-message fallback.
+     *
+     * @param  array<int, int|string>  $messageIds
+     * @return array<string, array<int, StoredAttachment>>
+     */
+    public function findByMessages(array $messageIds): array;
+
+    /**
      * Find an inline attachment by its Content-ID within a message.
      */
     public function findByCid(int|string $messageId, string $cid): ?StoredAttachment;
