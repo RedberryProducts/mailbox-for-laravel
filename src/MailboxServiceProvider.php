@@ -7,7 +7,6 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Mail\MailManager;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Gate;
-use Redberry\MailboxForLaravel\Commands\DevLinkCommand;
 use Redberry\MailboxForLaravel\Contracts\AttachmentStore as AttachmentStoreContract;
 use Redberry\MailboxForLaravel\Contracts\MessageSearch;
 use Redberry\MailboxForLaravel\Contracts\MessageStore;
@@ -34,6 +33,7 @@ class MailboxServiceProvider extends PackageServiceProvider
                 Commands\InstallCommand::class,
                 Commands\ClearInboxCommand::class,
                 Commands\UpgradeCommand::class,
+                Commands\DevLinkCommand::class,
             ]);
     }
 
@@ -44,7 +44,6 @@ class MailboxServiceProvider extends PackageServiceProvider
         $this->registerAttachmentStore();
         $this->registerCaptureService();
         $this->registerTransport();
-        $this->registerDevCommands();
     }
 
     public function packageBooted(): void
@@ -232,22 +231,6 @@ class MailboxServiceProvider extends PackageServiceProvider
         $manager = $app->make(MailManager::class);
 
         return $manager->mailer($name)->getSymfonyTransport();
-    }
-
-    /**
-     * Register additional dev-only commands (e.g. DevLinkCommand) in local env.
-     */
-    protected function registerDevCommands(): void
-    {
-        if (! $this->app->runningInConsole()) {
-            return;
-        }
-
-        if ($this->app->environment('local')) {
-            $this->commands([
-                DevLinkCommand::class,
-            ]);
-        }
     }
 
     /**

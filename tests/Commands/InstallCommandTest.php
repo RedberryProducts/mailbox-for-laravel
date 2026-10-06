@@ -2,7 +2,9 @@
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Redberry\MailboxForLaravel\Commands\InstallCommand;
 
 describe(InstallCommand::class, function () {
@@ -109,5 +111,31 @@ describe(InstallCommand::class, function () {
 
         // The assets should be published from the 'mailbox-assets' tag
         // as defined in the service provider
+    });
+
+    it('runs the package migrations wherever the package is installed', function () {
+        $database = sys_get_temp_dir().'/mailbox-install-'.uniqid().'/mailbox.sqlite';
+
+        config([
+            'database.connections.mailbox_install' => [
+                'driver' => 'sqlite',
+                'database' => $database,
+                'prefix' => '',
+                'foreign_key_constraints' => true,
+            ],
+            'mailbox.store.database.connection' => 'mailbox_install',
+        ]);
+
+        // Testbench has no vendor/redberry/mailbox-for-laravel, so a hardcoded
+        // vendor path would find no migrations and create no tables.
+        $this->artisan('mailbox:install')->assertExitCode(Command::SUCCESS);
+
+        expect(Schema::connection('mailbox_install')->hasTable('mailbox_messages'))->toBeTrue()
+            ->and(Schema::connection('mailbox_install')->hasTable('mailbox_attachments'))->toBeTrue();
+
+        // Teardown rolls the package migrations back on the configured connection.
+        config(['mailbox.store.database.connection' => 'testing']);
+        DB::purge('mailbox_install');
+        File::deleteDirectory(dirname($database));
     });
 });

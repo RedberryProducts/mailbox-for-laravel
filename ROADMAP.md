@@ -21,8 +21,8 @@ Working order for the open GitHub issues as of 2026-10-06. Priorities were check
 
 ## 3. Install commands
 
-- [ ] #102 `mailbox:install --dev` / `mailbox:dev-link` only work inside the monorepo (medium)
-- [ ] #109 Hardcoded `vendor/redberry/...` migration path (label: medium → low)
+- [x] #102 `mailbox:install --dev` / `mailbox:dev-link` only work inside the monorepo (medium)
+- [x] #109 Hardcoded `vendor/redberry/...` migration path (label: medium → low)
 
 ## 4. CI
 

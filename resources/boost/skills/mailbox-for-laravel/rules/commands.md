@@ -10,7 +10,7 @@ mailbox:install [--force] [--refresh] [--dev]
 
 Run once after `composer require`. Publishes the package's compiled assets to `public/vendor/mailbox/`, publishes `config/mailbox.php`, and runs the package migrations.
 
-- `--dev` — symlinks assets instead of copying (calls `mailbox:dev-link` internally). Use when working **inside** the package repo, not in a consumer app.
+- `--dev` — symlinks assets instead of copying (calls `mailbox:dev-link` internally) and stops with a failure if linking fails.
 - `--force` — overwrite already-published assets **and** `config/mailbox.php`.
 - `--refresh` — **destructive.** Runs `migrate:refresh` on the mailbox connection, dropping and recreating the mailbox tables; with the default SQLite connection it deletes the database file first. Every captured message is lost. Never suggest it as a harmless re-install.
 
@@ -31,7 +31,7 @@ Deletes stored messages and their attachments through the configured storage dri
 mailbox:dev-link
 ```
 
-Symlinks the package's `public/` into the host app's `public/vendor/mailbox/` and removes any stale copies first. Only useful when developing the package itself (the package is path-installed in the host app).
+Symlinks the package's own built assets (`public/vendor/mailbox/` inside the package, wherever it is installed) to the host app's `public/vendor/mailbox/`, removing any stale copy first. Registered in every environment. Exits with a failure and creates no link if the package has no built assets. Mostly useful when developing the package itself, where a rebuild shows up without re-publishing.
 
 ## `mailbox:upgrade`
 

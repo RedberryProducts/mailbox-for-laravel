@@ -326,7 +326,9 @@ Captured messages can include passwords, tokens, and personal data, so leave `MA
 ```bash
 # Publish assets + config, then run package migrations.
 # Flags: --force (overwrite published files), --refresh (drop and rebuild tables),
-#        --dev (symlink assets for hot reload).
+#        --dev (symlink public/vendor/mailbox to the package's own built assets
+#        instead of copying them, so `composer update` or a package rebuild
+#        is picked up without re-publishing).
 php artisan mailbox:install
 
 # Clear captured mail. With --outdated, only remove messages older than `retention`.
@@ -340,6 +342,7 @@ php artisan mailbox:clear --outdated
 php artisan mailbox:upgrade
 
 # Recreate the dev-mode asset symlink (rarely needed directly; --dev on install uses it).
+# Fails without touching public/ if the package has no built assets.
 php artisan mailbox:dev-link
 ```
 

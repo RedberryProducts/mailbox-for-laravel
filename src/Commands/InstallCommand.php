@@ -16,8 +16,9 @@ class InstallCommand extends Command
         if ($this->option('dev')) {
             $this->info('Dev mode: linking assets (reusing mailbox:dev-link)...');
 
-            $this->call('mailbox:dev-link');
-
+            if ($this->call('mailbox:dev-link') !== self::SUCCESS) {
+                return self::FAILURE;
+            }
         } else {
             $this->publishAssets();
             $this->info('Mailbox assets published.');
@@ -79,7 +80,8 @@ class InstallCommand extends Command
         }
 
         $this->call($command, [
-            '--path' => 'vendor/redberry/mailbox-for-laravel/database/migrations',
+            '--path' => dirname(__DIR__, 2).DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations',
+            '--realpath' => true,
             '--database' => $connectionName,
             '--force' => true,
         ]);
