@@ -15,6 +15,10 @@ public function boot(): void
 
 Without it those environments now answer with a 403 (or redirect to `mailbox.unauthorized_redirect`). Local development is unaffected.
 
+### Laravel 10 is no longer supported
+
+v2.4.0 requires Laravel 11, 12 or 13. Stay on 2.3.x if you are still on Laravel 10.
+
 # Upgrading from v1.x to v2.0.0
 
 This guide covers every breaking change in v2.0.0 and what you need to do about each one. The package captures ephemeral development mail, so the recommended upgrade path is fast and non-destructive to your application code.
