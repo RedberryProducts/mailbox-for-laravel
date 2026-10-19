@@ -4,6 +4,9 @@ All notable changes to `mailbox-for-laravel` will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Container deployment guide.** [DEPLOYMENT.md](DEPLOYMENT.md) explains how to keep captured mail persistent and shared across replicas and queue workers on Docker Compose and Kubernetes. It covers two setups: the `database` driver with an S3 attachment disk, and the `file` driver on a shared ReadWriteMany volume.
+
 ## [3.0.0] - 2026-10-06
 
 Major release. The default `viewMailbox` gate now only allows `APP_ENV=local`, Laravel 10 support is dropped, `Contracts\AttachmentStore` gains `findByMessages()`, `AttachmentData::$content` is always raw bytes, and the deprecated `Storage\AttachmentStore` shim is removed. See [UPGRADE.md](UPGRADE.md) before updating. **Rebuilt assets ship with this release**, so run `php artisan vendor:publish --tag=mailbox-assets --force` after upgrading.

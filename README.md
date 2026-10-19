@@ -293,6 +293,10 @@ Attachment content lives on the `mailbox` filesystem disk, independent of the me
 ],
 ```
 
+### Containers (Docker, Kubernetes)
+
+The default SQLite file and local attachment disk live inside the container, so captured mail is lost on restart and isn't shared between replicas or queue workers. Use the `database` driver with an S3 attachment disk, or the `file` driver on a shared volume. [DEPLOYMENT.md](DEPLOYMENT.md) walks through both, with Docker Compose and Kubernetes examples.
+
 ### Custom drivers
 
 Implement [`Contracts\MessageStore`](src/Contracts/MessageStore.php) for messages, and [`Contracts\AttachmentStore`](src/Contracts/AttachmentStore.php) for their attachments. Register the pair in your service provider and point `mailbox.store.driver` at your resolver key. See [DRIVERS.md](DRIVERS.md) for the full driver author guide.
